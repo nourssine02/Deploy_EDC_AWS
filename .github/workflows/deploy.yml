@@ -32,13 +32,23 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
+      - name: Build frontend
+        run: |
+          # Adjust this command to whatever build command your frontend requires
+          cd frontend-directory # Change to your frontend directory if needed
+          npm install
+          npm run build
+
+      - name: List project files
+        run: |
+          ls -la
+
       - name: Add user to Docker group
         run: |
           if ! getent group docker; then
             sudo groupadd docker
           fi
           sudo usermod -aG docker $USER
-          newgrp docker
 
       - name: Login to DockerHub
         env:
