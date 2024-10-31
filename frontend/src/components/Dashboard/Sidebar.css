@@ -1,0 +1,60 @@
+/* Styles de la barre latérale */
+.sidebar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #fff;
+  transition: transform 0.3s ease-in-out; /* Amélioration de la transition */
+  transform: translateX(-100%);
+  overflow-y: auto; /* Permettre le défilement */
+  z-index: 1000; /* S'assurer qu'elle est au-dessus des autres contenus */
+}
+
+/* Masquer la barre de défilement */
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Styles lorsque la barre latérale est ouverte */
+.sidebar.open {
+  transform: translateX(0);
+}
+
+/* Styles de la liste de navigation */
+.nav {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  padding: 1px;
+}
+
+.nav-link {
+  color: black; /* Changez pour une meilleure visibilité */
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.menu-icon {
+  margin-right: 8px;
+}
+
+
+.content-wrapper.shifted {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+
+}
+
+.main-panel {
+  transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out; 
+  width: calc(100% - 0px); 
+  min-height: 100vh; 
+  overflow: auto; 
+}
