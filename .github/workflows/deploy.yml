@@ -12,8 +12,8 @@ jobs:
     steps:
       - name: Install required dependencies
         run: |
-          yum update -y
-          yum install -y docker git
+          npm update -y
+          npm install -y docker git
 
       - name: Checkout code
         uses: actions/checkout@v2
