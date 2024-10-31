@@ -3,14 +3,14 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile
     ports:
       - "80:80"
 
   backend:
     build:
       context: ./backend 
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile
     environment:
       - DATABASE_HOST=cloud-db.cpseqi6mmsuu.us-east-1.rds.amazonaws.com
       - DATABASE_USER=root
