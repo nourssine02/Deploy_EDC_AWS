@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:  # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -28,20 +28,15 @@ jobs:
 
       - name: Install Docker Compose
         run: |
-          DOCKER_COMPOSE_VERSION=1.29.2  # Specify the version you need
+          DOCKER_COMPOSE_VERSION=1.29.2
           sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: Build frontend
         run: |
-          # Adjust this command to whatever build command your frontend requires
-          cd frontend-directory # Change to your frontend directory if needed
+          cd frontend  # Navigate to frontend folder
           npm install
-          npm run build
-
-      - name: List project files
-        run: |
-          ls -la
+          npm run build  # Generate the build directory
 
       - name: Add user to Docker group
         run: |
