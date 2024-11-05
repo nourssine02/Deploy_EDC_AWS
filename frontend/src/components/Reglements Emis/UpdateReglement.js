@@ -22,25 +22,25 @@ const UpdateReglement = ({ isSidebarOpen }) => {
   };
 
   const initialPayementState = useMemo(
-    () => ({
-      modalite: "",
-      num: "",
-      banque: "",
-      date_echeance: "",
-      montant: "",
-    }),
-    []
+      () => ({
+        modalite: "",
+        num: "",
+        banque: "",
+        date_echeance: "",
+        montant: "",
+      }),
+      []
   );
 
   const initialPieceState = useMemo(
-    () => ({
-      num_piece_a_regler: "",
-      date_piece_a_regler: "",
-      montant_piece_a_regler: "",
-      montant_restant: "",
-      document_fichier: "",
-    }),
-    []
+      () => ({
+        num_piece_a_regler: "",
+        date_piece_a_regler: "",
+        montant_piece_a_regler: "",
+        montant_restant: "",
+        document_fichier: "",
+      }),
+      []
   );
 
   const [reglement, setReglement] = useState(initialReglementState);
@@ -62,14 +62,14 @@ const UpdateReglement = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `https://comptaonline.line.pm/api/reglements_emis/${id}`
+            `http://localhost:5000/reglements_emis/${id}`
         );
         const { reglement, payements, pieces } = response.data;
 
         setReglement({
           date_saisie: reglement.date_saisie
-            ? reglement.date_saisie.split("T")[0]
-            : "",
+              ? reglement.date_saisie.split("T")[0]
+              : "",
           tierId: reglement.tierId || "",
           code_tiers: reglement.code_tiers || "",
           tiers_saisie: reglement.tiers_saisie || "",
@@ -82,25 +82,25 @@ const UpdateReglement = ({ isSidebarOpen }) => {
         });
         console.log("reglement " + setReglement);
         setPayements(
-          payements.length
-            ? payements.map((payement) => ({
-                ...payement,
-                date_echeance: payement.date_echeance
-                  ? payement.date_echeance.split("T")[0]
-                  : "",
-              }))
-            : [initialPayementState]
+            payements.length
+                ? payements.map((payement) => ({
+                  ...payement,
+                  date_echeance: payement.date_echeance
+                      ? payement.date_echeance.split("T")[0]
+                      : "",
+                }))
+                : [initialPayementState]
         );
         setPieces(
-          pieces.length
-            ? pieces.map((piece) => ({
-                ...piece,
-                document_fichier: piece.document_fichier || "",
-                date_piece_a_regler: piece.date_piece_a_regler
-                  ? piece.date_piece_a_regler.split("T")[0]
-                  : "",
-              }))
-            : [initialPieceState]
+            pieces.length
+                ? pieces.map((piece) => ({
+                  ...piece,
+                  document_fichier: piece.document_fichier || "",
+                  date_piece_a_regler: piece.date_piece_a_regler
+                      ? piece.date_piece_a_regler.split("T")[0]
+                      : "",
+                }))
+                : [initialPieceState]
         );
 
         console.log("payements " + setPayements);
@@ -108,9 +108,9 @@ const UpdateReglement = ({ isSidebarOpen }) => {
       } catch (error) {
         console.error("Erreur lors de la récupération du règlement :", error);
         Swal.fire(
-          "Erreur",
-          "Erreur lors de la récupération des données.",
-          "error"
+            "Erreur",
+            "Erreur lors de la récupération des données.",
+            "error"
         );
       }
     };
@@ -123,17 +123,17 @@ const UpdateReglement = ({ isSidebarOpen }) => {
       try {
         const token = localStorage.getItem("token");
         const [tiersResponse, tauxResponse, piecesResponse] = await Promise.all(
-          [
-            axios.get("https://comptaonline.line.pm/api/code_tiers", {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get("https://comptaonline.line.pm/api/taux_retenue_source/active", {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get("https://comptaonline.line.pm/api/pieces", {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-          ]
+            [
+              axios.get("http://localhost:5000/code_tiers", {
+                headers: { Authorization: `Bearer ${token}` },
+              }),
+              axios.get("http://localhost:5000/taux_retenue_source/active", {
+                headers: { Authorization: `Bearer ${token}` },
+              }),
+              axios.get("http://localhost:5000/pieces", {
+                headers: { Authorization: `Bearer ${token}` },
+              }),
+            ]
         );
 
         setCodeTiers(tiersResponse.data);
@@ -157,8 +157,8 @@ const UpdateReglement = ({ isSidebarOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://comptaonline.line.pm/api/tiers/${tierId}/banques`,
-        { headers: { Authorization: `Bearer ${token}` } }
+          `http://localhost:5000/tiers/${tierId}/banques`,
+          { headers: { Authorization: `Bearer ${token}` } }
       );
       setBanques(response.data);
     } catch (error) {
@@ -193,21 +193,21 @@ const UpdateReglement = ({ isSidebarOpen }) => {
         const base = parseFloat(updatedReglement.base_retenue_source) || 0;
         const taux = parseFloat(updatedReglement.taux_retenue_source) || 0;
         updatedReglement.montant_retenue_source = ((base * taux) / 100).toFixed(
-          3
+            3
         );
       }
 
       // Calculer montant_net après mise à jour correcte de montant_retenue_source
       if (
-        ["montant_brut", "base_retenue_source", "taux_retenue_source"].includes(
-          name
-        )
+          ["montant_brut", "base_retenue_source", "taux_retenue_source"].includes(
+              name
+          )
       ) {
         const montantBrut = parseFloat(updatedReglement.montant_brut) || 0;
         const montantRetenueSource =
-          parseFloat(updatedReglement.montant_retenue_source) || 0;
+            parseFloat(updatedReglement.montant_retenue_source) || 0;
         updatedReglement.montant_net = (
-          montantBrut - montantRetenueSource
+            montantBrut - montantRetenueSource
         ).toFixed(3);
       }
 
@@ -275,7 +275,7 @@ const UpdateReglement = ({ isSidebarOpen }) => {
         reglement_emis_id: id,
       }));
 
-      await axios.put(`https://comptaonline.line.pm/api/reglements_emis/${id}`, {
+      await axios.put(`http://localhost:5000/reglements_emis/${id}`, {
         reglement,
         payements: formattedPayements,
         pieces: formattedPieces,
@@ -285,9 +285,9 @@ const UpdateReglement = ({ isSidebarOpen }) => {
     } catch (error) {
       console.error("Erreur lors de la mise à jour du règlement :", error);
       Swal.fire(
-        "Erreur",
-        "Erreur lors de la mise à jour du règlement",
-        "error"
+          "Erreur",
+          "Erreur lors de la mise à jour du règlement",
+          "error"
       );
     }
   };
@@ -300,229 +300,229 @@ const UpdateReglement = ({ isSidebarOpen }) => {
     switch (activeTab) {
       case "payements":
         return (
-          <div>
-            <h3>Paiements</h3>
-            {payements.map((payement, index) => (
-              <div key={index}>
-                <div className="row">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Modalité :</label>
-                      <select
-                        style={{ color: "black" }}
-                        className="form-control"
-                        name="modalite"
-                        onChange={(e) => handleChangePayement(e, index)}
-                        value={payement.modalite}
-                      >
-                        <option value="">Sélectionnez...</option>
-                        <option value="Chèque">Chèque</option>
-                        <option value="Effet">Effet</option>
-                        <option value="CB">CB</option>
-                        <option value="Virement">Virement</option>
-                        <option value="Retrait de fonds">
-                          Retrait de fonds
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Numéro :</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="num"
-                        onChange={(e) => handleChangePayement(e, index)}
-                        value={payement.num}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Banque :</label>
-                      <select
-                        style={{ color: "black" }}
-                        value={payement.banque}
-                        name="banque"
-                        className="form-control mr-3"
-                        onChange={(e) => handleChangePayement(e, index)}
-                      >
-                        <option value="">Sélectionnez une option</option>
-                        {banques.length > 0 ? (
-                          banques.map((banque) => (
-                            <option key={banque.id} value={banque.name}>
-                              {banque.name}
+            <div>
+              <h3>Paiements</h3>
+              {payements.map((payement, index) => (
+                  <div key={index}>
+                    <div className="row">
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Modalité :</label>
+                          <select
+                              style={{ color: "black" }}
+                              className="form-control"
+                              name="modalite"
+                              onChange={(e) => handleChangePayement(e, index)}
+                              value={payement.modalite}
+                          >
+                            <option value="">Sélectionnez...</option>
+                            <option value="Chèque">Chèque</option>
+                            <option value="Effet">Effet</option>
+                            <option value="CB">CB</option>
+                            <option value="Virement">Virement</option>
+                            <option value="Retrait de fonds">
+                              Retrait de fonds
                             </option>
-                          ))
-                        ) : (
-                          <option disabled>Aucune banque disponible</option>
-                        )}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Date d'échéance :</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        name="date_echeance"
-                        onChange={(e) => handleChangePayement(e, index)}
-                        value={payement.date_echeance}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Montant :</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="montant"
-                          onChange={(e) => handleChangePayement(e, index)}
-                          value={payement.montant}
-                        />
-                        &nbsp;
-                        <span>DT</span>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Numéro :</label>
+                          <input
+                              type="text"
+                              className="form-control"
+                              name="num"
+                              onChange={(e) => handleChangePayement(e, index)}
+                              value={payement.num}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Banque :</label>
+                          <select
+                              style={{ color: "black" }}
+                              value={payement.banque}
+                              name="banque"
+                              className="form-control mr-3"
+                              onChange={(e) => handleChangePayement(e, index)}
+                          >
+                            <option value="">Sélectionnez une option</option>
+                            {banques.length > 0 ? (
+                                banques.map((banque) => (
+                                    <option key={banque.id} value={banque.name}>
+                                      {banque.name}
+                                    </option>
+                                ))
+                            ) : (
+                                <option disabled>Aucune banque disponible</option>
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Date d'échéance :</label>
+                          <input
+                              type="date"
+                              className="form-control"
+                              name="date_echeance"
+                              onChange={(e) => handleChangePayement(e, index)}
+                              value={payement.date_echeance}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Montant :</label>
+                          <div style={{ display: "flex", alignItems: "center" }}>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="montant"
+                                onChange={(e) => handleChangePayement(e, index)}
+                                value={payement.montant}
+                            />
+                            &nbsp;
+                            <span>DT</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <button
+                            type="button"
+                            className="btn btn-danger btn-sm mt-5"
+                            onClick={() => removePayement(index)}
+                        >
+                          Supprimer
+                        </button>
                       </div>
                     </div>
+                    <hr />
                   </div>
-                  <div className="col-md-3">
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm mt-5"
-                      onClick={() => removePayement(index)}
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-                <hr />
-              </div>
-            ))}
+              ))}
 
-            <button
-              type="button"
-              className="btn btn-success btn-sm"
-              onClick={addPayement}
-            >
-              Ajouter un paiement
-            </button>
-          </div>
+              <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  onClick={addPayement}
+              >
+                Ajouter un paiement
+              </button>
+            </div>
         );
       case "pieces":
         return (
-          <div>
-            <h3>Pièces</h3>
-            {pieces.map((piece, index) => (
-              <div key={index}>
-                <div className="row">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Numéro de pièce à régler :</label>
-                      <Select
-                        options={options}
-                        onChange={(selectedOption) =>
-                          handleSelectChange(selectedOption, index)
-                        }
-                        value={
-                          options.find(
-                            (option) =>
-                              option.value === piece.num_piece_a_regler
-                          ) || ""
-                        }
-                        isClearable
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Date de pièce à régler :</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        name="date_piece_a_regler"
-                        onChange={(e) => handleChangePiece(e, index)}
-                        value={piece.date_piece_a_regler || ""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Montant de pièce à régler :</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="montant_piece_a_regler"
-                          onChange={(e) => handleChangePiece(e, index)}
-                          value={piece.montant_piece_a_regler || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
+            <div>
+              <h3>Pièces</h3>
+              {pieces.map((piece, index) => (
+                  <div key={index}>
+                    <div className="row">
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Numéro de pièce à régler :</label>
+                          <Select
+                              options={options}
+                              onChange={(selectedOption) =>
+                                  handleSelectChange(selectedOption, index)
+                              }
+                              value={
+                                  options.find(
+                                      (option) =>
+                                          option.value === piece.num_piece_a_regler
+                                  ) || ""
+                              }
+                              isClearable
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Date de pièce à régler :</label>
+                          <input
+                              type="date"
+                              className="form-control"
+                              name="date_piece_a_regler"
+                              onChange={(e) => handleChangePiece(e, index)}
+                              value={piece.date_piece_a_regler || ""}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Montant de pièce à régler :</label>
+                          <div style={{ display: "flex", alignItems: "center" }}>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="montant_piece_a_regler"
+                                onChange={(e) => handleChangePiece(e, index)}
+                                value={piece.montant_piece_a_regler || ""}
+                            />
+                            &nbsp;
+                            <span>DT</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Montant restant de pièce</label>
+                          <div style={{ display: "flex", alignItems: "center" }}>
+                            <input
+                                type="text"
+                                className="form-control"
+                                name="montant_restant"
+                                onChange={(e) => handleChangePiece(e, index)}
+                                value={piece.montant_restant || ""}
+                            />
+                            &nbsp;
+                            <span>DT</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-md-3">
+                        <div className="form-group">
+                          <label>Document de pièce à régler :</label>
+
+                          {piece.document_fichier && (
+                              <img
+                                  src={piece.document_fichier}
+                                  alt="Document de pièce à régler"
+                                  style={{
+                                    width: "100px",
+                                    height: "auto",
+                                    cursor: "pointer",
+                                  }}
+                              />
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="col-md-3">
+                        <button
+                            type="button"
+                            className="btn btn-danger btn-sm mt-5"
+                            onClick={() => removePiece(index)}
+                        >
+                          Supprimer
+                        </button>
                       </div>
                     </div>
+                    <hr />
                   </div>
+              ))}
 
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Montant restant de pièce</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="montant_restant"
-                          onChange={(e) => handleChangePiece(e, index)}
-                          value={piece.montant_restant || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label>Document de pièce à régler :</label>
-
-                      {piece.document_fichier && (
-                        <img
-                          src={piece.document_fichier}
-                          alt="Document de pièce à régler"
-                          style={{
-                            width: "100px",
-                            height: "auto",
-                            cursor: "pointer",
-                          }}
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="col-md-3">
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm mt-5"
-                      onClick={() => removePiece(index)}
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-                <hr />
-              </div>
-            ))}
-
-            <button
-              type="button"
-              className="btn btn-success btn-sm mt-1"
-              onClick={addPiece}
-            >
-              Ajouter une pièce
-            </button>
-          </div>
+              <button
+                  type="button"
+                  className="btn btn-success btn-sm mt-1"
+                  onClick={addPiece}
+              >
+                Ajouter une pièce
+              </button>
+            </div>
         );
       default:
         return null;
@@ -530,220 +530,220 @@ const UpdateReglement = ({ isSidebarOpen }) => {
   };
 
   return (
-    <div className="main-panel">
-      <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
-        <div className="card">
-          <div className="card-body">
-            <h2 className="text-center">Ajouter un règlement Émis</h2>
-            <br />
-            <form onSubmit={handleSubmit} className="forms-sample">
-              <div className="row">
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Date de saisie :</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      name="date_saisie"
-                      value={reglement.date_saisie || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Code tiers :</label>
-                    <Select
-                      options={codeTiers.map((tier) => ({
-                        value: tier.id,
-                        label: `${tier.code_tiers} - ${tier.identite}`,
-                      }))}
-                      onChange={(option) => {
-                        setReglement((prevState) => ({
-                          ...prevState,
-                          tierId: option?.value || "", // Update tierId
-                          code_tiers:
-                            codeTiers.find((tier) => tier.id === option?.value)
-                              ?.code_tiers || "", // Update code_tiers
-                        }));
-                        fetchBanques(option?.value || ""); // Fetch banks based on selected tierId
-                      }}
-                      value={
-                        codeTiers.find((tier) => tier.id === reglement.tierId)
-                          ? {
-                              value: reglement.tierId,
-                              label: `${
-                                codeTiers.find(
-                                  (tier) => tier.id === reglement.tierId
-                                ).code_tiers
-                              } - ${
-                                codeTiers.find(
-                                  (tier) => tier.id === reglement.tierId
-                                ).identite
-                              }`,
-                            }
-                          : null
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Tiers à ajouter :</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="tiers_saisie"
-                      value={reglement.tiers_saisie}
-                      onChange={handleChange}
-                      onClick={handleModalShow}
-                      disabled={!!reglement.code_tiers} // Désactiver le champ si un code_tiers est sélectionné
-                    />
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Montant brut :</label>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="montant_brut"
-                        value={reglement.montant_brut}
-                        onChange={handleChange}
-                      />
-                      &nbsp;
-                      <span>DT</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Base retenue source :</label>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="base_retenue_source"
-                        value={reglement.base_retenue_source}
-                        onChange={handleChange}
-                      />
-                      &nbsp;
-                      <span>DT</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Taux retenue source :</label>
-                    <select
-                      style={{ color: "black" }}
-                      className="form-control"
-                      name="taux_retenue_source"
-                      onChange={handleChange}
-                      value={reglement.taux_retenue_source}
-                    >
-                      <option value="" style={{ color: "black" }}>
-                        Sélectionnez...
-                      </option>
-                      {taux.map((taux) => (
-                        <option
-                          key={taux.taux}
-                          value={taux.taux}
-                          style={{ color: "black" }}
-                        >
-                          {taux.taux}%
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Montant retenue source :</label>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="montant_retenue_source"
-                        value={reglement.montant_retenue_source}
-                        onChange={handleChange}
-                      />
-                      &nbsp;
-                      <span>DT</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Montant net :</label>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="montant_net"
-                        value={reglement.montant_net}
-                        onChange={handleChange}
-                      />
-                      &nbsp;
-                      <span>DT</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <label>Observations :</label>
-                    <textarea
-                      className="form-control"
-                      name="observations"
-                      placeholder="Entrez vos observations ici..."
-                      onChange={handleChange}
-                      value={reglement.observations}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="tabs">
-                <button
-                  type="button"
-                  className={`btn ${
-                    activeTab === "pieces" ? "btn-dark" : "btn-light"
-                  }`}
-                  onClick={() => setActiveTab("pieces")}
-                >
-                  Pièces
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${
-                    activeTab === "payements" ? "btn-dark" : "btn-light"
-                  }`}
-                  onClick={() => setActiveTab("payements")}
-                >
-                  Paiements
-                </button>
-              </div>
-              <div className="tab-content">{renderTabContent()}</div>
+      <div className="main-panel">
+        <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
+          <div className="card">
+            <div className="card-body">
+              <h2 className="text-center">Modifier un règlement émis</h2>
               <br />
-              <div className="d-flex justify-content-center">
-                <button type="submit" className="btn btn-primary mr-2">
-                  Ajouter
-                </button>
-                &nbsp;&nbsp;
-                <button
-                  type="button"
-                  className="btn btn-light"
-                  onClick={handleCancel}
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-            <TiersSaisie showModal={showModal} setShowModal={setShowModal} />
+              <form onSubmit={handleSubmit} className="forms-sample">
+                <div className="row">
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Date de saisie :</label>
+                      <input
+                          type="date"
+                          className="form-control"
+                          name="date_saisie"
+                          value={reglement.date_saisie || ""}
+                          onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Code tiers :</label>
+                      <Select
+                          options={codeTiers.map((tier) => ({
+                            value: tier.id,
+                            label: `${tier.code_tiers} - ${tier.identite}`,
+                          }))}
+                          onChange={(option) => {
+                            setReglement((prevState) => ({
+                              ...prevState,
+                              tierId: option?.value || "", // Update tierId
+                              code_tiers:
+                                  codeTiers.find((tier) => tier.id === option?.value)
+                                      ?.code_tiers || "", // Update code_tiers
+                            }));
+                            fetchBanques(option?.value || ""); // Fetch banks based on selected tierId
+                          }}
+                          value={
+                            codeTiers.find((tier) => tier.id === reglement.tierId)
+                                ? {
+                                  value: reglement.tierId,
+                                  label: `${
+                                      codeTiers.find(
+                                          (tier) => tier.id === reglement.tierId
+                                      ).code_tiers
+                                  } - ${
+                                      codeTiers.find(
+                                          (tier) => tier.id === reglement.tierId
+                                      ).identite
+                                  }`,
+                                }
+                                : null
+                          }
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Tiers à ajouter :</label>
+                      <input
+                          type="text"
+                          className="form-control"
+                          name="tiers_saisie"
+                          value={reglement.tiers_saisie}
+                          onChange={handleChange}
+                          onClick={handleModalShow}
+                          disabled={!!reglement.code_tiers} // Désactiver le champ si un code_tiers est sélectionné
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Montant brut :</label>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="montant_brut"
+                            value={reglement.montant_brut}
+                            onChange={handleChange}
+                        />
+                        &nbsp;
+                        <span>DT</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Base retenue source :</label>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="base_retenue_source"
+                            value={reglement.base_retenue_source}
+                            onChange={handleChange}
+                        />
+                        &nbsp;
+                        <span>DT</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Taux retenue source :</label>
+                      <select
+                          style={{ color: "black" }}
+                          className="form-control"
+                          name="taux_retenue_source"
+                          onChange={handleChange}
+                          value={reglement.taux_retenue_source}
+                      >
+                        <option value="" style={{ color: "black" }}>
+                          Sélectionnez...
+                        </option>
+                        {taux.map((taux) => (
+                            <option
+                                key={taux.taux}
+                                value={taux.taux}
+                                style={{ color: "black" }}
+                            >
+                              {taux.taux}%
+                            </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Montant retenue source :</label>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="montant_retenue_source"
+                            value={reglement.montant_retenue_source}
+                            onChange={handleChange}
+                        />
+                        &nbsp;
+                        <span>DT</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Montant net :</label>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="montant_net"
+                            value={reglement.montant_net}
+                            onChange={handleChange}
+                        />
+                        &nbsp;
+                        <span>DT</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="form-group">
+                      <label>Observations :</label>
+                      <textarea
+                          className="form-control"
+                          name="observations"
+                          placeholder="Entrez vos observations ici..."
+                          onChange={handleChange}
+                          value={reglement.observations}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="tabs">
+                  <button
+                      type="button"
+                      className={`btn ${
+                          activeTab === "pieces" ? "btn-dark" : "btn-light"
+                      }`}
+                      onClick={() => setActiveTab("pieces")}
+                  >
+                    Pièces
+                  </button>
+                  <button
+                      type="button"
+                      className={`btn ${
+                          activeTab === "payements" ? "btn-dark" : "btn-light"
+                      }`}
+                      onClick={() => setActiveTab("payements")}
+                  >
+                    Paiements
+                  </button>
+                </div>
+                <div className="tab-content">{renderTabContent()}</div>
+                <br />
+                <div className="d-flex justify-content-center">
+                  <button type="submit" className="btn btn-primary mr-2">
+                    Ajouter
+                  </button>
+                  &nbsp;&nbsp;
+                  <button
+                      type="button"
+                      className="btn btn-light"
+                      onClick={handleCancel}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+              <TiersSaisie showModal={showModal} setShowModal={setShowModal} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

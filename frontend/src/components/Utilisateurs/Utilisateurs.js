@@ -20,7 +20,7 @@ const Utilisateurs = ({ isSidebarOpen }) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/utilisateurs", {
+        const res = await axios.get("http://localhost:5000/utilisateurs", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -35,7 +35,7 @@ const Utilisateurs = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete("https://comptaonline.line.pm/api/users/" + id);
+      await axios.delete("http://localhost:5000/users/" + id);
       window.location.reload();
     } catch (err) {
       console.log(err);
@@ -44,7 +44,7 @@ const Utilisateurs = ({ isSidebarOpen }) => {
 
   const confirmDelete = (id) => {
     const confirmDelete = window.confirm(
-      "Voulez-vous vraiment supprimer ce utilisateur  ?"
+        "Voulez-vous vraiment supprimer ce utilisateur  ?"
     );
     if (confirmDelete) {
       handleDelete(id);
@@ -56,16 +56,22 @@ const Utilisateurs = ({ isSidebarOpen }) => {
     setCurrentPage(0);
   };
 
-  const filtered = users.filter((u) => {
-    const searchTermLower = searchTerm.toLowerCase();
-    return (
-      u.code_user.toLowerCase().includes(searchTermLower) ||
-      u.identite.toString().includes(searchTermLower) ||
-      u.position.toString().includes(searchTermLower) ||
-      u.tel.toString().includes(searchTermLower) ||
-      u.email.toString().includes(searchTermLower)
-    );
-  });
+  // Filter users based on search term and roles
+  const filtered = users
+      .filter((u) => {
+        // Exclude "super_admin" users unless the logged-in user is also a "super_admin"
+        if (u.role === "super_admin" && user.role !== "super_admin") {
+          return false;
+        }
+        const searchTermLower = searchTerm.toLowerCase();
+        return (
+            u.code_user.toLowerCase().includes(searchTermLower) ||
+            u.identite.toString().includes(searchTermLower) ||
+            u.position.toString().includes(searchTermLower) ||
+            u.tel.toString().includes(searchTermLower) ||
+            u.email.toString().includes(searchTermLower)
+        );
+      });
 
   const offset = currentPage * itemsPerPage;
   const currentItems = filtered.slice(offset, offset + itemsPerPage);
@@ -77,15 +83,14 @@ const Utilisateurs = ({ isSidebarOpen }) => {
 
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
-      const updatedStatus = !currentStatus; // Inverse le statut actuel
-      await axios.put(`https://comptaonline.line.pm/api/users/${userId}/status`, {
+      const updatedStatus = !currentStatus;
+      await axios.put(`http://localhost:5000/users/${userId}/status`, {
         isActive: updatedStatus,
       });
-      // Mettez à jour la liste des utilisateurs après le changement de statut
       setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, isActive: updatedStatus } : user
-        )
+          prevUsers.map((user) =>
+              user.id === userId ? { ...user, isActive: updatedStatus } : user
+          )
       );
     } catch (err) {
       console.log(err);
@@ -93,42 +98,42 @@ const Utilisateurs = ({ isSidebarOpen }) => {
   };
 
   return (
-    <div className="main-panel">
-      <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
-        <div className="row">
-          <div className="col-lg-12 grid-margin stretch-card">
-            <div className="card">
-              <div className="card-body">
-                <h2 className="titre text-center">Liste des Utilisateurs</h2>
-                <br></br>
-                <br></br>
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <div className="input-group" style={{ maxWidth: "300px" }}>
-                    <input
-                      type="search"
-                      className="form-control"
-                      placeholder="Rechercher..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                    />
-                    <div className="input-group-append">
+      <div className="main-panel">
+        <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
+          <div className="row">
+            <div className="col-lg-12 grid-margin stretch-card">
+              <div className="card">
+                <div className="card-body">
+                  <h2 className="titre text-center">Liste des Utilisateurs</h2>
+                  <br />
+                  <br />
+                  <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div className="input-group" style={{ maxWidth: "300px" }}>
+                      <input
+                          type="search"
+                          className="form-control"
+                          placeholder="Rechercher..."
+                          value={searchTerm}
+                          onChange={handleSearchChange}
+                      />
+                      <div className="input-group-append">
                       <span className="input-group-text">
                         <i className="fas fa-search"></i>
                       </span>
+                      </div>
                     </div>
+                    {user.role !== "utilisateur" && (
+                        <Link to="/addUser">
+                          <button type="button" className="btn btn-dark ml-2">
+                            Ajouter un Utilisateur
+                          </button>
+                        </Link>
+                    )}
                   </div>
-                  {user.role !== "utilisateur" && (
-                    <Link to="/addUser">
-                      <button type="button" className="btn btn-dark ml-2">
-                        Ajouter un Utilisateur
-                      </button>
-                    </Link>
-                  )}{" "}
-                </div>
 
-                <div className="table-responsive pt-3">
-                  <table className="table table-sm">
-                    <thead>
+                  <div className="table-responsive pt-3">
+                    <table className="table table-sm">
+                      <thead>
                       <tr>
                         <th>Code Utilisateur</th>
                         <th>Code_entreprise</th>
@@ -137,88 +142,86 @@ const Utilisateurs = ({ isSidebarOpen }) => {
                         <th>Position</th>
                         <th>Telephone</th>
                         <th>Email</th>
-                        {user.role !== "utilisateur" && (
-                        <th>Active</th>
-                        )}
+                        {user.role !== "utilisateur" && <th>Active</th>}
                         <th></th>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {currentItems.map((user) => (
-                        <tr key={user.id}>
-                          <td>{user.code_user}</td>
-                          <td>
-                            {user.code_entreprise
-                              ? user.code_entreprise
-                              : "___________"}
-                          </td>
-                          <td>{user.identite}</td>
-                          <td>{user.role}</td>
-                          <td>{user.position}</td>
-                          <td>{user.tel}</td>
-                          <td>{user.email}</td>
-                          <td>
-                            {user.role !== "utilisateur" && (
-                              <label className="switch">
-                                <input
-                                  type="checkbox"
-                                  checked={user.isActive}
-                                  onChange={() =>
-                                    handleToggleStatus(user.id, user.isActive)
-                                  }
-                                />
-                                <span className="slider round"></span>
-                              </label>
-                            )}
-                          </td>
-                          <td>
-                            <Link to={`/updateUser/${user.id}`}>
-                              <button type="button" className="btn btn-success">
-                                Modifier
+                      </thead>
+                      <tbody>
+                      {currentItems.map((currentUser) => (
+                          <tr key={currentUser.id}>
+                            <td>{currentUser.code_user}</td>
+                            <td>{currentUser.code_entreprise || "___________"}</td>
+                            <td>{currentUser.identite}</td>
+                            <td>{currentUser.role}</td>
+                            <td>{currentUser.position}</td>
+                            <td>{currentUser.tel}</td>
+                            <td>{currentUser.email}</td>
+                            <td>
+                              {currentUser.role === "utilisateur" &&
+                                  user.role === "comptable" && (
+                                      <label className="switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={currentUser.isActive}
+                                            onChange={() =>
+                                                handleToggleStatus(
+                                                    currentUser.id,
+                                                    currentUser.isActive
+                                                )
+                                            }
+                                        />
+                                        <span className="slider round"></span>
+                                      </label>
+                                  )}
+                            </td>
+                            <td>
+                              <Link to={`/updateUser/${currentUser.id}`}>
+                                <button type="button" className="btn btn-success">
+                                  Modifier
+                                </button>
+                              </Link>
+                              &nbsp;
+                              <button
+                                  type="button"
+                                  className="btn btn-danger"
+                                  onClick={() => confirmDelete(currentUser.id)}
+                              >
+                                Supprimer
                               </button>
-                            </Link>
-                            &nbsp;
-                            <button
-                              type="button"
-                              className="btn btn-danger"
-                              onClick={() => confirmDelete(user.id)}
-                            >
-                              Supprimer
-                            </button>
-                          </td>
-                        </tr>
+                            </td>
+                          </tr>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-                <br />
-                <div className="d-flex justify-content-center mt-5">
-                  <ReactPaginate
-                    previousLabel={"← Précédent"}
-                    nextLabel={"Suivant →"}
-                    breakLabel={"..."}
-                    pageCount={pageCount}
-                    marginPagesDisplayed={2}
-                    pageRangeDisplayed={3}
-                    onPageChange={handlePageClick}
-                    containerClassName={"pagination justify-content-center"}
-                    pageClassName={"page-item"}
-                    pageLinkClassName={"page-link"}
-                    previousClassName={"page-item"}
-                    previousLinkClassName={"page-link"}
-                    nextClassName={"page-item"}
-                    nextLinkClassName={"page-link"}
-                    breakClassName={"page-item"}
-                    breakLinkClassName={"page-link"}
-                    activeClassName={"active"}
-                  />
+                      </tbody>
+                    </table>
+                  </div>
+                  <br />
+                  <div className="d-flex justify-content-center mt-5">
+                    <ReactPaginate
+                        previousLabel={"← Précédent"}
+                        nextLabel={"Suivant →"}
+                        breakLabel={"..."}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={3}
+                        onPageChange={handlePageClick}
+                        containerClassName={"pagination justify-content-center"}
+                        pageClassName={"page-item"}
+                        pageLinkClassName={"page-link"}
+                        previousClassName={"page-item"}
+                        previousLinkClassName={"page-link"}
+                        nextClassName={"page-item"}
+                        nextLinkClassName={"page-link"}
+                        breakClassName={"page-item"}
+                        breakLinkClassName={"page-link"}
+                        activeClassName={"active"}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
