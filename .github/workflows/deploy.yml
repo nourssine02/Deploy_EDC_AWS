@@ -44,7 +44,6 @@ jobs:
       - name: Build frontend
         run: |
           cd frontend  # Accède au dossier frontend
-          npm install
           npm install --save-dev @babel/plugin-proposal-private-property-in-object
           CI=false npm run build
       # Cette étape installe les dépendances et construit le frontend si nécessaire.
@@ -82,11 +81,13 @@ jobs:
         run: |
           echo "$SSH_KEY" > ssh_key.pem
           chmod 600 ssh_key.pem
-          scp -i ssh_key.pem -o StrictHostKeyChecking=no docker-compose.yml $USER@$HOST:~/myapp
-          ssh -i ssh_key.pem -o StrictHostKeyChecking=no $USER@$HOST << EOF
-            cd ~/myapp
+          ssh -i ssh_key.pem -o StrictHostKeyChecking=no $USER@$HOST "mkdir -p /var/www/myapp"
+          scp -i ssh_key.pem -o StrictHostKeyChecking=no docker-compose.yml $USER@$HOST:/var/www/myapp/docker-compose.yml
+          ssh -i ssh_key.pem -o StrictHostKeyChecking=no $USER@$HOST << 'EOF'
+            cd /var/www/myapp
             docker-compose down
             docker-compose up -d
           EOF
+
       # Cette étape se connecte à l'instance EC2 via SSH pour redéployer l’application.
       # Elle copie le fichier `docker-compose.yml` sur le serveur, arrête les conteneurs en cours, et démarre les nouveaux conteneurs en utilisant les images Docker mises à jour.
