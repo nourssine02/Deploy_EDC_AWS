@@ -40,12 +40,13 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
       # Installe Docker Compose, qui permet de gérer plusieurs conteneurs avec `docker-compose.yml`.
 
-      # Étape 5 : Construire le frontend (si l'application a un dossier frontend séparé)
+      # Étape 5 : Construire le frontend
       - name: Build frontend
         run: |
           cd frontend  # Accède au dossier frontend
           npm install
-          npm run build  # Génère le répertoire de build
+          npm install --save-dev @babel/plugin-proposal-private-property-in-object
+          CI=false npm run build
       # Cette étape installe les dépendances et construit le frontend si nécessaire.
 
       # Étape 6 : Ajouter l'utilisateur au groupe Docker

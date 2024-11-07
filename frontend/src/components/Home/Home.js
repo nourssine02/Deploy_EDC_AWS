@@ -7,16 +7,16 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
-  LineElement,
-  ArcElement,
   Title,
   Tooltip,
   Legend,
+  ArcElement,
 } from 'chart.js';
 
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, ArcElement, Title, Tooltip, Legend);
+// Register the required Chart.js components
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 function Home({ isSidebarOpen }) {
   const [error, setError] = useState("");
@@ -25,16 +25,33 @@ function Home({ isSidebarOpen }) {
     totalOrders: 0,
     totalDeliveries: 0,
     unpaidInvoices: 0,
-    monthlyOrders: [], // Ajouté pour les commandes par mois
-    adminUsers: 0,
-    standardUsers: 0,
-    managerUsers: 0, // Ajouté pour les rôles utilisateur
   });
 
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserContext);
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Utilisateur non authentifié");
+          navigate("/");
+          return;
+        }
+
+        const response = await axios.get("https://comptaonline.line.pm/api/home", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUser(response.data.user);
+      } catch (error) {
+        setError("Erreur lors de la récupération des données");
+      }
+    };
+
     const fetchStatistics = async () => {
       try {
         const response = await axios.get("https://comptaonline.line.pm/api/statistics");
@@ -45,9 +62,11 @@ function Home({ isSidebarOpen }) {
       }
     };
 
+    fetchUserData();
     fetchStatistics();
-  }, [setUser, navigate, setError]);
+  }, [setUser, navigate]);
 
+  // Data for Bar Chart
   const barChartData = {
     labels: ["Utilisateurs", "Commandes", "Livraisons", "Factures Non Payées"],
     datasets: [
@@ -59,28 +78,13 @@ function Home({ isSidebarOpen }) {
     ],
   };
 
-  const monthlyOrdersData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-    datasets: [
-      {
-        label: "Commandes par mois",
-        data: stats.monthlyOrders,
-        borderColor: "#FF6384",
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
-        tension: 0.4,
+  const barChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
       },
-    ],
-  };
-
-  const userRolesData = {
-    labels: ["Administrateurs", "Utilisateurs", "Comptables"],
-    datasets: [
-      {
-        label: "Répartition des rôles",
-        data: [stats.adminUsers, stats.standardUsers, stats.managerUsers],
-        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
-      },
-    ],
+    },
   };
 
   return (
@@ -91,18 +95,42 @@ function Home({ isSidebarOpen }) {
               <div className="card">
                 <div className="card-body">
                   <h2 className="text-center mb-5">Dashboard</h2>
+                  <br />
                   {error && <p style={{ color: "red" }}>{error}</p>}
 
-                  <div className="mt-5">
-                    <Bar data={barChartData} options={{ responsive: true, plugins: { legend: { display: true }}}} />
-                  </div>
+                  {user && user.role !== "utilisateur" && (
+                      <div className="row text-center">
+                        <div className="col-md-3">
+                          <div className="stat-card">
+                            <h4>Total Utilisateurs</h4>
+                            <p>{stats.totalUsers}</p>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="stat-card">
+                            <h4>Total Commandes</h4>
+                            <p>{stats.totalOrders}</p>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="stat-card">
+                            <h4>Total Livraisons</h4>
+                            <p>{stats.totalDeliveries}</p>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="stat-card">
+                            <h4>Factures Non Payées</h4>
+                            <p>{stats.unpaidInvoices}</p>
+                          </div>
+                        </div>
+                      </div>
+                  )}
 
+                  {/* Bar Chart for Stats */}
                   <div className="mt-5">
-                    <Line data={monthlyOrdersData} options={{ responsive: true, plugins: { legend: { display: true }}}} />
-                  </div>
-
-                  <div className="mt-5">
-                    <Doughnut data={userRolesData} options={{ responsive: true, plugins: { legend: { display: true }}}} />
+                    <h3 className="text-center">Graphique des Statistiques</h3>
+                    <Bar data={barChartData} options={barChartOptions} />
                   </div>
 
                 </div>
