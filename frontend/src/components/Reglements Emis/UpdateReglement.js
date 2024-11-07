@@ -62,7 +62,7 @@ const UpdateReglement = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-            `http://localhost:5000/reglements_emis/${id}`
+            `https://comptaonline.line.pm/api/reglements_emis/${id}`
         );
         const { reglement, payements, pieces } = response.data;
 
@@ -124,13 +124,13 @@ const UpdateReglement = ({ isSidebarOpen }) => {
         const token = localStorage.getItem("token");
         const [tiersResponse, tauxResponse, piecesResponse] = await Promise.all(
             [
-              axios.get("http://localhost:5000/code_tiers", {
+              axios.get("https://comptaonline.line.pm/api/code_tiers", {
                 headers: { Authorization: `Bearer ${token}` },
               }),
-              axios.get("http://localhost:5000/taux_retenue_source/active", {
+              axios.get("https://comptaonline.line.pm/api/taux_retenue_source/active", {
                 headers: { Authorization: `Bearer ${token}` },
               }),
-              axios.get("http://localhost:5000/pieces", {
+              axios.get("https://comptaonline.line.pm/api/pieces", {
                 headers: { Authorization: `Bearer ${token}` },
               }),
             ]
@@ -157,7 +157,7 @@ const UpdateReglement = ({ isSidebarOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-          `http://localhost:5000/tiers/${tierId}/banques`,
+          `https://comptaonline.line.pm/api/tiers/${tierId}/banques`,
           { headers: { Authorization: `Bearer ${token}` } }
       );
       setBanques(response.data);
@@ -275,7 +275,7 @@ const UpdateReglement = ({ isSidebarOpen }) => {
         reglement_emis_id: id,
       }));
 
-      await axios.put(`http://localhost:5000/reglements_emis/${id}`, {
+      await axios.put(`https://comptaonline.line.pm/api/reglements_emis/${id}`, {
         reglement,
         payements: formattedPayements,
         pieces: formattedPieces,

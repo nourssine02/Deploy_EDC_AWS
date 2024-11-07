@@ -66,12 +66,12 @@ const Tiers = ({ isSidebarOpen }) => {
   const filtered = tiers.filter((tier) => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      tier.code_tiers.toLowerCase().includes(searchTermLower) ||
-      new Date(tier.date_creation).toLocaleDateString().includes(searchTermLower) ||
-      tier.type.toString().includes(searchTermLower) ||
-      tier.identite.toString().includes(searchTermLower) ||
-      tier["MF/CIN"].toString().includes(searchTermLower) ||
-      tier.tel.toString().includes(searchTermLower)
+        tier.code_tiers.toLowerCase().includes(searchTermLower) ||
+        new Date(tier.date_creation).toLocaleDateString().includes(searchTermLower) ||
+        tier.type.toString().includes(searchTermLower) ||
+        tier.identite.toString().includes(searchTermLower) ||
+        tier["MF/CIN"].toString().includes(searchTermLower) ||
+        tier.tel.toString().includes(searchTermLower)
     );
   });
 
@@ -102,144 +102,143 @@ const Tiers = ({ isSidebarOpen }) => {
   };
 
   return (
-    <div className="main-panel">
-      <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
-        <div className="row">
-          <div className="col-lg-12 grid-margin stretch-card">
-            <div className="card">
-              <div className="card-body">
-                <h2 className="titre text-center">Liste des Tiers</h2>
-                <br />
-                <br />
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <div className="input-group" style={{ maxWidth: "300px" }}>
-                    <input
-                      type="search"
-                      className="form-control"
-                      placeholder="Rechercher..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                    />
-                    <div className="input-group-append">
+      <div className="main-panel">
+        <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
+          <div className="row">
+            <div className="col-lg-12 grid-margin stretch-card">
+              <div className="card">
+                <div className="card-body">
+                  <h2 className="titre text-center">Liste des Tiers</h2>
+                  <br />
+                  <br />
+                  <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div className="input-group" style={{ maxWidth: "300px" }}>
+                      <input
+                          type="search"
+                          className="form-control"
+                          placeholder="Rechercher..."
+                          value={searchTerm}
+                          onChange={handleSearchChange}
+                      />
+                      <div className="input-group-append">
                       <span className="input-group-text">
                         <i className="fas fa-search"></i>
                       </span>
+                      </div>
                     </div>
+                    <Link to="/addTier">
+                      <button type="button" className="btn btn-dark ml-2">
+                        Ajouter un Tier
+                      </button>
+                    </Link>
                   </div>
-                  <Link to="/addTier">
-                    <button type="button" className="btn btn-dark ml-2">
-                      Ajouter un Tier
-                    </button>
-                  </Link>
-                </div>
-                <div className="table-responsive pt-4" style={{ overflowX: "unset" }}>
-  <table className="table table-sm table-hover" style={{ fontSize: "12px" }}>
-    <thead>
-      <tr>
-        <th style={{ width: "80px" }}>Code tiers</th>
-        <th style={{ width: "100px" }}>Date de Creation</th>
-        <th style={{ width: "70px" }}>Type</th>
-        <th style={{ width: "120px" }}>Identite</th>
-        <th style={{ width: "90px" }}>MF / CIN</th>
-        <th style={{ width: "100px" }}>Telephone</th>
-        <th style={{ width: "150px" }}>Email</th>
-        <th style={{ width: "150px" }}>Adresse</th>
-        <th style={{ width: "100px" }}></th>
-      </tr>
-    </thead>
-    <tbody>
-      {currentItems.map((tier) => (
-        <React.Fragment key={tier.id}>
-          <tr>
-            <td>{tier.code_tiers}</td>
-            <td>{new Date(tier.date_creation).toLocaleDateString()}</td>
-            <td>{tier.type === "autre" ? tier.autreType : tier.type}</td>
-            <td>{tier.identite}</td>
-            <td>{tier["MF/CIN"]}</td>
-            <td>{tier.tel}</td>
-            <td>{tier.email}</td>
-            <td>{tier.adresse}</td>
-            <td>
-              <button
-                type="button"
-                style={{ width: "40px" }}
-                className="btn btn-info"
-                onClick={() => toggleBanks(tier.id)}
-              >
-                {banksVisible[tier.id] ? "-" : "+"}
-              </button>
-              &nbsp;
-              <Link to={`/updateTier/${tier.id}`}>
-                <button type="button" className="btn btn-success">
-                Modifier
-                </button>
-              </Link>
-              &nbsp;
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => confirmDelete(tier.id)}
-              >
-                Supprimer
-              </button>
-            </td>
-          </tr>
-          {banksVisible[tier.id] && (
-            <tr>
-              <td colSpan="9">
-                <div className="bank-list d-flex flex-wrap">
-                  <strong style={{ paddingTop: "15px" }}>Banques :</strong>
-                  {banksVisible[tier.id].map((bank) => (
-                    <div
-                      key={bank.id}
-                      className="bank-item m-2 p-2"
-                      style={{
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        width: "200px",
-                      }}
-                    >
-                      {bank.name}
-                    </div>
-                  ))}
-                </div>
-              </td>
-            </tr>
-          )}
-        </React.Fragment>
-      ))}
-    </tbody>
-  </table>
-</div>
+                  <div className="table-responsive pt-4" style={{ overflowX: "unset" }}>
+                    <table className="table table-sm table-hover" style={{ fontSize: "12px" }}>
+                      <thead>
+                      <tr>
+                        <th style={{ width: "80px" }}>Code tiers</th>
+                        <th style={{ width: "100px" }}>Date de Creation</th>
+                        <th style={{ width: "70px" }}>Type</th>
+                        <th style={{ width: "120px" }}>Identite</th>
+                        <th style={{ width: "90px" }}>MF / CIN</th>
+                        <th style={{ width: "100px" }}>Telephone</th>
+                        <th style={{ width: "150px" }}>Email</th>
+                        <th style={{ width: "150px" }}>Adresse</th>
+                        <th style={{ width: "100px" }}></th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      {currentItems.map((tier) => (
+                          <React.Fragment key={tier.id}>
+                            <tr>
+                              <td>{tier.code_tiers}</td>
+                              <td>{new Date(tier.date_creation).toLocaleDateString()}</td>
+                              <td>{tier.type === "autre" ? tier.autreType : tier.type}</td>
+                              <td>{tier.identite}</td>
+                              <td>{tier["MF/CIN"]}</td>
+                              <td>{tier.tel}</td>
+                              <td>{tier.email}</td>
+                              <td>{tier.adresse}</td>
+                              <td>
+                                <button
+                                    type="button"
+                                    className="btn btn-info"
+                                    onClick={() => toggleBanks(tier.id)}
+                                >
+                                  {banksVisible[tier.id] ? "-" : "+"}
+                                </button>
+                                &nbsp;
+                                <Link to={`/updateTier/${tier.id}`}>
+                                  <button type="button" className="btn btn-success">
+                                    Modifier
+                                  </button>
+                                </Link>
+                                &nbsp;
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={() => confirmDelete(tier.id)}
+                                >
+                                  Supprimer
+                                </button>
+                              </td>
+                            </tr>
+                            {banksVisible[tier.id] && (
+                                <tr>
+                                  <td colSpan="9">
+                                    <div className="bank-list d-flex flex-wrap">
+                                      <strong style={{ paddingTop: "15px" }}>Banques :</strong>
+                                      {banksVisible[tier.id].map((bank) => (
+                                          <div
+                                              key={bank.id}
+                                              className="bank-item m-2 p-2"
+                                              style={{
+                                                border: "1px solid #ccc",
+                                                borderRadius: "4px",
+                                                width: "200px",
+                                              }}
+                                          >
+                                            {bank.name}
+                                          </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                            )}
+                          </React.Fragment>
+                      ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-                <div className="d-flex justify-content-center mt-5">
-                  <ReactPaginate
-                    previousLabel={"← Précédent"}
-                    nextLabel={"Suivant →"}
-                    breakLabel={"..."}
-                    pageCount={pageCount}
-                    marginPagesDisplayed={2}
-                    pageRangeDisplayed={3}
-                    onPageChange={handlePageClick}
-                    containerClassName={"pagination justify-content-center"}
-                    pageClassName={"page-item"}
-                    pageLinkClassName={"page-link"}
-                    previousClassName={"page-item"}
-                    previousLinkClassName={"page-link"}
-                    nextClassName={"page-item"}
-                    nextLinkClassName={"page-link"}
-                    breakClassName={"page-item"}
-                    breakLinkClassName={"page-link"}
-                    activeClassName={"active"}
-                  />
+                  <div className="d-flex justify-content-center mt-5">
+                    <ReactPaginate
+                        previousLabel={"← Précédent"}
+                        nextLabel={"Suivant →"}
+                        breakLabel={"..."}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={3}
+                        onPageChange={handlePageClick}
+                        containerClassName={"pagination justify-content-center"}
+                        pageClassName={"page-item"}
+                        pageLinkClassName={"page-link"}
+                        previousClassName={"page-item"}
+                        previousLinkClassName={"page-link"}
+                        nextClassName={"page-item"}
+                        nextLinkClassName={"page-link"}
+                        breakClassName={"page-item"}
+                        breakLinkClassName={"page-link"}
+                        activeClassName={"active"}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        <ToastContainer />
       </div>
-      <ToastContainer />
-    </div>
   );
 };
 

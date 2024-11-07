@@ -42,7 +42,6 @@ app.use(cookieParser());
 // Configurer Express pour servir les fichiers statiques de React
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-
 // Démarrer le serveur HTTPS
 https.createServer(options, app).listen(443, () => {
   console.log('HTTPS Server running on port 443');
@@ -4829,6 +4828,11 @@ app.get('*', (req, res) => {
 
 
 /***************************************************************** */
+
+
+
+
+
 
 // Démarrage du serveur
 const PORT = 5000;
