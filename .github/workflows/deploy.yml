@@ -88,6 +88,10 @@ jobs:
             docker-compose down
             docker-compose up -d
           EOF
-
       # Cette étape se connecte à l'instance EC2 via SSH pour redéployer l’application.
       # Elle copie le fichier `docker-compose.yml` sur le serveur, arrête les conteneurs en cours, et démarre les nouveaux conteneurs en utilisant les images Docker mises à jour.
+
+      # Étape 10 : Nettoyage des conteneurs Docker pour libérer les ressources
+      - name: Tear down Docker containers
+        if: always()  # Exécute cette étape même si le déploiement échoue
+        run: docker-compose down
