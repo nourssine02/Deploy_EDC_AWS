@@ -24,7 +24,7 @@ const options = {
 
 // Configuration CORS
 const corsOptions = {
-  origin: 'https://comptaonline.line.pm', // Remplacez par votre domaine
+  origin: ['https://comptaonline.line.pm', 'https://18.208.89.42'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],

@@ -129,7 +129,6 @@ function Home({ isSidebarOpen }) {
 
                   {/* Bar Chart for Stats */}
                   <div className="mt-5">
-                    <h3 className="text-center">Graphique des Statistiques</h3>
                     <Bar data={barChartData} options={barChartOptions} />
                   </div>
 
