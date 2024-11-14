@@ -18,3 +18,5 @@ services:
       - DATABASE_NAME=cloud
     ports:
       - "5000:5000"
+    volumes:
+      - ./backend/certs:/var/www/myapp/backend/certs
