@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReactPaginate from "react-paginate";
+import {UserContext} from "./UserProvider";
 
 const Tiers = ({ isSidebarOpen }) => {
   const [tiers, setTiers] = useState([]);
@@ -11,6 +12,7 @@ const Tiers = ({ isSidebarOpen }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage] = useState(4);
   const [banksVisible, setBanksVisible] = useState({}); // To track which tier has banks visible
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
 
