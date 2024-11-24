@@ -168,12 +168,14 @@ const Tiers = ({ isSidebarOpen }) => {
                                   {banksVisible[tier.id] ? "-" : "+"}
                                 </button>
                                 &nbsp;
+                                {user.role === "utilisateur" && (
+                                    <>
                                 <Link to={`/updateTier/${tier.id}`}>
                                   <button type="button" className="btn btn-success">
                                     Modifier
                                   </button>
                                 </Link>
-                                &nbsp;
+
                                 <button
                                     type="button"
                                     className="btn btn-danger"
@@ -181,6 +183,8 @@ const Tiers = ({ isSidebarOpen }) => {
                                 >
                                   Supprimer
                                 </button>
+                                </>
+                              )}
                               </td>
                             </tr>
                             {banksVisible[tier.id] && (
