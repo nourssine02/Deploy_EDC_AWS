@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReactPaginate from "react-paginate";
-import {UserContext} from "./UserProvider";
+import { UserContext } from "../Connexion/UserProvider";
 
 const Tiers = ({ isSidebarOpen }) => {
   const [tiers, setTiers] = useState([]);
