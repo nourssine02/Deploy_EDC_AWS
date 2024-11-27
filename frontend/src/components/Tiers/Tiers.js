@@ -13,6 +13,23 @@ const Tiers = ({ isSidebarOpen }) => {
   const [itemsPerPage] = useState(4);
   const [banksVisible, setBanksVisible] = useState({}); // To track which tier has banks visible
   const { user } = useContext(UserContext);
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState("");
+
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        setClients(res.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchClients();
+  }, []);
+
 
   useEffect(() => {
 
@@ -65,17 +82,30 @@ const Tiers = ({ isSidebarOpen }) => {
     setCurrentPage(0);
   };
 
+
   const filtered = tiers.filter((tier) => {
     const searchTermLower = searchTerm.toLowerCase();
+    const isInClient =
+        !selectedClient || achat.code_entreprise === selectedClient; // Filtrer par code_entreprise
+
     return (
-        tier.code_tiers.toLowerCase().includes(searchTermLower) ||
-        new Date(tier.date_creation).toLocaleDateString().includes(searchTermLower) ||
-        tier.type.toString().includes(searchTermLower) ||
-        tier.identite.toString().includes(searchTermLower) ||
-        tier["MF/CIN"].toString().includes(searchTermLower) ||
-        tier.tel.toString().includes(searchTermLower)
+        isInClient &&
+        (
+            tier.code_tiers.toLowerCase().includes(searchTermLower) ||
+            new Date(tier.date_creation).toLocaleDateString().includes(searchTermLower) ||
+            tier.type.toString().includes(searchTermLower) ||
+            tier.identite.toString().includes(searchTermLower) ||
+            tier["MF/CIN"].toString().includes(searchTermLower) ||
+            tier.tel.toString().includes(searchTermLower)
+        )
     );
   });
+
+
+  const handleClientChange = (e) => {
+    setSelectedClient(e.target.value);
+    setCurrentPage(0);
+  };
 
   const offset = currentPage * itemsPerPage;
   const currentItems = filtered.slice(offset, offset + itemsPerPage);
@@ -84,6 +114,10 @@ const Tiers = ({ isSidebarOpen }) => {
   const handlePageClick = ({ selected }) => {
     setCurrentPage(selected);
   };
+
+  if (!user) {
+    return <Navigate to="/404" replace />;
+  }
 
   // Toggle banks visibility for a specific tier
   const toggleBanks = async (tierId) => {
@@ -128,16 +162,37 @@ const Tiers = ({ isSidebarOpen }) => {
                       </span>
                       </div>
                     </div>
-                    <Link to="/addTier">
-                      <button type="button" className="btn btn-dark ml-2">
-                        Ajouter un Tier
-                      </button>
-                    </Link>
+                    {user.role !== "comptable" && (
+                        <Link to="/addTier">
+                          <button type="button" className="btn btn-dark ml-2">
+                            Ajouter un Tier
+                          </button>
+                        </Link>
+                    )}
+                    {user.role === "comptable" && (
+                        <select
+                            className="form-control w-auto mx-2"
+                            style={{ color: "black" }}
+                            value={selectedClient}
+                            onChange={handleClientChange}
+                        >
+                          <option value="">Tous les Entreprises</option>
+                          {clients.map((client) => (
+                              <option
+                                  key={client.code_entreprise}
+                                  value={client.code_entreprise}
+                              >
+                                {`${client.code_entreprise} - ${client.identite}`}
+                              </option>
+                          ))}
+                        </select>
+                    )}
                   </div>
                   <div className="table-responsive pt-4" style={{ overflowX: "unset" }}>
                     <table className="table table-sm table-hover" style={{ fontSize: "12px" }}>
                       <thead>
                       <tr>
+                        {user.role === "comptable" && <th style={{ width: "80px" }}>Ajouté par</th>}
                         <th style={{ width: "80px" }}>Code tiers</th>
                         <th style={{ width: "100px" }}>Date de Creation</th>
                         <th style={{ width: "70px" }}>Type</th>
@@ -153,6 +208,9 @@ const Tiers = ({ isSidebarOpen }) => {
                       {currentItems.map((tier) => (
                           <React.Fragment key={tier.id}>
                             <tr>
+                              {user.role === "comptable" && (
+                                  <td>{achat.identite}</td>
+                              )}
                               <td>{tier.code_tiers}</td>
                               <td>{new Date(tier.date_creation).toLocaleDateString()}</td>
                               <td>{tier.type === "autre" ? tier.autreType : tier.type}</td>
