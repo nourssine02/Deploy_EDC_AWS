@@ -1,6 +1,6 @@
 import React, {useContext, useEffect, useState} from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import {Link, Navigate} from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReactPaginate from "react-paginate";
@@ -86,7 +86,7 @@ const Tiers = ({ isSidebarOpen }) => {
   const filtered = tiers.filter((tier) => {
     const searchTermLower = searchTerm.toLowerCase();
     const isInClient =
-        !selectedClient || achat.code_entreprise === selectedClient; // Filtrer par code_entreprise
+        !selectedClient || tier.code_entreprise === selectedClient; // Filtrer par code_entreprise
 
     return (
         isInClient &&
@@ -209,7 +209,7 @@ const Tiers = ({ isSidebarOpen }) => {
                           <React.Fragment key={tier.id}>
                             <tr>
                               {user.role === "comptable" && (
-                                  <td>{achat.identite}</td>
+                                  <td>{tier.identite}</td>
                               )}
                               <td>{tier.code_tiers}</td>
                               <td>{new Date(tier.date_creation).toLocaleDateString()}</td>
