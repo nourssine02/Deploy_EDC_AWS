@@ -22,7 +22,7 @@ const Livraisons = ({isSidebarOpen}) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/livraisons", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/livraisons", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -39,7 +39,7 @@ const Livraisons = ({isSidebarOpen}) => {
 
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);

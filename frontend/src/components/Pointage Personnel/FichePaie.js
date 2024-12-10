@@ -22,7 +22,7 @@ const FichePaie = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);
@@ -40,7 +40,7 @@ const FichePaie = ({ isSidebarOpen }) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/pointage", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/pointage", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -88,7 +88,7 @@ const FichePaie = ({ isSidebarOpen }) => {
    // Handle deletion of selected fiches
    const handleDeleteSelected = async () => {
     try {
-      await axios.delete("https://comptaonline.line.pm/api/pointage", {
+      await axios.delete("https://comptaonline.linkpc.net/api/pointage", {
         data: { ids: selectedFiches }, // Send selected IDs to be deleted
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

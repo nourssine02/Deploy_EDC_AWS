@@ -37,7 +37,7 @@ export const UserProvider = ({ children }) => {
           return;
         }
 
-        const response = await axios.get("https://comptaonline.line.pm/api/home", {
+        const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

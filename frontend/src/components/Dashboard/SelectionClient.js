@@ -19,7 +19,7 @@ function SelectionClient({ setShowModal }) {
           return;
         }
 
-        const response = await axios.get("https://comptaonline.line.pm/api/home", {
+        const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,7 +37,7 @@ function SelectionClient({ setShowModal }) {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await axios.get(`https://comptaonline.line.pm/api/clients`);
+        const res = await axios.get(`https://comptaonline.linkpc.net/api/clients`);
         setClients(res.data);
       } catch (err) {
         console.error("Error fetching clients:", err);

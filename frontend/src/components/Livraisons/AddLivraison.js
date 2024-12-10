@@ -33,7 +33,7 @@ const AddLivraison = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
         setCodeTiers(res.data);
       } catch (err) {
         console.log(err);
@@ -45,7 +45,7 @@ const AddLivraison = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchRefCommande = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/reference_commande");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/reference_commande");
         setRefCommandes(res.data);
       } catch (err) {
         console.log(err);
@@ -114,7 +114,7 @@ const AddLivraison = ({ isSidebarOpen }) => {
 
     if (Object.keys(validationErrors).length === 0) {
       try {
-        await axios.post("https://comptaonline.line.pm/api/livraison", livraison);
+        await axios.post("https://comptaonline.linkpc.net/api/livraison", livraison);
         // Notification si l'utilisateur est un comptable
         if (user.role === "comptable") {
           const notificationMessage = `${user.identite} a ajouté une nouvelle Livraison`;
@@ -124,7 +124,7 @@ const AddLivraison = ({ isSidebarOpen }) => {
             message: notificationMessage,
           };
     
-          await axios.post("https://comptaonline.line.pm/api/notifications", notificationData);
+          await axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
         }
         Swal.fire({
           icon: "success",

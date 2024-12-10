@@ -13,7 +13,7 @@ const ListeClientsParPeriodeCreation = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchClientsList = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/clients");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClientsList(response.data);
       } catch (error) {
         console.error("Error fetching clients list", error);
@@ -27,7 +27,7 @@ const ListeClientsParPeriodeCreation = ({ isSidebarOpen }) => {
   const fetchClients = async () => {
     try {
       const response = await axios.get(
-        "https://comptaonline.line.pm/api/liste-clients-par-periode-creation",
+        "https://comptaonline.linkpc.net/api/liste-clients-par-periode-creation",
         {
           params: { dateCreation, company: selectedClient },
         }

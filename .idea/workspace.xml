@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f0f745e9-764d-4c8b-b228-c733a88facc8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/backend/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/server.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Achats/Achats.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Achats/Achats.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Achats/AddAchat.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Achats/AddAchat.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Achats/DetailsAchat.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Achats/DetailsAchat.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Achats/UpdateAchat.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Achats/UpdateAchat.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Commandes/AddCommande.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Commandes/AddCommande.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Commandes/Commandes.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Commandes/Commandes.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Commandes/DetailsCommande.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Commandes/DetailsCommande.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Commandes/UpdateCommande.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Commandes/UpdateCommande.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Connexion/ForgotPassword.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Connexion/ForgotPassword.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Connexion/Login.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Connexion/Login.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Connexion/Register.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Connexion/Register.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Connexion/ResetPassword.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Connexion/ResetPassword.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Connexion/UserProvider.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Connexion/UserProvider.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Dashboard/Configurations.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Dashboard/Configurations.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Dashboard/Navbar.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Dashboard/Navbar.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Dashboard/Profile.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Dashboard/Profile.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Dashboard/SelectionClient.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Dashboard/SelectionClient.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Document Comptabilite/AddDocCompta.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Document Comptabilite/AddDocCompta.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Document Comptabilite/DocumentComptabilite .js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Document Comptabilite/DocumentComptabilite .js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Document Comptabilite/UpdateDocCompta.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Document Comptabilite/UpdateDocCompta.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Document Direction/AddDocDirection.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Document Direction/AddDocDirection.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Document Direction/DocumentDirection.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Document Direction/DocumentDirection.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Document Direction/UpdateDocDirection.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Document Direction/UpdateDocDirection.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Entreprises/AddEntreprise.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Entreprises/AddEntreprise.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Entreprises/DetailsEntreprise.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Entreprises/DetailsEntreprise.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Entreprises/Entreprises.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Entreprises/Entreprises.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Entreprises/UpdateEntreprise.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Entreprises/UpdateEntreprise.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Facturations/AddFacture.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Facturations/AddFacture.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Facturations/DetailsFacture.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Facturations/DetailsFacture.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Facturations/Facturations.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Facturations/Facturations.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Facturations/UpdateFacture.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Facturations/UpdateFacture.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Home/Home.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Home/Home.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Livraisons/AddLivraison.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Livraisons/AddLivraison.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Livraisons/DetailsLivraison.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Livraisons/DetailsLivraison.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Livraisons/Livraisons.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Livraisons/Livraisons.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Livraisons/UpdateLivraison.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Livraisons/UpdateLivraison.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Notifications/Notifications.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Notifications/Notifications.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Pointage Personnel/FichePaie.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Pointage Personnel/FichePaie.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Pointage Personnel/UploadFile.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Pointage Personnel/UploadFile.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/AddReglement.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/AddReglement.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/DetailsReglement.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/DetailsReglement.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/ReglementsEmis.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/ReglementsEmis.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/UpdateReglement.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Emis/UpdateReglement.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/AddReglementRecu.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/AddReglementRecu.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/DetailsReglementRecu.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/DetailsReglementRecu.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/ReglementsRecus.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/ReglementsRecus.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/UpdateReglementRecu.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Reglements Recus/UpdateReglementRecu.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/CommandeDetailleesParPeriode.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/CommandeDetailleesParPeriode.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/CommandesParCodeClient.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/CommandesParCodeClient.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/EtatDeFacturation.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/EtatDeFacturation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/EtatVersementParPeriode.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/EtatVersementParPeriode.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/FacturesNonPayee.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/FacturesNonPayee.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/ListeClientsParPeriodeCreation.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/ListeClientsParPeriodeCreation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/LivraisonsPrevues.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/LivraisonsPrevues.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Requêtes/TotalCommandesParPeriode.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Requêtes/TotalCommandesParPeriode.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Tiers/AddTier.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Tiers/AddTier.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Tiers/Tiers.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Tiers/Tiers.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Tiers/UpdateTier.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Tiers/UpdateTier.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/TiersSaisie.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/TiersSaisie.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Utilisateurs/AddUser.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Utilisateurs/AddUser.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Utilisateurs/UpdateUser.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Utilisateurs/UpdateUser.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Utilisateurs/Utilisateurs.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Utilisateurs/Utilisateurs.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Versements/AddVersement.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Versements/AddVersement.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Versements/DetailsVersement.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Versements/DetailsVersement.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Versements/UpdateVersement.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Versements/UpdateVersement.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Versements/Versements.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Versements/Versements.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CSS File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <excluded-from-favorite>
+      <branch-storage>
+        <map>
+          <entry type="REMOTE">
+            <value>
+              <list>
+                <branch-info repo="$PROJECT_DIR$" source="origin/master" />
+              </list>
+            </value>
+          </entry>
+        </map>
+      </branch-storage>
+    </excluded-from-favorite>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;nourssine02&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/nourssine02/Deploy_EDC_AWS.git&quot;,
+    &quot;accountId&quot;: &quot;7c1f16b3-a186-494e-8fc2-8777b21a1be5&quot;
+  }
+}</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="remoteDeploymentFS://&lt;8e616198-0b7e-4092-931d-d830493fe2fc&gt;/frontend/src/components/Dashboard/Navbar.js" root0="FORCE_HIGHLIGHTING" />
+    <setting file="remoteDeploymentFS://&lt;8e616198-0b7e-4092-931d-d830493fe2fc&gt;/frontend/src/components/Home/Home.js" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="2nzH9HVAHllwLrrhYSNvXLNNpGn" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Node.js.Home.js.executor": "Debug",
+    "Node.js.Navbar.js.executor": "Run",
+    "Notification.DisplayName-DoNotAsk-Proofreading missing languages information": "Proofreading missing languages information",
+    "Notification.DoNotAsk-Proofreading missing languages information": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
+    "WebServerToolWindowPanel.toolwindow.show.date": "false",
+    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
+    "WebServerToolWindowPanel.toolwindow.show.size": "false",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/Users/HP/WebstormProjects/Deploy_EDC_AWS/frontend/src/components/Connexion",
+    "list.type.of.created.stylesheet": "CSS",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "terminal",
+    "ts.external.directory.path": "D:\\Downloads\\WebStorm 2024.2.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\HP\WebstormProjects\Deploy_EDC_AWS\frontend\src\components\Connexion" />
+      <recent name="C:\Users\HP\WebstormProjects\Deploy_EDC_AWS\frontend\public\assets\images" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-e768b9ed790e-JavaScript-WS-243.21565.180" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f0f745e9-764d-4c8b-b228-c733a88facc8" name="Changes" comment="" />
+      <created>1729968833690</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1729968833690</updated>
+      <workItem from="1729968835035" duration="3057000" />
+      <workItem from="1729973797017" duration="751000" />
+      <workItem from="1730025503973" duration="8516000" />
+      <workItem from="1730035914497" duration="201000" />
+      <workItem from="1730036619282" duration="3949000" />
+      <workItem from="1730047056394" duration="9698000" />
+      <workItem from="1730109973281" duration="9511000" />
+      <workItem from="1730119908938" duration="28787000" />
+      <workItem from="1730200101704" duration="27256000" />
+      <workItem from="1730284710721" duration="8408000" />
+      <workItem from="1730295864991" duration="20360000" />
+      <workItem from="1730369263340" duration="36100000" />
+      <workItem from="1730546364153" duration="3315000" />
+      <workItem from="1730828835410" duration="1741000" />
+      <workItem from="1730831018908" duration="7143000" />
+      <workItem from="1730889972927" duration="24204000" />
+      <workItem from="1730932462024" duration="7181000" />
+      <workItem from="1730975564244" duration="7920000" />
+      <workItem from="1730989604117" duration="1158000" />
+      <workItem from="1731001510759" duration="4932000" />
+      <workItem from="1731013073254" duration="27000" />
+      <workItem from="1731859043184" duration="1689000" />
+      <workItem from="1731922904095" duration="1113000" />
+      <workItem from="1731924269905" duration="165000" />
+      <workItem from="1731949046167" duration="2259000" />
+      <workItem from="1732473598248" duration="14633000" />
+      <workItem from="1732716995048" duration="124000" />
+      <workItem from="1732717907320" duration="2413000" />
+      <workItem from="1732720461548" duration="139000" />
+      <workItem from="1732720635232" duration="8065000" />
+      <workItem from="1732734217310" duration="217000" />
+      <workItem from="1733827422154" duration="13334000" />
+      <workItem from="1733845008661" duration="2912000" />
+      <workItem from="1733849293644" duration="1816000" />
+      <workItem from="1733851960404" duration="11395000" />
+      <workItem from="1733864231522" duration="158000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName=".env" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>remoteDeploymentFS://&lt;8e616198-0b7e-4092-931d-d830493fe2fc&gt;/frontend/src/components/Notifications/Notifications.js</url>
+          <line>5</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>remoteDeploymentFS://&lt;8e616198-0b7e-4092-931d-d830493fe2fc&gt;/frontend/src/App.js</url>
+          <line>10</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>remoteDeploymentFS://&lt;8e616198-0b7e-4092-931d-d830493fe2fc&gt;/frontend/src/components/Dashboard/Navbar.js</url>
+          <line>294</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

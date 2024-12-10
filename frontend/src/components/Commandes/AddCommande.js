@@ -40,7 +40,7 @@ const AddCommande = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
         setCodeTiers(res.data);
       } catch (err) {
         console.log(err);
@@ -52,7 +52,7 @@ const AddCommande = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchFamilles = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/familles");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/familles");
         const options = res.data.map((famille) => ({
           value: famille,
           label: famille,
@@ -121,7 +121,7 @@ const AddCommande = ({ isSidebarOpen }) => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        await axios.post("https://comptaonline.line.pm/api/commande", { commande, familles });
+        await axios.post("https://comptaonline.linkpc.net/api/commande", { commande, familles });
         setCommande(initialCommandeState);
         setFamilles([initialFamilleState]);
         // Notification si l'utilisateur est un comptable
@@ -133,7 +133,7 @@ const AddCommande = ({ isSidebarOpen }) => {
             message: notificationMessage,
           };
 
-          await axios.post("https://comptaonline.line.pm/api/notifications", notificationData);
+          await axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
         }
         Swal.fire({
           icon: "success",

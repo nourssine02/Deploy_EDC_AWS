@@ -15,7 +15,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("https://comptaonline.line.pm/api/login", {
+      const response = await axios.post("https://comptaonline.linkpc.net/api/login", {
         identite,
         mot_de_passe,
       });

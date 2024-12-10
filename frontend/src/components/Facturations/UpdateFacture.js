@@ -36,7 +36,7 @@ const UpdateFacture = ({isSidebarOpen}) => {
   useEffect(() => {
     const fetchFacture = async () => {
       try {
-        const res = await axios.get(`https://comptaonline.line.pm/api/facture/${id}`);
+        const res = await axios.get(`https://comptaonline.linkpc.net/api/facture/${id}`);
         const { data } = res;
 
         setFacture({
@@ -56,7 +56,7 @@ const UpdateFacture = ({isSidebarOpen}) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
         setCodeTiers(res.data);
       } catch (err) {
         console.log(err);
@@ -69,7 +69,7 @@ const UpdateFacture = ({isSidebarOpen}) => {
     const fetchRefLivraisons = async () => {
       try {
         const res = await axios.get(
-          "https://comptaonline.line.pm/api/reference_livraison"
+          "https://comptaonline.linkpc.net/api/reference_livraison"
         );
         setRefLivraisons(res.data);
       } catch (err) {
@@ -108,7 +108,7 @@ const UpdateFacture = ({isSidebarOpen}) => {
     const data = { facture };
 
     axios
-      .put(`https://comptaonline.line.pm/api/facture/${id}`, data)
+      .put(`https://comptaonline.linkpc.net/api/facture/${id}`, data)
       .then((response) => {
         console.log(response.data.message);
         alert("Données modifiées avec succès.");

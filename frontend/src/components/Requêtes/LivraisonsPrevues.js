@@ -14,7 +14,7 @@ const LivraisonsPrevues = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/clients"); // Adjust the URL if needed
+        const response = await axios.get("https://comptaonline.linkpc.net/api/clients"); // Adjust the URL if needed
         setCompanies(response.data);
       } catch (err) {
         console.error("Error fetching companies", err);
@@ -36,7 +36,7 @@ const LivraisonsPrevues = ({ isSidebarOpen }) => {
     }
 
     try {
-      const response = await axios.get("https://comptaonline.line.pm/api/livraisons-prevues", {
+      const response = await axios.get("https://comptaonline.linkpc.net/api/livraisons-prevues", {
         params: { startDate, endDate, company: selectedCompany },
       });
       setLivraisons(response.data);

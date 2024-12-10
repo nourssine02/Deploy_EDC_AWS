@@ -90,7 +90,7 @@ const Register = () => {
 
     if (Object.values(inputValidity).every((valid) => valid)) {
       try {
-        await axios.post("https://comptaonline.line.pm/api/register", userData);
+        await axios.post("https://comptaonline.linkpc.net/api/register", userData);
         navigate("/");
       } catch (error) {
         setServerError(error.response?.data?.sqlMessage || "Erreur lors de l'inscription");
@@ -101,7 +101,7 @@ const Register = () => {
   useEffect(() => {
     const fetchEntrepriseCodes = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_entreprises");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_entreprises");
         setEntrepriseCodes(res.data);
       } catch (err) {
         console.log(err);
@@ -113,7 +113,7 @@ const Register = () => {
   useEffect(() => {
     const fetchComptableCodes = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/comptables");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/comptables");
         setComptableCodes(res.data);
       } catch (err) {
         console.log(err);
@@ -125,7 +125,7 @@ const Register = () => {
   useEffect(() => {
     const fetchIdentites = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/identite");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/identite");
         setIdentites(res.data);
       } catch (err) {
         console.log(err);

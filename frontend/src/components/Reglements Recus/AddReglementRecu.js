@@ -49,7 +49,7 @@ const AddReglementRecu = ({ isSidebarOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://comptaonline.line.pm/api/tiers/${tierId}/banques`,
+        `https://comptaonline.linkpc.net/api/tiers/${tierId}/banques`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBanques(response.data);
@@ -74,7 +74,7 @@ const AddReglementRecu = ({ isSidebarOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "https://comptaonline.line.pm/api/reglements_recus",
+        "https://comptaonline.linkpc.net/api/reglements_recus",
         data, {
           headers: {
             Authorization: `Bearer ${token}`
@@ -94,7 +94,7 @@ const AddReglementRecu = ({ isSidebarOpen }) => {
           message: notificationMessage,
         };
   
-        await axios.post("https://comptaonline.line.pm/api/notifications", notificationData);
+        await axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
       }
       Swal.fire({
         icon: "success",
@@ -121,7 +121,7 @@ const AddReglementRecu = ({ isSidebarOpen }) => {
     const fetchCodeTiers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCodeTiers(res.data);
@@ -136,7 +136,7 @@ const AddReglementRecu = ({ isSidebarOpen }) => {
     const fetchFactures = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("https://comptaonline.line.pm/api/num_facture", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/num_facture", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const options = res.data.map((num_facture) => ({
@@ -193,7 +193,7 @@ const AddReglementRecu = ({ isSidebarOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `https://comptaonline.line.pm/api/factures/${facture.value}`
+        `https://comptaonline.linkpc.net/api/factures/${facture.value}`
         , {
           headers: { Authorization: `Bearer ${token}` },
         });

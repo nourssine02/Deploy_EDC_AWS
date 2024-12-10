@@ -28,7 +28,7 @@ const DetailsAchat = ({ isSidebarOpen }) => {
 
   const fetchAchatDetails = async (id) => {
     try {
-      const response = await axios.get(`https://comptaonline.line.pm/api/achats/${id}`);
+      const response = await axios.get(`https://comptaonline.linkpc.net/api/achats/${id}`);
       const res = response.data[0];
       console.log("Reponse:", JSON.stringify(res, null, 2)); // Afficher l'objet JSON de manière lisible
       setAchat(res);
@@ -47,7 +47,7 @@ const DetailsAchat = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://comptaonline.line.pm/api/achats/${id}`);
+      await axios.delete(`https://comptaonline.linkpc.net/api/achats/${id}`);
       navigate("/achats"); // Navigate back after deletion
     } catch (err) {
       console.error("Error deleting Achat:", err);

@@ -20,7 +20,7 @@ const UpdateDocCompta = ({ isSidebarOpen }) => {
     const fetchDocument = async () => {
       try {
         const res = await axios.get(
-            `https://comptaonline.line.pm/api/documents_comptabilite/${id}`
+            `https://comptaonline.linkpc.net/api/documents_comptabilite/${id}`
         );
         const document = res.data;
 
@@ -67,7 +67,7 @@ const UpdateDocCompta = ({ isSidebarOpen }) => {
     e.preventDefault();
     try {
       await axios.put(
-          `https://comptaonline.line.pm/api/documents_comptabilite/${id}`,
+          `https://comptaonline.linkpc.net/api/documents_comptabilite/${id}`,
           form
       );
       alert("Données modifiées avec succès.");

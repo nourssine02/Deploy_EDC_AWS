@@ -23,7 +23,7 @@ const UpdateLivraison = ({ isSidebarOpen }) => {
 
   useEffect(() => {
     axios
-      .get(`https://comptaonline.line.pm/api/livraison/${id}`)
+      .get(`https://comptaonline.linkpc.net/api/livraison/${id}`)
       .then((res) => {
         const data = res.data[0];
         setLivraison({
@@ -63,7 +63,7 @@ const UpdateLivraison = ({ isSidebarOpen }) => {
   const handleClick = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`https://comptaonline.line.pm/api/livraison/${id}`, livraison);
+      await axios.put(`https://comptaonline.linkpc.net/api/livraison/${id}`, livraison);
       Swal.fire({
         icon: "success",
         title: "Succès",
@@ -85,7 +85,7 @@ const UpdateLivraison = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
         setCodeTiers(res.data);
       } catch (err) {
         console.log(err);
@@ -102,7 +102,7 @@ const UpdateLivraison = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchRefCommande = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/reference_commande");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/reference_commande");
         setRefCommandes(res.data);
       } catch (err) {
         console.log(err);

@@ -221,7 +221,7 @@ const AddFacture = ({ isSidebarOpen }) => {
       try {
         // Envoi de la facture
         const token = localStorage.getItem("token");
-        const response = await axios.post("https://comptaonline.line.pm/api/facture", formData, {
+        const response = await axios.post("https://comptaonline.linkpc.net/api/facture", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -243,7 +243,7 @@ const AddFacture = ({ isSidebarOpen }) => {
           };
 
           // Envoi de la notification
-          await axios.post("https://comptaonline.line.pm/api/notifications", notificationData);
+          await axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
         }
 
         // Afficher le message de succès
@@ -280,7 +280,7 @@ const AddFacture = ({ isSidebarOpen }) => {
     const fetchCodeTiers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -298,7 +298,7 @@ const AddFacture = ({ isSidebarOpen }) => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(
-            "https://comptaonline.line.pm/api/reference_livraison", {
+            "https://comptaonline.linkpc.net/api/reference_livraison", {
               headers: {
                 Authorization: `Bearer ${token}`
               }

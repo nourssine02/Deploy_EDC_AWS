@@ -34,7 +34,7 @@ const AddDocDirection = ({ isSidebarOpen }) => {
   const createDocument = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://comptaonline.line.pm/api/documents_direction", form);
+      await axios.post("https://comptaonline.linkpc.net/api/documents_direction", form);
        // Notification si l'utilisateur est un comptable
        if (user.role === "utilisateur") {
         const notificationMessage = `${user.identite} a ajouté un nouveau Document pour la Direction`;
@@ -44,7 +44,7 @@ const AddDocDirection = ({ isSidebarOpen }) => {
           message: notificationMessage,
         };
   
-        axios.post("https://comptaonline.line.pm/api/notifications", notificationData);
+        axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
       }
   
         Swal.fire({

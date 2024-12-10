@@ -36,7 +36,7 @@ const DetailsCommande = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `https://comptaonline.line.pm/api/commande/${id}`
+          `https://comptaonline.linkpc.net/api/commande/${id}`
         );
         const { data } = response;
         setCommande(data.commande);
@@ -96,7 +96,7 @@ const DetailsCommande = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://comptaonline.line.pm/api/commande/${id}`);
+      await axios.delete(`https://comptaonline.linkpc.net/api/commande/${id}`);
       toast.success("Commande supprimée avec succès !");
       navigate("/commandes"); // Navigate back after deletion
     } catch (err) {

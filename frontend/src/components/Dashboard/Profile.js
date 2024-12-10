@@ -46,7 +46,7 @@ const Profile = ({ isSidebarOpen }) => {
 
   useEffect(() => {
     if (user) {
-      axios.get(`https://comptaonline.line.pm/api/users/${user.id}`)
+      axios.get(`https://comptaonline.linkpc.net/api/users/${user.id}`)
           .then((response) => {
             setFormData({
               code_entreprise: response.data.code_entreprise || "",
@@ -89,7 +89,7 @@ const Profile = ({ isSidebarOpen }) => {
     e.preventDefault();
 
     axios
-        .put(`https://comptaonline.line.pm/api/users/${user.id}`, formData)
+        .put(`https://comptaonline.linkpc.net/api/users/${user.id}`, formData)
         .then((res) => {
           if (res.data) {
             setUser(res.data);

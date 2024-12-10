@@ -14,7 +14,7 @@ const EtatDeFacturation = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/clients");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(response.data);
       } catch (error) {
         console.error("Error fetching clients", error);
@@ -38,7 +38,7 @@ const EtatDeFacturation = ({ isSidebarOpen }) => {
     }
 
     try {
-      const response = await axios.get("https://comptaonline.line.pm/api/etat-de-facturation", {
+      const response = await axios.get("https://comptaonline.linkpc.net/api/etat-de-facturation", {
         params: { startDate, endDate, company: selectedClient },
       });
       setTotalCA(response.data[0]?.totalCA || 0);

@@ -21,7 +21,7 @@ const ReglementsEmis = ({ isSidebarOpen }) => {
       }
     const fetchReglements = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/reglements_emis", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/reglements_emis", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -41,7 +41,7 @@ const ReglementsEmis = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);

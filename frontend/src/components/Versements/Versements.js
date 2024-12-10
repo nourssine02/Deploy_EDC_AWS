@@ -23,7 +23,7 @@ const Versements = ({isSidebarOpen}) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/versements", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/versements", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -39,7 +39,7 @@ const Versements = ({isSidebarOpen}) => {
 
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);
@@ -99,7 +99,7 @@ const Versements = ({isSidebarOpen}) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://comptaonline.line.pm/api/versement/${id}`);
+      await axios.delete(`https://comptaonline.linkpc.net/api/versement/${id}`);
       window.location.reload();
     } catch (err) {
       console.error("Error deleting versement:", err);

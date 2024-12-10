@@ -37,7 +37,7 @@ const UpdateVersement = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
         setCodeTiers(res.data);
       } catch (err) {
         console.error(err);
@@ -50,7 +50,7 @@ const UpdateVersement = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `https://comptaonline.line.pm/api/versement/${id}`
+          `https://comptaonline.linkpc.net/api/versement/${id}`
         );
         const { data } = response;
 
@@ -89,7 +89,7 @@ const UpdateVersement = ({ isSidebarOpen }) => {
   const fetchBanques = async (tierId) => {
     try {
       const response = await axios.get(
-        `https://comptaonline.line.pm/api/tiers/${tierId}/banques`
+        `https://comptaonline.linkpc.net/api/tiers/${tierId}/banques`
       );
       setBanques(response.data);
     } catch (error) {
@@ -117,7 +117,7 @@ const UpdateVersement = ({ isSidebarOpen }) => {
     };
 
     try {
-      await axios.put(`https://comptaonline.line.pm/api/versement/${id}`, data);
+      await axios.put(`https://comptaonline.linkpc.net/api/versement/${id}`, data);
       Swal.fire("Succès", "Données mises à jour avec succès.", "success");
       navigate("/versements");
     } catch (error) {

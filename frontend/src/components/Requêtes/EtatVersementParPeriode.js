@@ -14,7 +14,7 @@ const EtatVersementParPeriode = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/clients");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(response.data);
       } catch (error) {
         console.error("Error fetching clients", error);
@@ -38,7 +38,7 @@ const EtatVersementParPeriode = ({ isSidebarOpen }) => {
     }
 
     try {
-      const response = await axios.get("https://comptaonline.line.pm/api/etat-versement-par-periode", {
+      const response = await axios.get("https://comptaonline.linkpc.net/api/etat-versement-par-periode", {
         params: { startDate, endDate, company: selectedClient },
       });
       setTotalVersement(response.data[0]?.totalVersement || 0);

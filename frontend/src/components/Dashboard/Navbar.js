@@ -42,7 +42,7 @@ const Navbar = ({ toggleSidebar }) => {
       if (user) {
         try {
           const res = await axios.get(
-              `https://comptaonline.line.pm/api/notifications/${user.id}`
+              `https://comptaonline.linkpc.net/api/notifications/${user.id}`
           );
           const newNotifications = res.data;
           setNotifications(newNotifications);
@@ -89,7 +89,7 @@ const Navbar = ({ toggleSidebar }) => {
 
   const markNotificationsAsRead = async () => {
     try {
-      await axios.post(`https://comptaonline.line.pm/api/notifications/markAsRead`, {
+      await axios.post(`https://comptaonline.linkpc.net/api/notifications/markAsRead`, {
         userId: user.id,
       });
       setUnreadNotifications([]);
@@ -101,7 +101,7 @@ const Navbar = ({ toggleSidebar }) => {
   const removeNotification = async (notificationId) => {
     try {
       await axios.delete(
-          `https://comptaonline.line.pm/api/notifications/${notificationId}`
+          `https://comptaonline.linkpc.net/api/notifications/${notificationId}`
       );
       setNotifications(notifications.filter((n) => n.id !== notificationId));
       setUnreadNotifications(

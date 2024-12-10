@@ -16,7 +16,7 @@ const Configurations = ({ isSidebarOpen }) => {
   const fetchTaxRates = async () => {
     try {
       const response = await axios.get(
-        "https://comptaonline.line.pm/api/taux_retenue_source"
+        "https://comptaonline.linkpc.net/api/taux_retenue_source"
       );
       setTaxRates(response.data);
     } catch (error) {
@@ -30,7 +30,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const addTaxRate = async () => {
     try {
-      await axios.post("https://comptaonline.line.pm/api/taux_retenue_source", {
+      await axios.post("https://comptaonline.linkpc.net/api/taux_retenue_source", {
         taux: newRate,
       });
       setNewRate("");
@@ -42,7 +42,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const modifTaxRate = async (id) => {
     try {
-      await axios.put(`https://comptaonline.line.pm/api/taux_retenue_source/modif/${id}`, {
+      await axios.put(`https://comptaonline.linkpc.net/api/taux_retenue_source/modif/${id}`, {
         taux: updatedRate,
       });
       setEditingRate(null);
@@ -55,7 +55,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const toggleTaxRate = async (id, active) => {
     try {
-      await axios.put(`https://comptaonline.line.pm/api/taux_retenue_source/${id}`, {
+      await axios.put(`https://comptaonline.linkpc.net/api/taux_retenue_source/${id}`, {
         active: !active,
       });
       fetchTaxRates();
@@ -71,7 +71,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const handleDeleteRate = async (id) => {
     try {
-      await axios.delete(`https://comptaonline.line.pm/api/taux_retenue_source/${id}`);
+      await axios.delete(`https://comptaonline.linkpc.net/api/taux_retenue_source/${id}`);
       fetchTaxRates(); // Rafraîchir la liste après suppression
     } catch (err) {
       console.error("Error deleting tax rate:", err);
@@ -87,7 +87,7 @@ const Configurations = ({ isSidebarOpen }) => {
   // Fetch Banks
   const fetchBanks = async () => {
     try {
-      const response = await axios.get("https://comptaonline.line.pm/api/banques");
+      const response = await axios.get("https://comptaonline.linkpc.net/api/banques");
       setBanks(response.data);
     } catch (error) {
       console.error("Error fetching banks:", error);
@@ -100,7 +100,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const addBank = async () => {
     try {
-      await axios.post("https://comptaonline.line.pm/api/banques", {
+      await axios.post("https://comptaonline.linkpc.net/api/banques", {
         bank: newBank,
       });
       setNewBank("");
@@ -112,7 +112,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const modifBank = async (id) => {
     try {
-      await axios.put(`https://comptaonline.line.pm/api/banques/modif/${id}`, {
+      await axios.put(`https://comptaonline.linkpc.net/api/banques/modif/${id}`, {
         bank: updatedBank,
       });
       setEditingBank(null);
@@ -125,7 +125,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const toggleBank = async (id, active) => {
     try {
-      await axios.put(`https://comptaonline.line.pm/api/banques/${id}`, {
+      await axios.put(`https://comptaonline.linkpc.net/api/banques/${id}`, {
         active: !active,
       });
       fetchBanks();
@@ -141,7 +141,7 @@ const Configurations = ({ isSidebarOpen }) => {
 
   const handleDeleteBank = async (id) => {
     try {
-      await axios.delete(`https://comptaonline.line.pm/api/banques/${id}`);
+      await axios.delete(`https://comptaonline.linkpc.net/api/banques/${id}`);
       fetchBanks(); // Rafraîchir la liste après suppression
     } catch (err) {
       console.error("Error deleting bank:", err);

@@ -40,7 +40,7 @@ const UpdateCommande = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`https://comptaonline.line.pm/api/commande/${id}`);
+        const response = await axios.get(`https://comptaonline.linkpc.net/api/commande/${id}`);
         const { data } = response;
         // Correction : Assurer que les dates sont bien formatées
         setCommande({
@@ -73,7 +73,7 @@ const UpdateCommande = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
         setCodeTiers(res.data);
       } catch (err) {
         console.log(err);
@@ -126,7 +126,7 @@ const UpdateCommande = ({ isSidebarOpen }) => {
   const removeFamille = async (index, familleId) => {
     try {
       if (familleId) {
-        await axios.delete(`https://comptaonline.line.pm/api/familles/${familleId}`);
+        await axios.delete(`https://comptaonline.linkpc.net/api/familles/${familleId}`);
       }
       const updatedFamilles = familles.filter((_, i) => i !== index);
       setFamilles(updatedFamilles);
@@ -147,7 +147,7 @@ const UpdateCommande = ({ isSidebarOpen }) => {
         commande_id: id,
       }));
 
-      await axios.put(`https://comptaonline.line.pm/api/commande/${id}`, {
+      await axios.put(`https://comptaonline.linkpc.net/api/commande/${id}`, {
         commande,
         familles: formattedFamilles,
       });

@@ -107,7 +107,7 @@ const AddEntreprise = ({ isSidebarOpen }) => {
 
     if (Object.values(inputValidity).every((valid) => valid)) {
       try {
-        await axios.post("https://comptaonline.line.pm/api/entreprises", entreprise);        
+        await axios.post("https://comptaonline.linkpc.net/api/entreprises", entreprise);        
         Swal.fire({
           icon: "success",
           title: "Succès",

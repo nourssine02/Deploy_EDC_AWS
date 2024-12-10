@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="95352cce-50ea-4df1-8f37-e8596cfffab6" name="ec2-user" url="https://comptaonline.linkpc.net/">
+        <fileTransfer rootFolder="/var/www/myapp" accessType="SFTP" host="18.208.89.42" port="22" sshConfigId="e53cd461-dbe7-456f-ab82-15570462faed" sshConfig="ec2-user@18.208.89.42:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

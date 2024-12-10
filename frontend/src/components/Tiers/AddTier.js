@@ -34,7 +34,7 @@ const AddTier = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const axiosInstance = axiosWithAuth();
-        const response = await axiosInstance.get("https://comptaonline.line.pm/api/banques/active");
+        const response = await axiosInstance.get("https://comptaonline.linkpc.net/api/banques/active");
 
         // Formatage des résultats pour Select
         const formattedBanques = response.data.map((banque) => ({
@@ -167,7 +167,7 @@ const AddTier = ({ isSidebarOpen }) => {
   const axiosWithAuth = () => {
     const token = localStorage.getItem("token");
     return axios.create({
-      baseURL: "https://comptaonline.line.pm",
+      baseURL: "https://comptaonline.linkpc.net",
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -198,7 +198,7 @@ const AddTier = ({ isSidebarOpen }) => {
             message: notificationMessage,
           };
 
-          await axiosInstance.post("https://comptaonline.line.pm/api/notifications", notificationData);
+          await axiosInstance.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
         }
 
         // Afficher une notification de succès

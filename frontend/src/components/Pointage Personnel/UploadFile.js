@@ -81,7 +81,7 @@ const handleUpload = async () => {
 
   try {
     const token = localStorage.getItem("token");
-    await axios.post("https://comptaonline.line.pm/api/pointage", formData, {
+    await axios.post("https://comptaonline.linkpc.net/api/pointage", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${token}` 
@@ -97,7 +97,7 @@ const handleUpload = async () => {
       };
 
       await axios.post(
-        "https://comptaonline.line.pm/api/notifications",
+        "https://comptaonline.linkpc.net/api/notifications",
         notificationData
       );
     }

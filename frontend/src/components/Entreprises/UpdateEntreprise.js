@@ -24,7 +24,7 @@ const UpdateEntreprise = ({ isSidebarOpen }) => {
   const handleClick = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`https://comptaonline.line.pm/api/entreprises/${id}`, entreprise);
+      await axios.put(`https://comptaonline.linkpc.net/api/entreprises/${id}`, entreprise);
       Swal.fire({
         icon: "success",
         title: "Succès",
@@ -44,7 +44,7 @@ const UpdateEntreprise = ({ isSidebarOpen }) => {
 
   useEffect(() => {
     axios
-      .get(`https://comptaonline.line.pm/api/entreprises/${id}`)
+      .get(`https://comptaonline.linkpc.net/api/entreprises/${id}`)
       .then((res) => {
         const data = res.data[0];
         setEntreprise({
