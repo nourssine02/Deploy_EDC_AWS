@@ -26,7 +26,7 @@ const UpdateUser = ({ isSidebarOpen }) => {
       return;
     }
     try {
-      await axios.put(`https://comptaonline.line.pm/api/users/${id}`, user);
+      await axios.put(`https://comptaonline.linkpc.net/api/users/${id}`, user);
       Swal.fire({
         icon: "success",
         title: "Succès",
@@ -46,7 +46,7 @@ const UpdateUser = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchEntrepriseCodes = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_entreprises");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_entreprises");
         setEntrepriseCodes(res.data);
       } catch (err) {
         console.log(err);
@@ -61,7 +61,7 @@ const UpdateUser = ({ isSidebarOpen }) => {
       return;
     }
     axios
-      .get(`https://comptaonline.line.pm/api/users/${id}`)
+      .get(`https://comptaonline.linkpc.net/api/users/${id}`)
       .then((res) => {
         const data = res.data;
         setUser({

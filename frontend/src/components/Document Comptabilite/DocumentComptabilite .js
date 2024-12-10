@@ -20,7 +20,7 @@ const DocumentComptabilite = ({isSidebarOpen}) => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);
@@ -37,7 +37,7 @@ const DocumentComptabilite = ({isSidebarOpen}) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/documents_comptabilite", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/documents_comptabilite", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

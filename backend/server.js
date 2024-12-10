@@ -24,7 +24,7 @@ const options = {
 
 // Configuration CORS
 const corsOptions = {
-  origin: ['https://comptaonline.line.pm', 'https://18.208.89.42'],
+  origin: ['https://comptaonline.linkpc.net', 'https://18.208.89.42'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -302,7 +302,7 @@ app.post("/api/forgot-password", (req, res) => {
           subject: "Password Reset",
           text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
           Please click on the following link, or paste this into your browser to complete the process:\n\n
-          https://comptaonline.line.pm/api/reset-password/${token}\n\n
+          https://comptaonline.linkpc.net/api/reset-password/${token}\n\n
           If you did not request this, please ignore this email and your password will remain unchanged.\n`,
         };
 
@@ -365,8 +365,8 @@ const sendVerificationEmail = async (email, verificationCode) => {
     },
     to: email,
     subject: "Verify Your Email Address",
-    text: `Please click on the following link to verify your email address: https://comptaonline.line.pm/api/verify-email/${verificationCode}`,
-    html: `<p>Please click on the following link to verify your email address: <a href="https://comptaonline.line.pm/api/verify-email/${verificationCode}">Verify Email Address</a></p>`,
+    text: `Please click on the following link to verify your email address: https://comptaonline.linkpc.net/api/verify-email/${verificationCode}`,
+    html: `<p>Please click on the following link to verify your email address: <a href="https://comptaonline.linkpc.net/api/verify-email/${verificationCode}">Verify Email Address</a></p>`,
   });
 
   console.log("Email sent: %s", info.messageId);
@@ -801,14 +801,14 @@ app.put("/api/users/:id", async (req, res) => {
     const sqlUpdate = "UPDATE utilisateurs SET code_entreprise = ?, code_user = ?, identite = ?, position = ?, tel = ?, email = ?, mot_de_passe = ?, role = ?, profile_image = ? WHERE id = ?";
     const values = [
       code_entreprise || null,
-      code_user,
-      identite,
-      position,
-      tel,
-      email,
-      updatedPassword,
-      role,
-      profile_image || null, // Store base64 string or NULL
+      code_user || null,
+      identite || null,
+      position || null,
+      tel || null,
+      email || null,
+      updatedPassword || null,
+      role || null,
+      profile_image || null,
       userID,
     ];
 
@@ -1730,20 +1730,33 @@ app.delete("/api/achats/:id", (req, res) => {
 
 /************************ code_tiers **************************************** */
 
+//Affichier Code Tiers
 app.get("/api/code_tiers", (req, res) => {
-  const query = "SELECT id, code_tiers, identite FROM tiers";
+  // Requête SQL pour récupérer les tiers associés à l'utilisateur connecté
+  const query = `
+    SELECT t.id, t.code_tiers, u.identite
+    FROM tiers t
+    LEFT JOIN utilisateurs u ON t.ajoute_par = u.id
+    WHERE u.identite = ?
+  `;
 
-  db.query(query, (err, results) => {
+  // Exécution de la requête SQL
+  db.query(query, [req.user.identite], (err, results) => {
     if (err) {
       console.error("Erreur lors de l'exécution de la requête :", err);
-      res.status(500).json({ error: "Erreur serveur" });
-      return;
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
+
+    // Si aucun tiers n'est trouvé pour cet utilisateur
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Aucun tiers trouvé pour cet utilisateur" });
     }
 
     // Renvoyer les résultats de la requête
     res.json(results);
   });
 });
+
 
 /*************************liste des clients (entreprises) **************************************** */
 

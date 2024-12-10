@@ -20,7 +20,7 @@ const Tiers = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);
@@ -40,7 +40,7 @@ const Tiers = ({ isSidebarOpen }) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/tiers", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/tiers", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -55,7 +55,7 @@ const Tiers = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://comptaonline.line.pm/api/tiers/${id}`);
+      await axios.delete(`https://comptaonline.linkpc.net/api/tiers/${id}`);
       setTiers(tiers.filter((tier) => tier.id !== id));
       toast.success("Tier supprimé avec succès");
     } catch (err) {
@@ -125,7 +125,7 @@ const Tiers = ({ isSidebarOpen }) => {
       setBanksVisible({ ...banksVisible, [tierId]: false });
     } else {
       try {
-        const res = await axios.get(`https://comptaonline.line.pm/api/tiers/${tierId}/banques`);
+        const res = await axios.get(`https://comptaonline.linkpc.net/api/tiers/${tierId}/banques`);
         setBanksVisible({
           ...banksVisible,
           [tierId]: res.data, // Store the banks data

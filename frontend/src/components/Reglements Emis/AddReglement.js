@@ -119,13 +119,13 @@ const AddReglement = ({ isSidebarOpen }) => {
         const token = localStorage.getItem("token");
         const [tiersResponse, tauxResponse, piecesResponse] = await Promise.all(
           [
-            axios.get("https://comptaonline.line.pm/api/code_tiers", {
+            axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
               headers: { Authorization: `Bearer ${token}` },
             }),
-            axios.get("https://comptaonline.line.pm/api/taux_retenue_source/active", {
+            axios.get("https://comptaonline.linkpc.net/api/taux_retenue_source/active", {
               headers: { Authorization: `Bearer ${token}` },
             }),
-            axios.get("https://comptaonline.line.pm/api/pieces", {
+            axios.get("https://comptaonline.linkpc.net/api/pieces", {
               headers: { Authorization: `Bearer ${token}` },
             }),
           ]
@@ -152,7 +152,7 @@ const AddReglement = ({ isSidebarOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://comptaonline.line.pm/api/tiers/${tierId}/banques`,
+        `https://comptaonline.linkpc.net/api/tiers/${tierId}/banques`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBanques(response.data);
@@ -305,7 +305,7 @@ const AddReglement = ({ isSidebarOpen }) => {
 
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "https://comptaonline.line.pm/api/reglements_emis",
+        "https://comptaonline.linkpc.net/api/reglements_emis",
         formData,
         {
           headers: {
@@ -327,7 +327,7 @@ const AddReglement = ({ isSidebarOpen }) => {
         };
 
         await axios.post(
-          "https://comptaonline.line.pm/api/notifications",
+          "https://comptaonline.linkpc.net/api/notifications",
           notificationData
         );
       }

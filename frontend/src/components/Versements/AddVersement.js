@@ -39,7 +39,7 @@ const AddVersement = ({ isSidebarOpen }) => {
     const fetchCodeTiers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCodeTiers(res.data);
@@ -54,7 +54,7 @@ const AddVersement = ({ isSidebarOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-          `https://comptaonline.line.pm/api/tiers/${tierId}/banques`,
+          `https://comptaonline.linkpc.net/api/tiers/${tierId}/banques`,
           { headers: { Authorization: `Bearer ${token}` } }
       );
       setBanques(response.data);
@@ -69,7 +69,7 @@ const AddVersement = ({ isSidebarOpen }) => {
     const token = localStorage.getItem("token");
 
     axios
-        .post("https://comptaonline.line.pm/api/versement", data, {
+        .post("https://comptaonline.linkpc.net/api/versement", data, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((response) => {
@@ -88,7 +88,7 @@ const AddVersement = ({ isSidebarOpen }) => {
               message: notificationMessage,
             };
 
-            axios.post("https://comptaonline.line.pm/api/notifications", notificationData);
+            axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
           }
 
           Swal.fire({

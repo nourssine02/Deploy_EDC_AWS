@@ -21,7 +21,7 @@ const Facturations = ({ isSidebarOpen }) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/facturations", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/facturations", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,7 +37,7 @@ const Facturations = ({ isSidebarOpen }) => {
 
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);
@@ -52,7 +52,7 @@ const Facturations = ({ isSidebarOpen }) => {
   const handlePaymentStatusChange = async (id, currentStatus) => {
     try {
       const newStatus = !currentStatus;
-      await axios.put(`https://comptaonline.line.pm/api/facture/${id}/etat_payement`, {
+      await axios.put(`https://comptaonline.linkpc.net/api/facture/${id}/etat_payement`, {
         etat_payement: newStatus,
       });
       setFactures((prevFactures) =>

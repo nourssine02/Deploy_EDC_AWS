@@ -14,7 +14,7 @@ const CommandesParCodeClient = ({isSidebarOpen}) => {
     }
 
     try {
-      const response = await axios.get('https://comptaonline.line.pm/api/commandes-par-code-client', {
+      const response = await axios.get('https://comptaonline.linkpc.net/api/commandes-par-code-client', {
         params: { code_entreprise: codeEntreprise },
       });
       setCommandes(response.data);

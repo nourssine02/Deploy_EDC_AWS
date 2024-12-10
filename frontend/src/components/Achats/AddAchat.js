@@ -41,7 +41,7 @@ const AddAchat = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("https://comptaonline.line.pm/api/code_tiers", {
+        const response = await axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -58,7 +58,7 @@ const AddAchat = ({ isSidebarOpen }) => {
   // Fonction pour vérifier si le numéro de pièce existe
   const checkNumPieceExists = async (numPiece) => {
     try {
-      const response = await axios.get(`https://comptaonline.line.pm/api/check-num-piece/${numPiece}`);
+      const response = await axios.get(`https://comptaonline.linkpc.net/api/check-num-piece/${numPiece}`);
 
       if (response.data.exists) {
         // Si le numéro de pièce existe, afficher une alerte
@@ -161,7 +161,7 @@ const AddAchat = ({ isSidebarOpen }) => {
     const token = localStorage.getItem("token");
 
     return axios.create({
-      baseURL: "https://comptaonline.line.pm",
+      baseURL: "https://comptaonline.linkpc.net",
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -197,7 +197,7 @@ const AddAchat = ({ isSidebarOpen }) => {
       let postData = { ...achat };
 
       // Envoyer les données de l'achat
-      await axiosInstance.post("https://comptaonline.line.pm/api/achats", postData);
+      await axiosInstance.post("https://comptaonline.linkpc.net/api/achats", postData);
 
       if (user.role === "comptable") {
         // Ajouter une notification
@@ -209,7 +209,7 @@ const AddAchat = ({ isSidebarOpen }) => {
         };
 
         await axiosInstance.post(
-            "https://comptaonline.line.pm/api/notifications",
+            "https://comptaonline.linkpc.net/api/notifications",
             notificationData
         );
       }

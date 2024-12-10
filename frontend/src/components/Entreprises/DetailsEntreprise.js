@@ -21,7 +21,7 @@ const DetailsEntreprise = ({ isSidebarOpen }) => {
 
   useEffect(() => {
     axios
-      .get("https://comptaonline.line.pm/api/entreprises/" + id)
+      .get("https://comptaonline.linkpc.net/api/entreprises/" + id)
       .then((res) => {
         const data = res.data[0];
         setEntreprise({

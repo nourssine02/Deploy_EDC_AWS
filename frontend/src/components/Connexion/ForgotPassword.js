@@ -7,7 +7,7 @@ const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://comptaonline.line.pm/api/forgot-password", { email });
+      await axios.post("https://comptaonline.linkpc.net/api/forgot-password", { email });
       alert("Password reset link sent to your email.");
     } catch (error) {
       alert("Error sending reset link.");

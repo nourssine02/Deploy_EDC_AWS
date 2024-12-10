@@ -44,7 +44,7 @@ const DetailsReglement = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `https://comptaonline.line.pm/api/reglements_emis/${id}`
+          `https://comptaonline.linkpc.net/api/reglements_emis/${id}`
         );
         const { data } = response;
         setReglement(data.reglement);
@@ -105,7 +105,7 @@ const DetailsReglement = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete("https://comptaonline.line.pm/api/reglements_emis/" + id);
+      await axios.delete("https://comptaonline.linkpc.net/api/reglements_emis/" + id);
       toast.success("Règlement supprimé avec succès");
       navigate("/reglements_emis");
     } catch (err) {

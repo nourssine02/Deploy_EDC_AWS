@@ -14,7 +14,7 @@ const TotalCommandesParPeriode = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/clients");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(response.data);
       } catch (error) {
         console.error("Error fetching clients", error);
@@ -28,7 +28,7 @@ const TotalCommandesParPeriode = ({ isSidebarOpen }) => {
   // Fetch total orders by period and company
   const fetchTotal = async () => {
     try {
-      const response = await axios.get("https://comptaonline.line.pm/api/total-commandes-par-periode", {
+      const response = await axios.get("https://comptaonline.linkpc.net/api/total-commandes-par-periode", {
         params: { startDate, endDate, company: selectedClient },
       });
       if (response.data.length > 0 && response.data[0].total !== null) {

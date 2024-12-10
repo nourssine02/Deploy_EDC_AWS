@@ -14,7 +14,7 @@ const CommandeDetailleesParPeriode = ({ isSidebarOpen }) => {
     // Fetch the list of clients for the dropdown
     const fetchClients = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/clients");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(response.data);
       } catch (error) {
         console.error("Error fetching clients", error);
@@ -37,7 +37,7 @@ const CommandeDetailleesParPeriode = ({ isSidebarOpen }) => {
     }
 
     try {
-      const response = await axios.get("https://comptaonline.line.pm/api/commandes-detaillees", {
+      const response = await axios.get("https://comptaonline.linkpc.net/api/commandes-detaillees", {
         params: { startDate, endDate, company: selectedClient },
       });
       setCommandes(response.data);

@@ -9,7 +9,7 @@ const Notifications = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await axios.get(`https://comptaonline.line.pm/api/notifications/${user.id}`);
+        const res = await axios.get(`https://comptaonline.linkpc.net/api/notifications/${user.id}`);
         setNotifications(res.data);
       } catch (err) {
         console.error("Error fetching notifications:", err);

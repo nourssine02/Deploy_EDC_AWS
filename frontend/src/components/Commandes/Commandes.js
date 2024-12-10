@@ -22,7 +22,7 @@ const Commandes = ({isSidebarOpen}) => {
           window.location.href = "/";
           return;
         }
-        const res = await axios.get("https://comptaonline.line.pm/api/commandes", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/commandes", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -39,7 +39,7 @@ const Commandes = ({isSidebarOpen}) => {
 
     const fetchClients = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/clients");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/clients");
         setClients(res.data);
       } catch (err) {
         console.log(err);

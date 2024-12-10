@@ -60,7 +60,7 @@ const UpdateTier = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/banques/active");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/banques/active");
 
         // Formatage des résultats pour Select
         const formattedBanques = response.data.map((banque) => ({
@@ -161,7 +161,7 @@ const UpdateTier = ({ isSidebarOpen }) => {
       banques: tier.banques.map(banque => banque.value) // Ensure the `banques` field contains the IDs
     };
   
-    axios.put(`https://comptaonline.line.pm/api/tiers/${id}`, updatedTier)
+    axios.put(`https://comptaonline.linkpc.net/api/tiers/${id}`, updatedTier)
       .then((response) => {
         Swal.fire({
           icon: "success",
@@ -186,7 +186,7 @@ const UpdateTier = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchTier = async () => {
       try {
-        const response = await axios.get(`https://comptaonline.line.pm/api/tiers/${id}`);
+        const response = await axios.get(`https://comptaonline.linkpc.net/api/tiers/${id}`);
         const data = response.data;
         if (!data) {
           console.error("Empty response or invalid data structure:", response);

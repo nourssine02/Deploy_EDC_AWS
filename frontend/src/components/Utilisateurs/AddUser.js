@@ -110,7 +110,7 @@ const AddUser = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchEntrepriseCodes = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_entreprises");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_entreprises");
         setEntrepriseCodes(res.data);
         console.log(res.data);
       } catch (err) {
@@ -129,7 +129,7 @@ const AddUser = ({ isSidebarOpen }) => {
     // Check if all inputs are valid
     if (Object.values(inputValidity).every((valid) => valid)) {
       try {
-        await axios.post("https://comptaonline.line.pm/api/users", user);
+        await axios.post("https://comptaonline.linkpc.net/api/users", user);
         Swal.fire({
           icon: "success",
           title: "Succès",

@@ -20,7 +20,7 @@ const Utilisateurs = ({ isSidebarOpen }) => {
         return;
       }
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/utilisateurs", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/utilisateurs", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -35,7 +35,7 @@ const Utilisateurs = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete("https://comptaonline.line.pm/api/users/" + id);
+      await axios.delete("https://comptaonline.linkpc.net/api/users/" + id);
       window.location.reload();
     } catch (err) {
       console.log(err);
@@ -84,7 +84,7 @@ const Utilisateurs = ({ isSidebarOpen }) => {
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
       const updatedStatus = !currentStatus;
-      await axios.put(`https://comptaonline.line.pm/api/users/${userId}/status`, {
+      await axios.put(`https://comptaonline.linkpc.net/api/users/${userId}/status`, {
         isActive: updatedStatus,
       });
       setUsers((prevUsers) =>

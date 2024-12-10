@@ -9,7 +9,7 @@ const ResetPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://comptaonline.line.pm/api/reset-password", {
+      await axios.post("https://comptaonline.linkpc.net/api/reset-password", {
         token,
         password,
       });

@@ -40,7 +40,7 @@ const DetailsReglementRecu = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `https://comptaonline.line.pm/api/reglements_recus/${id}`
+          `https://comptaonline.linkpc.net/api/reglements_recus/${id}`
         );
         const { data } = response;
         setReglement(data.reglement);
@@ -98,7 +98,7 @@ const DetailsReglementRecu = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete("https://comptaonline.line.pm/api/reglements_recus/" + id);
+      await axios.delete("https://comptaonline.linkpc.net/api/reglements_recus/" + id);
       toast.success("Règlement supprimé avec succès");
       navigate("/reglements_recus");
     } catch (err) {

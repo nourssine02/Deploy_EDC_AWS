@@ -29,7 +29,7 @@ const DetailsFacture = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchFactureDetails = async () => {
       try {
-        const response = await axios.get(`https://comptaonline.line.pm/api/facture/${id}`);
+        const response = await axios.get(`https://comptaonline.linkpc.net/api/facture/${id}`);
         const { data } = response;
         setFacture(data.facture);
       } catch (error) {

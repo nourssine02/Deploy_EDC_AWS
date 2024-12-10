@@ -29,7 +29,7 @@ const DetailsVersement = ({ isSidebarOpen }) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `https://comptaonline.line.pm/api/versement/${id}`
+          `https://comptaonline.linkpc.net/api/versement/${id}`
         );
         const { data } = response;
         setVersement(

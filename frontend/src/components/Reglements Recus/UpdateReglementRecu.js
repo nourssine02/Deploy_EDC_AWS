@@ -49,7 +49,7 @@ const UpdateReglementRecu = ({isSidebarOpen}) => {
       if (!id) return; // Vérifiez si `id` est défini
   
       try {
-        const response = await axios.get(`https://comptaonline.line.pm/api/reglements_recus/${id}`);
+        const response = await axios.get(`https://comptaonline.linkpc.net/api/reglements_recus/${id}`);
         const { data } = response;
   
         if (data) {
@@ -100,7 +100,7 @@ const UpdateReglementRecu = ({isSidebarOpen}) => {
     const fetchCodeTiers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers", {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCodeTiers(res.data);
@@ -114,7 +114,7 @@ const UpdateReglementRecu = ({isSidebarOpen}) => {
   useEffect(() => {
     const fetchFactures = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/num_facture");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/num_facture");
         const options = res.data.map((num_facture) => ({
           value: num_facture,
           label: num_facture,
@@ -133,7 +133,7 @@ const UpdateReglementRecu = ({isSidebarOpen}) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://comptaonline.line.pm/api/tiers/${tierId}/banques`,
+        `https://comptaonline.linkpc.net/api/tiers/${tierId}/banques`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBanques(response.data);
@@ -202,7 +202,7 @@ const UpdateReglementRecu = ({isSidebarOpen}) => {
   const handleChangeFacture = async (facture, index) => {
     try {
       const res = await axios.get(
-        `https://comptaonline.line.pm/api/factures/${facture.value}`
+        `https://comptaonline.linkpc.net/api/factures/${facture.value}`
       );
       const { id, date_facture, montant_total_facture, document_fichier } =
         res.data;
@@ -240,7 +240,7 @@ const UpdateReglementRecu = ({isSidebarOpen}) => {
 
     try {
       const response = await axios.put(
-        `https://comptaonline.line.pm/api/reglements_recus/${id}`,
+        `https://comptaonline.linkpc.net/api/reglements_recus/${id}`,
         data
       );
       console.log(response.data.message);

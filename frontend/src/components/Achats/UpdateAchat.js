@@ -35,7 +35,7 @@ const UpdateAchat = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.line.pm/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
         setCodeTiers(res.data);
       } catch (err) {
         console.log(err);
@@ -94,7 +94,7 @@ const UpdateAchat = ({ isSidebarOpen }) => {
       return;
     }
     try {
-      await axios.put(`https://comptaonline.line.pm/api/achats/${id}`, achat);
+      await axios.put(`https://comptaonline.linkpc.net/api/achats/${id}`, achat);
       Swal.fire({
         icon: "success",
         title: "Succès",
@@ -115,7 +115,7 @@ const UpdateAchat = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchAchat = async () => {
       try {
-        const res = await axios.get(`https://comptaonline.line.pm/api/achats/${id}`);
+        const res = await axios.get(`https://comptaonline.linkpc.net/api/achats/${id}`);
         const data = res.data[0];
         setAchat({
           date_saisie: data.date_saisie ? data.date_saisie.split('T')[0] : "",

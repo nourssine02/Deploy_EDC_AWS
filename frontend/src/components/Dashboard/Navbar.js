@@ -1,3 +1,5 @@
+// Navbar.js
+
 import React, { useContext, useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserContext } from "../Connexion/UserProvider";
@@ -40,7 +42,7 @@ const Navbar = ({ toggleSidebar }) => {
             if (user) {
                 try {
                     const res = await axios.get(
-                        `https://comptaonline.line.pm/api/notifications/${user.id}`
+                        `https://comptaonline.linkpc.net/api/notifications/${user.id}`
                     );
                     const newNotifications = res.data;
                     setNotifications(newNotifications);
@@ -87,7 +89,7 @@ const Navbar = ({ toggleSidebar }) => {
 
     const markNotificationsAsRead = async () => {
         try {
-            await axios.post(`https://comptaonline.line.pm/api/notifications/markAsRead`, {
+            await axios.post(`https://comptaonline.linkpc.net/api/notifications/markAsRead`, {
                 userId: user.id,
             });
             setUnreadNotifications([]);
@@ -99,7 +101,7 @@ const Navbar = ({ toggleSidebar }) => {
     const removeNotification = async (notificationId) => {
         try {
             await axios.delete(
-                `https://comptaonline.line.pm/api/notifications/${notificationId}`
+                `https://comptaonline.linkpc.net/api/notifications/${notificationId}`
             );
             setNotifications(notifications.filter((n) => n.id !== notificationId));
             setUnreadNotifications(
@@ -144,13 +146,11 @@ const Navbar = ({ toggleSidebar }) => {
             route = '/documents_direction';
         }
 
-
         // Rediriger vers la route déterminée
         if (route) {
             navigate(route);
         }
     };
-
 
     return (
         <nav className="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
@@ -222,7 +222,6 @@ const Navbar = ({ toggleSidebar }) => {
                                         key={notification.id}
                                         className="dropdown-item d-flex justify-content-between align-items-center"
                                         onClick={() => handleNotificationClick(notification.message)}
-
                                     >
                                         <span>{notification.message}</span>
                                         &nbsp;&nbsp;
@@ -243,7 +242,11 @@ const Navbar = ({ toggleSidebar }) => {
                             className="nav-link dropdown-toggle"
                             id="profileDropdown"
                         >
-                            <img src="https://cdn3.iconfinder.com/data/icons/business-avatar-1/512/11_avatar-512.png" alt="profile" />
+                            <img
+                                src={user.profile_image || 'assets/images/faces/face.jpg'}
+                                alt="profile"
+                                className="profile-image"
+                            />
                         </Link>
                         {user.identite && (
                             <ul className="navbar-nav navbar-nav-right">

@@ -25,7 +25,7 @@ const DetailsLivraison = ({ isSidebarOpen }) => {
 
   useEffect(() => {
     axios
-      .get(`https://comptaonline.line.pm/api/livraison/${id}`)
+      .get(`https://comptaonline.linkpc.net/api/livraison/${id}`)
       .then((res) => {
         const data = res.data[0];
         setLivraison({
@@ -88,7 +88,7 @@ const DetailsLivraison = ({ isSidebarOpen }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://comptaonline.line.pm/api/livraison/${id}`);
+      await axios.delete(`https://comptaonline.linkpc.net/api/livraison/${id}`);
       toast.success("Livraison supprimée avec succès !");
       navigate("/livraisons"); // Navigate back after deletion
     } catch (err) {
