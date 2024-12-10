@@ -47,7 +47,6 @@ https.createServer(options, app).listen(443, () => {
   console.log('HTTPS Server running on port 443');
 });
 
-
 let db;
 
 function handleDisconnect() {
@@ -149,10 +148,53 @@ app.post("/api/refresh-token", (req, res) => {
   });
 });
 
-// Route protégée nécessitant une authentification
-app.get("/api/home", verifyToken, (req, res) => {
-  res.json({ message: "Bienvenue sur la page d'accueil", user: req.user });
+// Route  Home nécessitant une authentification
+app.get("/api/home", verifyToken, async (req, res) => {
+  try {
+    // Assurez-vous que `req.user` contient les informations nécessaires (ex: id)
+    const userId = req.user.id;
+
+    // Requête SQL pour récupérer les données de l'utilisateur
+    const sql = `
+      SELECT id, code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role, profile_image 
+      FROM utilisateurs WHERE id = ?`;
+
+    db.query(sql, [userId], (err, results) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des données utilisateur :", err);
+        return res.status(500).json({ message: "Erreur interne du serveur" });
+      }
+
+      // Vérifier si l'utilisateur existe
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      // Récupérer les données utilisateur
+      const user = results[0];
+
+      // Retourner un objet combinant le message d'accueil et les données utilisateur
+      res.json({
+        message: "Bienvenue sur la page d'accueil",
+        user: {
+          id: user.id,
+          code_entreprise: user.code_entreprise,
+          code_user: user.code_user,
+          identite: user.identite,
+          position: user.position,
+          tel: user.tel,
+          email: user.email,
+          role: user.role,
+          profile_image: user.profile_image,
+        },
+      });
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données utilisateur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
 });
+
 
 /*************************** notifications ********************************* */
 
@@ -731,20 +773,11 @@ app.delete("/api/users/:id", (req, res) => {
 
 //Update utilisateur
 app.put("/api/users/:id", async (req, res) => {
-  const { id } = req.params;
-  const {
-    code_entreprise,
-    code_user,
-    identite,
-    position,
-    tel,
-    email,
-    mot_de_passe,
-    role,
-  } = req.body;
+  const userID = req.params.id;
+  const { code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role, profile_image } = req.body;
 
   const sqlSelect = "SELECT * FROM utilisateurs WHERE id = ?";
-  db.query(sqlSelect, [id], async (err, results) => {
+  db.query(sqlSelect, [userID], async (err, results) => {
     if (err) {
       console.error("Erreur lors de la récupération de l'utilisateur :", err);
       return res.status(500).json({ error: "Erreur du serveur" });
@@ -761,16 +794,13 @@ app.put("/api/users/:id", async (req, res) => {
         updatedPassword = await bcrypt.hash(mot_de_passe, 10);
       } catch (err) {
         console.error("Erreur lors du hachage du mot de passe :", err);
-        return res
-            .status(500)
-            .json({ error: "Erreur lors du hachage du mot de passe" });
+        return res.status(500).json({ error: "Erreur lors du hachage du mot de passe" });
       }
     }
 
-    const sqlUpdate =
-        "UPDATE utilisateurs SET code_entreprise = ?, code_user = ?, identite = ?, position = ?, tel = ?, email = ?, mot_de_passe = ?, role = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE utilisateurs SET code_entreprise = ?, code_user = ?, identite = ?, position = ?, tel = ?, email = ?, mot_de_passe = ?, role = ?, profile_image = ? WHERE id = ?";
     const values = [
-      code_entreprise,
+      code_entreprise || null,
       code_user,
       identite,
       position,
@@ -778,7 +808,8 @@ app.put("/api/users/:id", async (req, res) => {
       email,
       updatedPassword,
       role,
-      id,
+      profile_image || null, // Store base64 string or NULL
+      userID,
     ];
 
     db.query(sqlUpdate, values, (err, result) => {
@@ -787,9 +818,7 @@ app.put("/api/users/:id", async (req, res) => {
         return res.status(500).json({ error: "Erreur du serveur" });
       }
 
-      return res
-          .status(200)
-          .json({ message: "Utilisateur mis à jour avec succès" });
+      return res.status(200).json({ message: "Utilisateur mis à jour avec succès" });
     });
   });
 });
@@ -831,6 +860,47 @@ app.put('/api/users/:id/status', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Erreur lors de la mise à jour du statut", error });
+  }
+});
+
+// Route pour récupérer les informations de l'utilisateur courant
+app.get("/api/users/me", async (req, res) => {
+  try {
+    // Supposons que l'utilisateur est authentifié avec un ID transmis dans la session ou via un token (par exemple)
+    const userId = req.user.id; // Vous devez remplacer cette ligne par une méthode d'authentification appropriée
+
+    // Exécuter la requête SQL pour récupérer les données de l'utilisateur
+    const sql =
+        `SELECT id, code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role, profile_image FROM utilisateurs WHERE id = ?`;
+
+    db.execute(sql, [userId], (err, results) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des données utilisateur :", err);
+        return res.status(500).json({ message: "Erreur interne du serveur" });
+      }
+
+      // Vérifier si l'utilisateur a été trouvé
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      // Renvoyer les données de l'utilisateur
+      const user = results[0];
+      res.json({
+        id: user.id,
+        code_entreprise: user.code_entreprise,
+        code_user: user.code_user,
+        identite: user.identite,
+        position: user.position,
+        tel: user.tel,
+        email: user.email,
+        role: user.role,
+        profile_image: user.profile_image,
+      });
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données utilisateur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
   }
 });
 
@@ -929,68 +999,55 @@ app.delete('/api/banques/:id', async (req, res) => {
 // affichier all Tiers
 app.get("/api/tiers", verifyToken, (req, res) => {
   let q = `
-    SELECT t.*, u.role AS ajoute_par, u.identite, u.code_entreprise
+    SELECT t.*, u.role AS ajoute_par, u.identite AS identite_utilisateur, u.code_entreprise
     FROM tiers t
     LEFT JOIN utilisateurs u ON t.ajoute_par = u.id
   `;
 
-  const { clientId, code_entreprise } = req.query; // Récupération de code_entreprise
+  const { clientId, code_entreprise } = req.query;
 
   if (req.user.role === "utilisateur") {
     q += " WHERE u.identite = ?";
     db.query(q, [req.user.identite], (err, data) => {
       if (err) {
-        return res.status(500).json({
-          error: "Erreur lors de la récupération des tiers du client",
-        });
+        console.error("Erreur SQL (utilisateur):", err); // Log SQL
+        return res.status(500).json({ error: "Erreur lors de la récupération des tiers du client" });
       }
       return res.json(data);
     });
   } else if (req.user.role === "comptable") {
     if (code_entreprise) {
-      // Filtrer par code_entreprise
       q += " WHERE u.code_entreprise = ?";
       db.query(q, [code_entreprise], (err, data) => {
         if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération des tiers pour l'entreprise spécifiée",
-          });
+          return res.status(500).json({ error: "Erreur lors de la récupération des tiers pour l'entreprise spécifiée" });
         }
         return res.json(data);
       });
     } else if (clientId) {
-      // Filtrer par clientId (si nécessaire)
       q += " WHERE t.ajoute_par = ?";
       db.query(q, [clientId], (err, data) => {
         if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération des tiers du client spécifié",
-          });
+          console.error("Erreur SQL (comptable - clientId):", err); // Log SQL
+          return res.status(500).json({ error: "Erreur lors de la récupération des tiers du client spécifié" });
         }
         return res.json(data);
       });
     } else {
       db.query(q, [], (err, data) => {
         if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération de tous les tiers pour les comptables",
-          });
+          console.error("Erreur SQL (comptable - tous):", err); // Log SQL
+          return res.status(500).json({ error: "Erreur lors de la récupération de tous les tiers pour les comptables" });
         }
         return res.json(data);
       });
     }
   } else {
+    console.error("Accès non autorisé pour le rôle:", req.user.role); // Log accès refusé
     res.status(403).send("Accès refusé");
   }
 });
 
-// app.get("/api/tiers", verifyToken, (req, res) => {
-//   const q = "SELECT * FROM  tiers";
-//   db.query(q, (err, data) => {
-//     if (err) return res.json(err);
-//     return res.json(data);
-//   });
-// });
 
 // Add tier
 app.post("/api/tiers", verifyToken, (req, res) => {
@@ -4794,7 +4851,7 @@ app.get("/api/factures-non-payees", (req, res) => {
 app.get("/api/statistics", (req, res) => {
   const stats = {};
 
-  db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs`, (err, totalUsers) => {
+  db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs WHERE role="utilisateur"`, (err, totalUsers) => {
     if (err) return res.status(500).json({ error: "Error fetching total users" });
 
     stats.totalUsers = totalUsers[0].totalUsers;
@@ -4821,21 +4878,59 @@ app.get("/api/statistics", (req, res) => {
   });
 });
 
+// Route pour récupérer les commandes par période
+app.get('/api/orders-per-period', async (req, res) => {
+  try {
+    // Requête SQL MySQL
+    const query = `
+            SELECT 
+                DATE_FORMAT(date_commande, '%Y-%m') AS period, 
+                COUNT(*) AS count 
+            FROM commandes 
+            GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
+            ORDER BY period;
+        `;
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // Exécution de la requête et traitement du résultat
+    db.query(query, (err, rows) => {
+      if (err) {
+        console.error("Erreur lors de l'exécution de la requête:", err.message);
+        return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+      }
+
+      // Vérification du format des données
+      if (!Array.isArray(rows)) {
+        console.error("Format inattendu des données:", rows);
+        return res.status(500).json({ error: "Format inattendu des données reçues" });
+      }
+
+      // Transformation des résultats pour le frontend
+      const ordersPerPeriod = rows.map(row => ({
+        label: row.period,
+        count: parseInt(row.count, 10),
+      }));
+
+      // Réponse au client
+      res.json({ ordersPerPeriod });
+    });
+  } catch (err) {
+    console.error("Erreur lors de la récupération des commandes par période:", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+  }
 });
 
+// Route pour servir le fichier index.html de React
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
 
 /***************************************************************** */
 
 
 
 
-
-
-// Démarrage du serveur
-const PORT = 5001;
+//Démarrage du serveur
+const PORT = 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Le serveur est en écoute sur le port ${PORT}`);
 });
