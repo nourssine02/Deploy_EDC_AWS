@@ -11,51 +11,40 @@ const fileUpload = require("express-fileupload");
 const crypto = require("crypto");
 const path = require('path');
 const xlsx = require("xlsx");
-const https = require('https');
-const fs = require('fs');
 
 const app = express();
 
-// Charger les certificats
-const options = {
-  key: fs.readFileSync('/var/www/myapp/backend/certs/privkey.pem'),
-  cert: fs.readFileSync('/var/www/myapp/backend/certs/fullchain.pem'),
-};
+// Configurer Express pour servir les fichiers statiques de React
+app.use(express.static(path.join(__dirname, '../frontend/build'))); // Si vous avez un dossier build
 
-// Configuration CORS
-const corsOptions = {
-  origin: ['https://comptaonline.line.pm', 'https://18.208.89.42'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build/index.html')); // Redirige vers l'index.html
+});
 
-app.use(cors(corsOptions));
 
-// Middleware pour traiter les données des requêtes
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(
+  cors({
+    origin: "https://comptaonline.line.pm/api",    // ou bien https://18.208.89.42
+    methods: ['GET', 'POST', 'PUT','DELETE'],
+    credentials: true,
+  })
+);
+
+// Augmenter la limite de la taille du payload (par exemple, 50 Mo)
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(fileUpload());
 app.use(cookieParser());
-
-
-// Configurer Express pour servir les fichiers statiques de React
-app.use(express.static(path.join(__dirname, '../frontend/build')));
-
-// Démarrer le serveur HTTPS
-https.createServer(options, app).listen(443, () => {
-  console.log('HTTPS Server running on port 443');
-});
 
 
 let db;
 
 function handleDisconnect() {
   db = mysql.createConnection({
-    host: "cloud-db.cpseqi6mmsuu.us-east-1.rds.amazonaws.com", // Utilisez l'endpoint RDS réel
-    user: "root",
-    password: "Nourssine02",
-    database: "cloud",
+    host: process.env.DATABASE_HOST || "cloud-db.cpseqi6mmsuu.us-east-1.rds.amazonaws.com", // Utilisez l'endpoint RDS réel
+    user: process.env.DATABASE_USER || "root",
+    password: process.env.DATABASE_PASSWORD || "Nourssine02",
+    database: process.env.DATABASE_NAME || "cloud",
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -104,8 +93,8 @@ const verifyToken = (req, res, next) => {
       console.error("Erreur lors de la vérification du token:", err);
       if (err.name === "TokenExpiredError") {
         return res
-            .status(401)
-            .json({ message: "Token expiré", expiredAt: err.expiredAt });
+          .status(401)
+          .json({ message: "Token expiré", expiredAt: err.expiredAt });
       } else {
         return res.status(403).json({ message: "Token invalide" });
       }
@@ -138,11 +127,11 @@ app.post("/api/refresh-token", (req, res) => {
     }
 
     const newToken = jwt.sign(
-        { id: decoded.id, identite: decoded.identite, role: decoded.role },
-        secretKey,
-        {
-          expiresIn: 86400, // 24 hours
-        }
+      { id: decoded.id, identite: decoded.identite, role: decoded.role },
+      secretKey,
+      {
+        expiresIn: 86400, // 24 hours
+      }
     );
 
     res.send({ token: newToken });
@@ -150,9 +139,52 @@ app.post("/api/refresh-token", (req, res) => {
 });
 
 // Route protégée nécessitant une authentification
-app.get("/api/home", verifyToken, (req, res) => {
-  res.json({ message: "Bienvenue sur la page d'accueil", user: req.user });
+app.get("/api/home", verifyToken, async (req, res) => {
+  try {
+    // Assurez-vous que `req.user` contient les informations nécessaires (ex: id)
+    const userId = req.user.id;
+
+    // Requête SQL pour récupérer les données de l'utilisateur
+    const sql = `
+      SELECT id, code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role, profile_image 
+      FROM utilisateurs WHERE id = ?`;
+
+    db.query(sql, [userId], (err, results) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des données utilisateur :", err);
+        return res.status(500).json({ message: "Erreur interne du serveur" });
+      }
+
+      // Vérifier si l'utilisateur existe
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      // Récupérer les données utilisateur
+      const user = results[0];
+
+      // Retourner un objet combinant le message d'accueil et les données utilisateur
+      res.json({
+        message: "Bienvenue sur la page d'accueil",
+        user: {
+          id: user.id,
+          code_entreprise: user.code_entreprise,
+          code_user: user.code_user,
+          identite: user.identite,
+          position: user.position,
+          tel: user.tel,
+          email: user.email,
+          role: user.role,
+          profile_image: user.profile_image,
+        },
+      });
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données utilisateur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
 });
+
 
 /*************************** notifications ********************************* */
 
@@ -165,8 +197,8 @@ app.get("/api/notifications/:userId", (req, res) => {
     if (err) {
       console.error(err);
       return res
-          .status(500)
-          .json({ error: "Erreur lors de la récupération des notifications." });
+        .status(500)
+        .json({ error: "Erreur lors de la récupération des notifications." });
     }
     return res.status(200).json(data);
   });
@@ -184,7 +216,7 @@ app.post("/api/notifications", verifyToken, (req, res) => {
 
   // Add notification to the database
   const notificationQuery =
-      "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+    "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
   db.query(notificationQuery, [userId, message], (err, result) => {
     if (err) {
       console.error("Error adding notification:", err);
@@ -203,12 +235,12 @@ app.delete("/api/notifications/:id", (req, res) => {
     if (err) {
       console.error(err);
       return res
-          .status(500)
-          .json({ error: "Erreur lors de la suppression de la notification." });
+        .status(500)
+        .json({ error: "Erreur lors de la suppression de la notification." });
     }
     return res
-        .status(200)
-        .json({ message: "Notification supprimée avec succès" });
+      .status(200)
+      .json({ message: "Notification supprimée avec succès" });
   });
 });
 
@@ -224,8 +256,8 @@ app.post("/api/notifications/markAsRead", (req, res) => {
     if (err) {
       console.error("Error marking notifications as read:", err);
       return res
-          .status(500)
-          .json({ error: "Failed to mark notifications as read" });
+        .status(500)
+        .json({ error: "Failed to mark notifications as read" });
     }
     return res.status(200).json({ message: "Notifications marked as read" });
   });
@@ -241,34 +273,34 @@ app.post("/api/forgot-password", (req, res) => {
   const expiration = Date.now() + 3600000; // 1 hour from now
 
   db.query(
-      "UPDATE utilisateurs SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?",
-      [token, expiration, email],
-      (err, result) => {
-        if (err) return res.status(500).send("Error updating the user.");
+    "UPDATE utilisateurs SET resetPasswordToken = ?, resetPasswordExpires = ? WHERE email = ?",
+    [token, expiration, email],
+    (err, result) => {
+      if (err) return res.status(500).send("Error updating the user.");
 
-        const transporter = nodemailer.createTransport({
-          service: "Gmail",
-          auth: {
-            user: "your_email@gmail.com",
-            pass: "your_password",
-          },
-        });
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: "your_email@gmail.com",
+          pass: "your_password",
+        },
+      });
 
-        const mailOptions = {
-          to: email,
-          from: "your_email@gmail.com",
-          subject: "Password Reset",
-          text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+      const mailOptions = {
+        to: email,
+        from: "your_email@gmail.com",
+        subject: "Password Reset",
+        text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
           Please click on the following link, or paste this into your browser to complete the process:\n\n
           https://comptaonline.line.pm/api/reset-password/${token}\n\n
           If you did not request this, please ignore this email and your password will remain unchanged.\n`,
-        };
+      };
 
-        transporter.sendMail(mailOptions, (err, response) => {
-          if (err) return res.status(500).send("Error sending email.");
-          res.status(200).send("Password reset link sent.");
-        });
-      }
+      transporter.sendMail(mailOptions, (err, response) => {
+        if (err) return res.status(500).send("Error sending email.");
+        res.status(200).send("Password reset link sent.");
+      });
+    }
   );
 });
 
@@ -277,28 +309,28 @@ app.post("/api/reset-password", (req, res) => {
   const { token, password } = req.body;
 
   db.query(
-      "SELECT * FROM utilisateurs WHERE resetPasswordToken = ? AND resetPasswordExpires > ?",
-      [token, Date.now()],
-      (err, results) => {
-        if (err || results.length === 0)
-          return res
-              .status(400)
-              .send("Password reset token is invalid or has expired.");
+    "SELECT * FROM utilisateurs WHERE resetPasswordToken = ? AND resetPasswordExpires > ?",
+    [token, Date.now()],
+    (err, results) => {
+      if (err || results.length === 0)
+        return res
+          .status(400)
+          .send("Password reset token is invalid or has expired.");
 
-        const hashedPassword = crypto
-            .createHash("sha256")
-            .update(password)
-            .digest("hex");
+      const hashedPassword = crypto
+        .createHash("sha256")
+        .update(password)
+        .digest("hex");
 
-        db.query(
-            "UPDATE utilisateurs SET mot_de_passe = ?, resetPasswordToken = NULL, resetPasswordExpires = NULL WHERE resetPasswordToken = ?",
-            [hashedPassword, token],
-            (err, result) => {
-              if (err) return res.status(500).send("Error resetting the password.");
-              res.status(200).send("Password has been reset.");
-            }
-        );
-      }
+      db.query(
+        "UPDATE utilisateurs SET mot_de_passe = ?, resetPasswordToken = NULL, resetPasswordExpires = NULL WHERE resetPasswordToken = ?",
+        [hashedPassword, token],
+        (err, result) => {
+          if (err) return res.status(500).send("Error resetting the password.");
+          res.status(200).send("Password has been reset.");
+        }
+      );
+    }
   );
 });
 
@@ -353,7 +385,7 @@ app.post("/api/register", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
     const sql =
-        "INSERT INTO utilisateurs (code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+      "INSERT INTO utilisateurs (code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     const values = [
       code_entreprise,
       code_user,
@@ -405,18 +437,18 @@ app.post("/api/login", (req, res) => {
 
       if (isMatch) {
         const token = jwt.sign(
-            {
-              identite,
-              role: results[0].role,
-              id: results[0].id,
-              code_entreprise: results[0].code_entreprise,
-              email: results[0].email,
-              tel: results[0].tel,
-              code_user: results[0].code_user,
-              position: results[0].position,
-            },
-            secretKey,
-            { expiresIn: "7d" }
+          {
+            identite,
+            role: results[0].role,
+            id: results[0].id,
+            code_entreprise: results[0].code_entreprise,
+            email: results[0].email,
+            tel: results[0].tel,
+            code_user: results[0].code_user,
+            position: results[0].position,
+          },
+          secretKey,
+          { expiresIn: "7d" }
         );
         const user = {
           id: results[0].id,
@@ -469,15 +501,15 @@ app.get("/api/taux_retenue_source", (req, res) => {
 app.post("/api/taux_retenue_source", (req, res) => {
   const { taux } = req.body;
   db.query(
-      "INSERT INTO taux_retenue_source (taux, active) VALUES (?, true)",
-      [taux],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "INSERT INTO taux_retenue_source (taux, active) VALUES (?, true)",
+    [taux],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
@@ -486,15 +518,15 @@ app.put("/api/taux_retenue_source/:id", (req, res) => {
   const { id } = req.params;
   const { active } = req.body;
   db.query(
-      "UPDATE taux_retenue_source SET active = ? WHERE id = ?",
-      [active, id],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "UPDATE taux_retenue_source SET active = ? WHERE id = ?",
+    [active, id],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
@@ -503,29 +535,29 @@ app.put("/api/taux_retenue_source/modif/:id", (req, res) => {
   const { id } = req.params;
   const { taux } = req.body;
   db.query(
-      "UPDATE taux_retenue_source SET taux = ? WHERE id = ?",
-      [taux, id],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "UPDATE taux_retenue_source SET taux = ? WHERE id = ?",
+    [taux, id],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
 // Route pour obtenir tous les taux where active = 1
 app.get("/api/taux_retenue_source/active", (req, res) => {
   db.query(
-      "SELECT `taux` FROM `taux_retenue_source` WHERE `active` = 1",
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "SELECT `taux` FROM `taux_retenue_source` WHERE `active` = 1",
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
@@ -567,7 +599,7 @@ app.get("/api/entreprises/user", verifyToken, (req, res) => {
 // Add entreprise
 app.post("/api/entreprises", verifyToken, (req, res) => {
   const q =
-      "INSERT INTO entreprises (`code_entreprise`, `date_creation`, `identite`, `MF/CIN`, `responsable`, `cnss`, `tel`, `email`, `adresse`) VALUES (?)";
+    "INSERT INTO entreprises (`code_entreprise`, `date_creation`, `identite`, `MF/CIN`, `responsable`, `cnss`, `tel`, `email`, `adresse`) VALUES (?)";
   const values = [
     req.body.code_entreprise,
     req.body.date_creation,
@@ -600,7 +632,7 @@ app.delete("/api/entreprises/:id", (req, res) => {
 app.put("/api/entreprises/:id", (req, res) => {
   const entrepriseID = req.params.id;
   const q =
-      "UPDATE entreprises SET `code_entreprise` = ?, `date_creation` = ?, `identite` = ?, `MF/CIN` = ?, `responsable` = ?, `cnss` = ?, `tel` = ?, `email` = ?, `adresse` = ? WHERE id = ? ";
+    "UPDATE entreprises SET `code_entreprise` = ?, `date_creation` = ?, `identite` = ?, `MF/CIN` = ?, `responsable` = ?, `cnss` = ?, `tel` = ?, `email` = ?, `adresse` = ? WHERE id = ? ";
 
   const values = [
     req.body.code_entreprise,
@@ -652,7 +684,7 @@ app.get("/api/identite", (req, res) => {
 // identite des Comptables
 app.get("/api/comptables", (req, res) => {
   const q =
-      "SELECT `identite`, `code_user` FROM utilisateurs WHERE `position` = 'Comptable'";
+    "SELECT `identite`, `code_user` FROM utilisateurs WHERE `position` = 'Comptable'";
   db.query(q, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);
@@ -731,20 +763,11 @@ app.delete("/api/users/:id", (req, res) => {
 
 //Update utilisateur
 app.put("/api/users/:id", async (req, res) => {
-  const { id } = req.params;
-  const {
-    code_entreprise,
-    code_user,
-    identite,
-    position,
-    tel,
-    email,
-    mot_de_passe,
-    role,
-  } = req.body;
+  const userID = req.params.id;
+  const { code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role, profile_image } = req.body;
 
   const sqlSelect = "SELECT * FROM utilisateurs WHERE id = ?";
-  db.query(sqlSelect, [id], async (err, results) => {
+  db.query(sqlSelect, [userID], async (err, results) => {
     if (err) {
       console.error("Erreur lors de la récupération de l'utilisateur :", err);
       return res.status(500).json({ error: "Erreur du serveur" });
@@ -761,16 +784,13 @@ app.put("/api/users/:id", async (req, res) => {
         updatedPassword = await bcrypt.hash(mot_de_passe, 10);
       } catch (err) {
         console.error("Erreur lors du hachage du mot de passe :", err);
-        return res
-            .status(500)
-            .json({ error: "Erreur lors du hachage du mot de passe" });
+        return res.status(500).json({ error: "Erreur lors du hachage du mot de passe" });
       }
     }
 
-    const sqlUpdate =
-        "UPDATE utilisateurs SET code_entreprise = ?, code_user = ?, identite = ?, position = ?, tel = ?, email = ?, mot_de_passe = ?, role = ? WHERE id = ?";
+    const sqlUpdate = "UPDATE utilisateurs SET code_entreprise = ?, code_user = ?, identite = ?, position = ?, tel = ?, email = ?, mot_de_passe = ?, role = ?, profile_image = ? WHERE id = ?";
     const values = [
-      code_entreprise,
+      code_entreprise || null,
       code_user,
       identite,
       position,
@@ -778,7 +798,8 @@ app.put("/api/users/:id", async (req, res) => {
       email,
       updatedPassword,
       role,
-      id,
+      profile_image || null, // Store base64 string or NULL
+      userID,
     ];
 
     db.query(sqlUpdate, values, (err, result) => {
@@ -787,9 +808,7 @@ app.put("/api/users/:id", async (req, res) => {
         return res.status(500).json({ error: "Erreur du serveur" });
       }
 
-      return res
-          .status(200)
-          .json({ message: "Utilisateur mis à jour avec succès" });
+      return res.status(200).json({ message: "Utilisateur mis à jour avec succès" });
     });
   });
 });
@@ -834,6 +853,46 @@ app.put('/api/users/:id/status', async (req, res) => {
   }
 });
 
+// Route pour récupérer les informations de l'utilisateur courant
+app.get("/api/users/me", async (req, res) => {
+  try {
+    // Supposons que l'utilisateur est authentifié avec un ID transmis dans la session ou via un token (par exemple)
+    const userId = req.user.id; // Vous devez remplacer cette ligne par une méthode d'authentification appropriée
+
+    // Exécuter la requête SQL pour récupérer les données de l'utilisateur
+    const sql =
+        `SELECT id, code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role, profile_image FROM utilisateurs WHERE id = ?`;
+
+    db.execute(sql, [userId], (err, results) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des données utilisateur :", err);
+        return res.status(500).json({ message: "Erreur interne du serveur" });
+      }
+
+      // Vérifier si l'utilisateur a été trouvé
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      // Renvoyer les données de l'utilisateur
+      const user = results[0];
+      res.json({
+        id: user.id,
+        code_entreprise: user.code_entreprise,
+        code_user: user.code_user,
+        identite: user.identite,
+        position: user.position,
+        tel: user.tel,
+        email: user.email,
+        role: user.role,
+        profile_image: user.profile_image,
+      });
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données utilisateur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
+});
 
 /************************************************************/
 /********************** banques *****************************/
@@ -853,15 +912,15 @@ app.get("/api/banques", (req, res) => {
 app.post("/api/banques", (req, res) => {
   const { taux } = req.body;
   db.query(
-      "INSERT INTO banques (name, active) VALUES (?, true)",
-      [taux],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "INSERT INTO banques (name, active) VALUES (?, true)",
+    [taux],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
@@ -870,15 +929,15 @@ app.put("/api/banques/:id", (req, res) => {
   const { id } = req.params;
   const { active } = req.body;
   db.query(
-      "UPDATE banques SET active = ? WHERE id = ?",
-      [active, id],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "UPDATE banques SET active = ? WHERE id = ?",
+    [active, id],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
@@ -887,29 +946,29 @@ app.put("/api/banques/modif/:id", (req, res) => {
   const { id } = req.params;
   const { bank } = req.body;
   db.query(
-      "UPDATE banques SET name = ? WHERE id = ?",
-      [bank, id],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "UPDATE banques SET name = ? WHERE id = ?",
+    [bank, id],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
 // Route pour obtenir tous les banques where active = 1
 app.get("/api/banques/active", (req, res) => {
   db.query(
-      "SELECT `name` FROM `banques` WHERE `active` = 1",
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send(results);
-        }
+    "SELECT `name` FROM `banques` WHERE `active` = 1",
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
       }
+    }
   );
 });
 
@@ -929,68 +988,54 @@ app.delete('/api/banques/:id', async (req, res) => {
 // affichier all Tiers
 app.get("/api/tiers", verifyToken, (req, res) => {
   let q = `
-    SELECT t.*, u.role AS ajoute_par, u.identite, u.code_entreprise
+    SELECT t.*, u.role AS ajoute_par, u.identite AS identite_utilisateur, u.code_entreprise
     FROM tiers t
     LEFT JOIN utilisateurs u ON t.ajoute_par = u.id
   `;
 
-  const { clientId, code_entreprise } = req.query; // Récupération de code_entreprise
+  const { clientId, code_entreprise } = req.query;
 
   if (req.user.role === "utilisateur") {
     q += " WHERE u.identite = ?";
     db.query(q, [req.user.identite], (err, data) => {
       if (err) {
-        return res.status(500).json({
-          error: "Erreur lors de la récupération des tiers du client",
-        });
+        console.error("Erreur SQL (utilisateur):", err); // Log SQL
+        return res.status(500).json({ error: "Erreur lors de la récupération des tiers du client" });
       }
       return res.json(data);
     });
   } else if (req.user.role === "comptable") {
     if (code_entreprise) {
-      // Filtrer par code_entreprise
       q += " WHERE u.code_entreprise = ?";
       db.query(q, [code_entreprise], (err, data) => {
         if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération des tiers pour l'entreprise spécifiée",
-          });
+          return res.status(500).json({ error: "Erreur lors de la récupération des tiers pour l'entreprise spécifiée" });
         }
         return res.json(data);
       });
     } else if (clientId) {
-      // Filtrer par clientId (si nécessaire)
       q += " WHERE t.ajoute_par = ?";
       db.query(q, [clientId], (err, data) => {
         if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération des tiers du client spécifié",
-          });
+          console.error("Erreur SQL (comptable - clientId):", err); // Log SQL
+          return res.status(500).json({ error: "Erreur lors de la récupération des tiers du client spécifié" });
         }
         return res.json(data);
       });
     } else {
       db.query(q, [], (err, data) => {
         if (err) {
-          return res.status(500).json({
-            error: "Erreur lors de la récupération de tous les tiers pour les comptables",
-          });
+          console.error("Erreur SQL (comptable - tous):", err); // Log SQL
+          return res.status(500).json({ error: "Erreur lors de la récupération de tous les tiers pour les comptables" });
         }
         return res.json(data);
       });
     }
   } else {
+    console.error("Accès non autorisé pour le rôle:", req.user.role); // Log accès refusé
     res.status(403).send("Accès refusé");
   }
 });
-
-// app.get("/api/tiers", verifyToken, (req, res) => {
-//   const q = "SELECT * FROM  tiers";
-//   db.query(q, (err, data) => {
-//     if (err) return res.json(err);
-//     return res.json(data);
-//   });
-// });
 
 // Add tier
 app.post("/api/tiers", verifyToken, (req, res) => {
@@ -1040,103 +1085,103 @@ app.post("/api/tiers", verifyToken, (req, res) => {
     const tierID = result.insertId;
 
     const addBanques =
-        banques && banques.length > 0
-            ? Promise.all(
-                banques.map((banque) => {
-                  return new Promise((resolve, reject) => {
-                    const banqueQuery =
-                        "INSERT INTO tiers_banques (tier_id, banque_id) VALUES (?, ?)";
-                    db.query(banqueQuery, [tierID, banque.value], (err, result) => {
-                      if (err) {
-                        console.error("Erreur lors de l'ajout de la banque :", err);
-                        reject(err);
-                      } else {
-                        resolve(result);
-                      }
-                    });
-                  });
-                })
-            )
-            : Promise.resolve();
+      banques && banques.length > 0
+        ? Promise.all(
+            banques.map((banque) => {
+              return new Promise((resolve, reject) => {
+                const banqueQuery =
+                  "INSERT INTO tiers_banques (tier_id, banque_id) VALUES (?, ?)";
+                db.query(banqueQuery, [tierID, banque.value], (err, result) => {
+                  if (err) {
+                    console.error("Erreur lors de l'ajout de la banque :", err);
+                    reject(err);
+                  } else {
+                    resolve(result);
+                  }
+                });
+              });
+            })
+          )
+        : Promise.resolve();
 
     addBanques
-        .then(() => {
-          const notificationMessage =
-              req.user.role === "client"
-                  ? `${req.user.identite} a ajouté un Tier`
-                  : "Le comptable a ajouté un Tier";
+      .then(() => {
+        const notificationMessage =
+          req.user.role === "client"
+            ? `${req.user.identite} a ajouté un Tier`
+            : "Le comptable a ajouté un Tier";
 
-          const recipientRole =
-              req.user.role === "comptable" ? "client" : "comptable";
+        const recipientRole =
+          req.user.role === "comptable" ? "client" : "comptable";
 
-          const getUserQuery = "SELECT id FROM utilisateurs WHERE role = ?";
-          db.query(getUserQuery, [recipientRole], (userErr, userData) => {
-            if (userErr) {
-              console.error(
-                  `Erreur lors de la récupération de l'utilisateur avec le rôle ${recipientRole} :`,
-                  userErr
-              );
-              return res.status(500).json({
-                error: `Erreur lors de la récupération de l'utilisateur avec le rôle ${recipientRole}.`,
-              });
-            }
-            if (userData.length === 0) {
-              console.error(
-                  `Aucun utilisateur trouvé avec le rôle ${recipientRole}`
-              );
-              return res.status(404).json({
-                error: `Aucun utilisateur trouvé avec le rôle ${recipientRole}.`,
-              });
-            }
-
-            const recipientId = userData[0].id;
-
-            const notificationQuery =
-                "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-            db.query(
-                notificationQuery,
-                [recipientId, notificationMessage],
-                (notifErr, notifData) => {
-                  if (notifErr) {
-                    console.error(
-                        "Erreur lors de l'ajout de la notification :",
-                        notifErr
-                    );
-                    return res.status(500).json({
-                      error: "Erreur lors de l'ajout de la notification.",
-                    });
-                  }
-
-                  return res.status(200).json({
-                    message:
-                        "Le tier, les banques et les notifications ont été ajoutés avec succès.",
-                    tier: {
-                      id: tierID,
-                      code_tiers,
-                      date_creation,
-                      type,
-                      identite,
-                      MF_CIN,
-                      tel,
-                      email,
-                      adresse,
-                      ville,
-                      pays,
-                      observations,
-                      autreType,
-                    },
-                  });
-                }
+        const getUserQuery = "SELECT id FROM utilisateurs WHERE role = ?";
+        db.query(getUserQuery, [recipientRole], (userErr, userData) => {
+          if (userErr) {
+            console.error(
+              `Erreur lors de la récupération de l'utilisateur avec le rôle ${recipientRole} :`,
+              userErr
             );
-          });
-        })
+            return res.status(500).json({
+              error: `Erreur lors de la récupération de l'utilisateur avec le rôle ${recipientRole}.`,
+            });
+          }
+          if (userData.length === 0) {
+            console.error(
+              `Aucun utilisateur trouvé avec le rôle ${recipientRole}`
+            );
+            return res.status(404).json({
+              error: `Aucun utilisateur trouvé avec le rôle ${recipientRole}.`,
+            });
+          }
 
-        .catch((err) => {
-          console.error("Erreur lors de l'ajout des banques du tier :", err);
-          return res
-              .status(500)
-              .json({ error: "Erreur lors de l'ajout des banques du tier." });
+          const recipientId = userData[0].id;
+
+          const notificationQuery =
+            "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+          db.query(
+            notificationQuery,
+            [recipientId, notificationMessage],
+            (notifErr, notifData) => {
+              if (notifErr) {
+                console.error(
+                  "Erreur lors de l'ajout de la notification :",
+                  notifErr
+                );
+                return res.status(500).json({
+                  error: "Erreur lors de l'ajout de la notification.",
+                });
+              }
+
+              return res.status(200).json({
+                message:
+                  "Le tier, les banques et les notifications ont été ajoutés avec succès.",
+                tier: {
+                  id: tierID,
+                  code_tiers,
+                  date_creation,
+                  type,
+                  identite,
+                  MF_CIN,
+                  tel,
+                  email,
+                  adresse,
+                  ville,
+                  pays,
+                  observations,
+                  autreType,
+                },
+              });
+            }
+          );
         });
+      })
+
+      .catch((err) => {
+        console.error("Erreur lors de l'ajout des banques du tier :", err);
+        return res
+          .status(500)
+          .json({ error: "Erreur lors de l'ajout des banques du tier." });
+      });
   });
 });
 
@@ -1164,172 +1209,172 @@ app.put("/api/tiers/:id", (req, res) => {
     if (err) {
       console.error("Erreur lors du démarrage de la transaction:", err);
       return res
-          .status(500)
-          .json({ error: "Erreur lors du démarrage de la transaction" });
+        .status(500)
+        .json({ error: "Erreur lors du démarrage de la transaction" });
     }
 
     // Mise à jour des informations du tier
     db.query(
-        "UPDATE tiers SET code_tiers = ?, date_creation = ?, type = ?, identite = ?, `MF/CIN` = ?, tel = ?, email = ?, adresse = ?, ville = ?, pays = ?, observations = ?, autreType = ? WHERE id = ?",
-        [
-          code_tiers,
-          date_creation,
-          type,
-          identite,
-          MF_CIN,
-          tel,
-          email,
-          adresse,
-          ville,
-          pays,
-          observations,
-          autreType,
-          tierId,
-        ],
-        (err, result) => {
-          if (err) {
-            return db.rollback(() => {
-              console.error("Erreur lors de la mise à jour du tier:", err);
-              res
-                  .status(500)
-                  .json({ error: "Erreur lors de la mise à jour du tier" });
-            });
-          }
+      "UPDATE tiers SET code_tiers = ?, date_creation = ?, type = ?, identite = ?, `MF/CIN` = ?, tel = ?, email = ?, adresse = ?, ville = ?, pays = ?, observations = ?, autreType = ? WHERE id = ?",
+      [
+        code_tiers,
+        date_creation,
+        type,
+        identite,
+        MF_CIN,
+        tel,
+        email,
+        adresse,
+        ville,
+        pays,
+        observations,
+        autreType,
+        tierId,
+      ],
+      (err, result) => {
+        if (err) {
+          return db.rollback(() => {
+            console.error("Erreur lors de la mise à jour du tier:", err);
+            res
+              .status(500)
+              .json({ error: "Erreur lors de la mise à jour du tier" });
+          });
+        }
 
-          // Supprimer les anciennes banques associées
-          db.query(
-              "DELETE FROM tiers_banques WHERE tier_id = ?",
-              [tierId],
-              (err, result) => {
-                if (err) {
-                  return db.rollback(() => {
-                    console.error(
-                        "Erreur lors de la suppression des banques associées:",
+        // Supprimer les anciennes banques associées
+        db.query(
+          "DELETE FROM tiers_banques WHERE tier_id = ?",
+          [tierId],
+          (err, result) => {
+            if (err) {
+              return db.rollback(() => {
+                console.error(
+                  "Erreur lors de la suppression des banques associées:",
+                  err
+                );
+                res.status(500).json({
+                  error: "Erreur lors de la suppression des banques associées",
+                });
+              });
+            }
+
+            if (Array.isArray(banques) && banques.length > 0) {
+              // Vérifier que les banques existent réellement
+              db.query(
+                "SELECT id FROM banques WHERE id IN (?)",
+                [banques],
+                (err, validBanks) => {
+                  if (err) {
+                    return db.rollback(() => {
+                      console.error(
+                        "Erreur lors de la vérification des banques:",
                         err
-                    );
-                    res.status(500).json({
-                      error: "Erreur lors de la suppression des banques associées",
+                      );
+                      res.status(500).json({
+                        error: "Erreur lors de la vérification des banques",
+                      });
                     });
-                  });
-                }
+                  }
 
-                if (Array.isArray(banques) && banques.length > 0) {
-                  // Vérifier que les banques existent réellement
-                  db.query(
-                      "SELECT id FROM banques WHERE id IN (?)",
-                      [banques],
-                      (err, validBanks) => {
+                  // Extraire les IDs des banques valides
+                  const validBankIds = validBanks.map((bank) => bank.id);
+
+                  // Filtrer les IDs des banques valides
+                  const filteredBanks = banques.filter((banqueId) =>
+                    validBankIds.includes(banqueId)
+                  );
+
+                  if (filteredBanks.length > 0) {
+                    // Insérer les nouvelles banques associées
+                    const values = filteredBanks.map((banqueId) => [
+                      tierId,
+                      banqueId,
+                    ]);
+                    db.query(
+                      "INSERT INTO tiers_banques (tier_id, banque_id) VALUES ?",
+                      [values],
+                      (err, result) => {
                         if (err) {
                           return db.rollback(() => {
                             console.error(
-                                "Erreur lors de la vérification des banques:",
-                                err
+                              "Erreur lors de l'insertion des banques associées:",
+                              err
                             );
                             res.status(500).json({
-                              error: "Erreur lors de la vérification des banques",
+                              error:
+                                "Erreur lors de l'insertion des banques associées",
                             });
                           });
                         }
 
-                        // Extraire les IDs des banques valides
-                        const validBankIds = validBanks.map((bank) => bank.id);
-
-                        // Filtrer les IDs des banques valides
-                        const filteredBanks = banques.filter((banqueId) =>
-                            validBankIds.includes(banqueId)
-                        );
-
-                        if (filteredBanks.length > 0) {
-                          // Insérer les nouvelles banques associées
-                          const values = filteredBanks.map((banqueId) => [
-                            tierId,
-                            banqueId,
-                          ]);
-                          db.query(
-                              "INSERT INTO tiers_banques (tier_id, banque_id) VALUES ?",
-                              [values],
-                              (err, result) => {
-                                if (err) {
-                                  return db.rollback(() => {
-                                    console.error(
-                                        "Erreur lors de l'insertion des banques associées:",
-                                        err
-                                    );
-                                    res.status(500).json({
-                                      error:
-                                          "Erreur lors de l'insertion des banques associées",
-                                    });
-                                  });
-                                }
-
-                                // Commit de la transaction
-                                db.commit((err) => {
-                                  if (err) {
-                                    return db.rollback(() => {
-                                      console.error(
-                                          "Erreur lors du commit de la transaction:",
-                                          err
-                                      );
-                                      res.status(500).json({
-                                        error:
-                                            "Erreur lors du commit de la transaction",
-                                      });
-                                    });
-                                  }
-
-                                  res.status(200).json({
-                                    message: "Tier et banques mis à jour avec succès",
-                                  });
-                                });
-                              }
-                          );
-                        } else {
-                          // Commit de la transaction même s'il n'y a pas de banques à ajouter
-                          db.commit((err) => {
-                            if (err) {
-                              return db.rollback(() => {
-                                console.error(
-                                    "Erreur lors du commit de la transaction:",
-                                    err
-                                );
-                                res.status(500).json({
-                                  error: "Erreur lors du commit de la transaction",
-                                });
+                        // Commit de la transaction
+                        db.commit((err) => {
+                          if (err) {
+                            return db.rollback(() => {
+                              console.error(
+                                "Erreur lors du commit de la transaction:",
+                                err
+                              );
+                              res.status(500).json({
+                                error:
+                                  "Erreur lors du commit de la transaction",
                               });
-                            }
-
-                            res.status(200).json({
-                              message:
-                                  "Tier mis à jour avec succès, sans banques à ajouter",
                             });
+                          }
+
+                          res.status(200).json({
+                            message: "Tier et banques mis à jour avec succès",
                           });
-                        }
+                        });
                       }
-                  );
-                } else {
-                  // Commit de la transaction même s'il n'y a pas de banques à ajouter
-                  db.commit((err) => {
-                    if (err) {
-                      return db.rollback(() => {
-                        console.error(
+                    );
+                  } else {
+                    // Commit de la transaction même s'il n'y a pas de banques à ajouter
+                    db.commit((err) => {
+                      if (err) {
+                        return db.rollback(() => {
+                          console.error(
                             "Erreur lors du commit de la transaction:",
                             err
-                        );
-                        res.status(500).json({
-                          error: "Erreur lors du commit de la transaction",
+                          );
+                          res.status(500).json({
+                            error: "Erreur lors du commit de la transaction",
+                          });
                         });
-                      });
-                    }
+                      }
 
-                    res.status(200).json({
-                      message:
+                      res.status(200).json({
+                        message:
                           "Tier mis à jour avec succès, sans banques à ajouter",
+                      });
+                    });
+                  }
+                }
+              );
+            } else {
+              // Commit de la transaction même s'il n'y a pas de banques à ajouter
+              db.commit((err) => {
+                if (err) {
+                  return db.rollback(() => {
+                    console.error(
+                      "Erreur lors du commit de la transaction:",
+                      err
+                    );
+                    res.status(500).json({
+                      error: "Erreur lors du commit de la transaction",
                     });
                   });
                 }
-              }
-          );
-        }
+
+                res.status(200).json({
+                  message:
+                    "Tier mis à jour avec succès, sans banques à ajouter",
+                });
+              });
+            }
+          }
+        );
+      }
     );
   });
 });
@@ -1351,7 +1396,7 @@ app.get("/api/tiers/:id", (req, res) => {
       console.error("Error fetching tier and related banks:", err);
       return res.status(500).json({
         error:
-            "Erreur lors de la récupération du tier et des banques associées.",
+          "Erreur lors de la récupération du tier et des banques associées.",
       });
     }
     if (data.length === 0) {
@@ -1396,53 +1441,53 @@ app.delete("/api/tiers/:id", (req, res) => {
       (SELECT COUNT(*) FROM pointage_personnel WHERE code_tiers = ?) AS pointagePersonnelCount
   `;
 
-  db.query(checkDependenciesQuery,
-      [tierID, tierID, tierID, tierID, tierID, tierID, tierID],
-      (err, results) => {
-        if (err) {
-          console.error("Erreur lors de la vérification des dépendances :", err);
-          return res.status(500).json({ error: "Erreur lors de la vérification des dépendances." });
-        }
+  db.query(checkDependenciesQuery, 
+    [tierID, tierID, tierID, tierID, tierID, tierID, tierID], 
+    (err, results) => {
+    if (err) {
+      console.error("Erreur lors de la vérification des dépendances :", err);
+      return res.status(500).json({ error: "Erreur lors de la vérification des dépendances." });
+    }
 
-        const { achatsCount, commandesCount, livraisonsCount, facturationsCount, reglementsEmisCount, reglementsRecusCount, pointagePersonnelCount } = results[0];
+    const { achatsCount, commandesCount, livraisonsCount, facturationsCount, reglementsEmisCount, reglementsRecusCount, pointagePersonnelCount } = results[0];
 
-        // Si des dépendances existent, les retourner à l'utilisateur
-        if (
-            achatsCount > 0 ||
-            commandesCount > 0 ||
-            livraisonsCount > 0 ||
-            facturationsCount > 0 ||
-            reglementsEmisCount > 0 ||
-            reglementsRecusCount > 0 ||
-            pointagePersonnelCount > 0
-        ) {
-          const dependencies = [];
-          if (achatsCount > 0) dependencies.push("Achats");
-          if (commandesCount > 0) dependencies.push("Commandes");
-          if (livraisonsCount > 0) dependencies.push("Livraisons");
-          if (facturationsCount > 0) dependencies.push("Facturations");
-          if (reglementsEmisCount > 0) dependencies.push("Règlements émis");
-          if (reglementsRecusCount > 0) dependencies.push("Règlements reçus");
-          if (pointagePersonnelCount > 0) dependencies.push("Pointage personnel");
+    // Si des dépendances existent, les retourner à l'utilisateur
+    if (
+      achatsCount > 0 || 
+      commandesCount > 0 || 
+      livraisonsCount > 0 || 
+      facturationsCount > 0 || 
+      reglementsEmisCount > 0 || 
+      reglementsRecusCount > 0 || 
+      pointagePersonnelCount > 0
+    ) {
+      const dependencies = [];
+      if (achatsCount > 0) dependencies.push("Achats");
+      if (commandesCount > 0) dependencies.push("Commandes");
+      if (livraisonsCount > 0) dependencies.push("Livraisons");
+      if (facturationsCount > 0) dependencies.push("Facturations");
+      if (reglementsEmisCount > 0) dependencies.push("Règlements émis");
+      if (reglementsRecusCount > 0) dependencies.push("Règlements reçus");
+      if (pointagePersonnelCount > 0) dependencies.push("Pointage personnel");
 
-          const dependentTablesMessage = dependencies.join(", ");
+      const dependentTablesMessage = dependencies.join(", ");
 
-          return res.status(400).json({
-            error: `Le tier ne peut pas être supprimé car il est associé aux enregistrements dans les tables suivantes : ${dependentTablesMessage}.`,
-          });
-        }
-
-        // Si pas de dépendances, supprimer le tier
-        const deleteQuery = "DELETE FROM tiers WHERE id = ?";
-        db.query(deleteQuery, [tierID], (err) => {
-          if (err) {
-            console.error("Erreur lors de la suppression du tier :", err);
-            return res.status(500).json({ error: "Erreur lors de la suppression du tier." });
-          }
-
-          return res.status(200).json({ message: "Tier supprimé avec succès." });
-        });
+      return res.status(400).json({
+        error: `Le tier ne peut pas être supprimé car il est associé aux enregistrements dans les tables suivantes : ${dependentTablesMessage}.`,
       });
+    }
+
+    // Si pas de dépendances, supprimer le tier
+    const deleteQuery = "DELETE FROM tiers WHERE id = ?";
+    db.query(deleteQuery, [tierID], (err) => {
+      if (err) {
+        console.error("Erreur lors de la suppression du tier :", err);
+        return res.status(500).json({ error: "Erreur lors de la suppression du tier." });
+      }
+
+      return res.status(200).json({ message: "Tier supprimé avec succès." });
+    });
+  });
 });
 
 /************************************************************/
@@ -1589,7 +1634,7 @@ app.post("/api/achats", verifyToken, (req, res) => {
 
     // Récupérer le comptable
     const getComptableQuery =
-        "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+      "SELECT id FROM utilisateurs WHERE role = 'comptable'";
     db.query(getComptableQuery, (comptableErr, comptableData) => {
       if (comptableErr) {
         console.error("Error fetching comptable:", comptableErr);
@@ -1607,22 +1652,22 @@ app.post("/api/achats", verifyToken, (req, res) => {
 
       // Ajouter la notification pour le comptable
       const notificationQuery =
-          "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+        "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
       db.query(
-          notificationQuery,
-          [comptableId, notificationMessage],
-          (notifErr, notifData) => {
-            if (notifErr) {
-              console.error("Error adding notification:", notifErr);
-              return res.status(500).json({
-                error: "Failed to add notification",
-                details: notifErr.message,
-              });
-            }
-            return res
-                .status(200)
-                .json({ message: "Achat and notification added successfully" });
+        notificationQuery,
+        [comptableId, notificationMessage],
+        (notifErr, notifData) => {
+          if (notifErr) {
+            console.error("Error adding notification:", notifErr);
+            return res.status(500).json({
+              error: "Failed to add notification",
+              details: notifErr.message,
+            });
           }
+          return res
+            .status(200)
+            .json({ message: "Achat and notification added successfully" });
+        }
       );
     });
   });
@@ -1634,7 +1679,7 @@ app.post("/api/achats", verifyToken, (req, res) => {
 app.put("/api/achats/:id", (req, res) => {
   const achatD = req.params.id;
   const q =
-      "UPDATE  achats SET `date_saisie`=?,`code_tiers`=?,`tiers_saisie`=?,`type_piece`=?,`num_piece`=?,`date_piece`=?,`statut`=?,`montant_HT_piece`=?,`FODEC_piece`=?,`TVA_piece`=?,`timbre_piece`=?,`autre_montant_piece`=?,`montant_total_piece`=?,`observations`=?,`document_fichier`=? WHERE id = ?";
+    "UPDATE  achats SET `date_saisie`=?,`code_tiers`=?,`tiers_saisie`=?,`type_piece`=?,`num_piece`=?,`date_piece`=?,`statut`=?,`montant_HT_piece`=?,`FODEC_piece`=?,`TVA_piece`=?,`timbre_piece`=?,`autre_montant_piece`=?,`montant_total_piece`=?,`observations`=?,`document_fichier`=? WHERE id = ?";
 
   const values = [
     req.body.date_saisie,
@@ -1745,7 +1790,7 @@ app.get("/api/reglements_emis", verifyToken, (req, res) => {
         if (err) {
           return res.status(500).json({
             error:
-                "Erreur lors de la récupération des règlements du client spécifié",
+              "Erreur lors de la récupération des règlements du client spécifié",
           });
         }
         return res.json(data);
@@ -1755,7 +1800,7 @@ app.get("/api/reglements_emis", verifyToken, (req, res) => {
         if (err) {
           return res.status(500).json({
             error:
-                "Erreur lors de la récupération de tous les règlements pour les comptables",
+              "Erreur lors de la récupération de tous les règlements pour les comptables",
           });
         }
         return res.json(data);
@@ -1771,8 +1816,8 @@ app.post("/api/reglements_emis", verifyToken, (req, res) => {
   const userId = req.user.id;
   if (!userId) {
     return res
-        .status(400)
-        .json({ error: "User ID is required to add reglement" });
+      .status(400)
+      .json({ error: "User ID is required to add reglement" });
   }
 
   try {
@@ -1782,191 +1827,191 @@ app.post("/api/reglements_emis", verifyToken, (req, res) => {
 
     // Validation pour les champs requis
     if (
-        !reglement ||
-        !reglement.montant_brut ||
-        !reglement.base_retenue_source ||
-        !reglement.taux_retenue_source ||
-        !reglement.montant_retenue_source ||
-        !reglement.montant_net
+      !reglement ||
+      !reglement.montant_brut ||
+      !reglement.base_retenue_source ||
+      !reglement.taux_retenue_source ||
+      !reglement.montant_retenue_source ||
+      !reglement.montant_net
     ) {
       return res
-          .status(400)
-          .json({ error: "Tous les champs requis doivent être fournis." });
+        .status(400)
+        .json({ error: "Tous les champs requis doivent être fournis." });
     }
 
     db.beginTransaction((err) => {
       if (err) {
         console.error("Erreur lors de la création de la transaction:", err);
         return res
-            .status(500)
-            .json({ message: "Erreur lors de la création de la transaction." });
+          .status(500)
+          .json({ message: "Erreur lors de la création de la transaction." });
       }
 
       const insertReglementQuery =
-          "INSERT INTO reglements_emis (date_saisie, code_tiers, tierId, tiers_saisie, montant_brut, base_retenue_source, taux_retenue_source, montant_retenue_source, montant_net, observations, ajoute_par) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO reglements_emis (date_saisie, code_tiers, tierId, tiers_saisie, montant_brut, base_retenue_source, taux_retenue_source, montant_retenue_source, montant_net, observations, ajoute_par) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
       db.query(
-          insertReglementQuery,
-          [
-            reglement.date_saisie || null,
-            reglement.code_tiers || null,
-            reglement.tierId || null,
-            reglement.tiers_saisie || null,
-            reglement.montant_brut,
-            reglement.base_retenue_source,
-            reglement.taux_retenue_source,
-            reglement.montant_retenue_source,
-            reglement.montant_net,
-            reglement.observations || null,
-            userId,
-          ],
-          (err, result) => {
-            if (err) {
-              console.error("Erreur lors de l'insertion du règlement émis:", err);
-              return db.rollback(() =>
-                  res
-                      .status(500)
-                      .json({
-                        message: "Erreur lors de l'insertion du règlement émis.",
-                      })
-              );
-            }
-
-            const reglementId = result.insertId;
-
-            const payementPromises = payements
-                ? payements.map((payement) => {
-                  return new Promise((resolve, reject) => {
-                    const insertPayementQuery =
-                        "INSERT INTO payements (modalite, num, banque, date_echeance, montant, reglement_emis_id) VALUES (?, ?, ?, ?, ?, ?)";
-                    db.query(
-                        insertPayementQuery,
-                        [
-                          payement.modalite || null,
-                          payement.num || null,
-                          payement.banque || null,
-                          payement.date_echeance || null,
-                          payement.montant || null,
-                          reglementId,
-                        ],
-                        (err) => (err ? reject(err) : resolve())
-                    );
-                  });
+        insertReglementQuery,
+        [
+          reglement.date_saisie || null,
+          reglement.code_tiers || null,
+          reglement.tierId || null,
+          reglement.tiers_saisie || null,
+          reglement.montant_brut,
+          reglement.base_retenue_source,
+          reglement.taux_retenue_source,
+          reglement.montant_retenue_source,
+          reglement.montant_net,
+          reglement.observations || null,
+          userId,
+        ],
+        (err, result) => {
+          if (err) {
+            console.error("Erreur lors de l'insertion du règlement émis:", err);
+            return db.rollback(() =>
+              res
+                .status(500)
+                .json({
+                  message: "Erreur lors de l'insertion du règlement émis.",
                 })
-                : [];
+            );
+          }
 
-            const piecePromises = pieces
-                ? pieces.map((piece) => {
-                  return new Promise((resolve, reject) => {
-                    const insertPieceQuery =
-                        "INSERT INTO pieces_a_regler (num_piece_a_regler, date_piece_a_regler, montant_piece_a_regler, montant_restant, document_fichier, reglement_emis_id) VALUES (?, ?, ?, ?, ?, ?)";
-                    db.query(
-                        insertPieceQuery,
-                        [
-                          piece.num_piece_a_regler || null,
-                          piece.date_piece_a_regler || null,
-                          piece.montant_piece_a_regler || null,
-                          piece.montant_restant || null,
-                          piece.document_fichier || null,
-                          reglementId,
-                        ],
-                        (err) => (err ? reject(err) : resolve())
-                    );
-                  });
-                })
-                : [];
+          const reglementId = result.insertId;
 
-            Promise.all([...payementPromises, ...piecePromises])
-                .then(() => {
-                  db.commit((err) => {
-                    if (err) {
-                      console.error(
-                          "Erreur lors de la validation de la transaction:",
-                          err
-                      );
-                      return db.rollback(() =>
-                          res
-                              .status(500)
-                              .json({
-                                message:
-                                    "Erreur lors de la validation de la transaction.",
-                              })
-                      );
-                    }
-
-                    const notificationMessage = `${req.user.identite} a ajouté un nouveau règlement emi`;
-                    const getComptableQuery =
-                        "SELECT id FROM utilisateurs WHERE role = 'comptable'";
-                    db.query(getComptableQuery, (comptableErr, comptableData) => {
-                      if (comptableErr) {
-                        console.error(
-                            "Erreur lors de la récupération du comptable:",
-                            comptableErr
-                        );
-                        return res
-                            .status(500)
-                            .json({
-                              error: "Échec de la récupération du comptable",
-                              details: comptableErr.message,
-                            });
-                      }
-                      if (comptableData.length === 0) {
-                        console.error("Aucun comptable trouvé");
-                        return res
-                            .status(404)
-                            .json({ error: "Aucun comptable trouvé" });
-                      }
-
-                      const comptableId = comptableData[0].id;
-                      const notificationQuery =
-                          "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-                      db.query(
-                          notificationQuery,
-                          [comptableId, notificationMessage],
-                          (notifErr) => {
-                            if (notifErr) {
-                              console.error(
-                                  "Erreur lors de l'ajout de la notification:",
-                                  notifErr
-                              );
-                              return res
-                                  .status(500)
-                                  .json({
-                                    error: "Échec de l'ajout de la notification",
-                                    details: notifErr.message,
-                                  });
-                            }
-                            return res.status(200).json({
-                              message:
-                                  "Règlement émis ajouté avec succès et notification envoyée",
-                            });
-                          }
-                      );
-                    });
-                  });
-                })
-                .catch((err) => {
-                  console.error(
-                      "Erreur lors de l'insertion des payements ou pièces:",
-                      err
-                  );
-                  db.rollback(() =>
-                      res
-                          .status(500)
-                          .json({
-                            message:
-                                "Erreur lors de l'insertion des payements ou pièces.",
-                          })
+          const payementPromises = payements
+            ? payements.map((payement) => {
+                return new Promise((resolve, reject) => {
+                  const insertPayementQuery =
+                    "INSERT INTO payements (modalite, num, banque, date_echeance, montant, reglement_emis_id) VALUES (?, ?, ?, ?, ?, ?)";
+                  db.query(
+                    insertPayementQuery,
+                    [
+                      payement.modalite || null,
+                      payement.num || null,
+                      payement.banque || null,
+                      payement.date_echeance || null,
+                      payement.montant || null,
+                      reglementId,
+                    ],
+                    (err) => (err ? reject(err) : resolve())
                   );
                 });
-          }
+              })
+            : [];
+
+          const piecePromises = pieces
+            ? pieces.map((piece) => {
+                return new Promise((resolve, reject) => {
+                  const insertPieceQuery =
+                    "INSERT INTO pieces_a_regler (num_piece_a_regler, date_piece_a_regler, montant_piece_a_regler, montant_restant, document_fichier, reglement_emis_id) VALUES (?, ?, ?, ?, ?, ?)";
+                  db.query(
+                    insertPieceQuery,
+                    [
+                      piece.num_piece_a_regler || null,
+                      piece.date_piece_a_regler || null,
+                      piece.montant_piece_a_regler || null,
+                      piece.montant_restant || null,
+                      piece.document_fichier || null,
+                      reglementId,
+                    ],
+                    (err) => (err ? reject(err) : resolve())
+                  );
+                });
+              })
+            : [];
+
+          Promise.all([...payementPromises, ...piecePromises])
+            .then(() => {
+              db.commit((err) => {
+                if (err) {
+                  console.error(
+                    "Erreur lors de la validation de la transaction:",
+                    err
+                  );
+                  return db.rollback(() =>
+                    res
+                      .status(500)
+                      .json({
+                        message:
+                          "Erreur lors de la validation de la transaction.",
+                      })
+                  );
+                }
+
+                const notificationMessage = `${req.user.identite} a ajouté un nouveau règlement emi`;
+                const getComptableQuery =
+                  "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+                db.query(getComptableQuery, (comptableErr, comptableData) => {
+                  if (comptableErr) {
+                    console.error(
+                      "Erreur lors de la récupération du comptable:",
+                      comptableErr
+                    );
+                    return res
+                      .status(500)
+                      .json({
+                        error: "Échec de la récupération du comptable",
+                        details: comptableErr.message,
+                      });
+                  }
+                  if (comptableData.length === 0) {
+                    console.error("Aucun comptable trouvé");
+                    return res
+                      .status(404)
+                      .json({ error: "Aucun comptable trouvé" });
+                  }
+
+                  const comptableId = comptableData[0].id;
+                  const notificationQuery =
+                    "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+                  db.query(
+                    notificationQuery,
+                    [comptableId, notificationMessage],
+                    (notifErr) => {
+                      if (notifErr) {
+                        console.error(
+                          "Erreur lors de l'ajout de la notification:",
+                          notifErr
+                        );
+                        return res
+                          .status(500)
+                          .json({
+                            error: "Échec de l'ajout de la notification",
+                            details: notifErr.message,
+                          });
+                      }
+                      return res.status(200).json({
+                        message:
+                          "Règlement émis ajouté avec succès et notification envoyée",
+                      });
+                    }
+                  );
+                });
+              });
+            })
+            .catch((err) => {
+              console.error(
+                "Erreur lors de l'insertion des payements ou pièces:",
+                err
+              );
+              db.rollback(() =>
+                res
+                  .status(500)
+                  .json({
+                    message:
+                      "Erreur lors de l'insertion des payements ou pièces.",
+                  })
+              );
+            });
+        }
       );
     });
   } catch (e) {
     console.error("Erreur lors du traitement des données:", e);
     return res
-        .status(500)
-        .json({ message: "Erreur lors du traitement des données." });
+      .status(500)
+      .json({ message: "Erreur lors du traitement des données." });
   }
 });
 
@@ -1990,8 +2035,8 @@ app.get("/api/reglements_emis/:id", (req, res) => {
     if (err) {
       console.error("Erreur lors de la récupération du règlement émis:", err);
       return res
-          .status(500)
-          .json({ message: "Erreur lors de la récupération du règlement émis." });
+        .status(500)
+        .json({ message: "Erreur lors de la récupération du règlement émis." });
     }
 
     if (reglementRows.length === 0) {
@@ -2007,21 +2052,21 @@ app.get("/api/reglements_emis/:id", (req, res) => {
       if (err) {
         console.error("Erreur lors de la récupération des payements:", err);
         return res
-            .status(500)
-            .json({ message: "Erreur lors de la récupération des payements." });
+          .status(500)
+          .json({ message: "Erreur lors de la récupération des payements." });
       }
 
       payements = payementRows;
 
       // Requête pour obtenir les pièces
       const pieceQuery =
-          "SELECT * FROM pieces_a_regler WHERE reglement_emis_id = ?";
+        "SELECT * FROM pieces_a_regler WHERE reglement_emis_id = ?";
       db.query(pieceQuery, [reglementID], (err, pieceRows) => {
         if (err) {
           console.error("Erreur lors de la récupération des pièces:", err);
           return res
-              .status(500)
-              .json({ message: "Erreur lors de la récupération des pièces." });
+            .status(500)
+            .json({ message: "Erreur lors de la récupération des pièces." });
         }
 
         pieces = pieceRows;
@@ -2041,13 +2086,13 @@ app.put("/api/reglements_emis/:id", async (req, res) => {
   try {
     // Vérifier l'existence du règlement
     const existingReglement = await db.query(
-        "SELECT * FROM `reglements_emis` WHERE id = ?",
-        [reglementID]
+      "SELECT * FROM `reglements_emis` WHERE id = ?",
+      [reglementID]
     );
     if (existingReglement.length === 0) {
       return res
-          .status(404)
-          .json({ error: "Le règlement spécifié n'a pas été trouvé." });
+        .status(404)
+        .json({ error: "Le règlement spécifié n'a pas été trouvé." });
     }
 
     // Mettre à jour le règlement existant
@@ -2063,8 +2108,8 @@ app.put("/api/reglements_emis/:id", async (req, res) => {
 
     // Supprimer les pièces associées au règlement
     await db.query(
-        "DELETE FROM `pieces_a_regler` WHERE reglement_emis_id = ?",
-        [reglementID]
+      "DELETE FROM `pieces_a_regler` WHERE reglement_emis_id = ?",
+      [reglementID]
     );
 
     // Ajouter ou mettre à jour les payements associés
@@ -2117,7 +2162,7 @@ app.post("/api/payements", async (req, res) => {
     // Assurez-vous que le reglement_emis_id est inclus dans les données du payement
     if (!payementData.reglement_emis_id) {
       throw new Error(
-          "Le reglement_emis_id est requis pour ajouter un payement."
+        "Le reglement_emis_id est requis pour ajouter un payement."
       );
     }
 
@@ -2138,8 +2183,8 @@ app.delete("/api/payements/:id", async (req, res) => {
   try {
     // Avant de supprimer le payement, vérifiez si le payement existe et récupérez le reglement_emis_id associé
     const payementResult = await db.query(
-        "SELECT reglement_emis_id FROM payements WHERE id = ?",
-        [payementId]
+      "SELECT reglement_emis_id FROM payements WHERE id = ?",
+      [payementId]
     );
     if (payementResult.length === 0) {
       return res.status(404).json({ error: "payement not found." });
@@ -2155,8 +2200,8 @@ app.delete("/api/payements/:id", async (req, res) => {
   } catch (error) {
     console.error("Erreur lors de la suppression du payement :", error);
     res
-        .status(500)
-        .json({ error: "Erreur lors de la suppression du payement." });
+      .status(500)
+      .json({ error: "Erreur lors de la suppression du payement." });
   }
 });
 
@@ -2171,8 +2216,8 @@ app.post("/api/pieces_a_regler", async (req, res) => {
     }
 
     const result = await db.query(
-        "INSERT INTO pieces_a_regler SET ?",
-        pieceData
+      "INSERT INTO pieces_a_regler SET ?",
+      pieceData
     );
     const insertedId = result.insertId;
 
@@ -2190,8 +2235,8 @@ app.delete("/api/pieces_a_regler/:id", async (req, res) => {
   try {
     // Avant de supprimer le piece, vérifiez si le piece existe et récupérez le reglement_emis_id associé
     const pieceResult = await db.query(
-        "SELECT reglement_emis_id FROM pieces_a_regler WHERE id = ?",
-        [pieceId]
+      "SELECT reglement_emis_id FROM pieces_a_regler WHERE id = ?",
+      [pieceId]
     );
     if (pieceResult.length === 0) {
       return res.status(404).json({ error: "Piece not found." });
@@ -2353,120 +2398,120 @@ app.post("/api/commande", verifyToken, (req, res) => {
     if (err) {
       console.error("Erreur lors de la création de la transaction:", err);
       return res
-          .status(500)
-          .json({ message: "Erreur lors de la création de la transaction." });
+        .status(500)
+        .json({ message: "Erreur lors de la création de la transaction." });
     }
 
     const insertCommandeQuery =
-        "INSERT INTO `commandes`(`date_commande`, `num_commande`, `code_tiers`, `tiers_saisie`, `montant_commande`, `date_livraison_prevue`, `observations`, `document_fichier`, `ajoute_par` ) VALUES (?,?,?,?,?,?,?,?,?)";
+      "INSERT INTO `commandes`(`date_commande`, `num_commande`, `code_tiers`, `tiers_saisie`, `montant_commande`, `date_livraison_prevue`, `observations`, `document_fichier`, `ajoute_par` ) VALUES (?,?,?,?,?,?,?,?,?)";
     db.query(
-        insertCommandeQuery,
-        [
-          commande.date_commande,
-          commande.num_commande,
-          commande.code_tiers,
-          commande.tiers_saisie,
-          commande.montant_commande,
-          commande.date_livraison_prevue,
-          commande.observations,
-          commande.document_fichier,
-          userId,
-        ],
-        (err, result) => {
-          if (err) {
-            console.error("Erreur lors de l'insertion de la commande :", err);
-            return db.rollback(() =>
-                res
-                    .status(500)
-                    .json({ message: "Erreur lors de l'insertion de la commande." })
-            );
-          }
-
-          const commandeId = result.insertId;
-
-          const famillePromises = familles.map(
-              (famille) =>
-                  new Promise((resolve, reject) => {
-                    const insertFamilleQuery =
-                        "INSERT INTO `familles`(`famille`, `sous_famille`, `article`, `commande_id`) VALUES (?,?,?,?)";
-                    db.query(
-                        insertFamilleQuery,
-                        [
-                          famille.famille,
-                          famille.sous_famille,
-                          famille.article,
-                          commandeId,
-                        ],
-                        (err) => (err ? reject(err) : resolve())
-                    );
-                  })
+      insertCommandeQuery,
+      [
+        commande.date_commande,
+        commande.num_commande,
+        commande.code_tiers,
+        commande.tiers_saisie,
+        commande.montant_commande,
+        commande.date_livraison_prevue,
+        commande.observations,
+        commande.document_fichier,
+        userId,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("Erreur lors de l'insertion de la commande :", err);
+          return db.rollback(() =>
+            res
+              .status(500)
+              .json({ message: "Erreur lors de l'insertion de la commande." })
           );
+        }
 
-          Promise.all([...famillePromises])
-              .then(() => {
-                db.commit((err) => {
-                  if (err) {
-                    console.error(
-                        "Erreur lors de la validation de la transaction :",
-                        err
-                    );
-                    return db.rollback(() =>
-                        res.status(500).json({
-                          message: "Erreur lors de la validation de la transaction.",
-                        })
-                    );
-                  }
+        const commandeId = result.insertId;
 
-                  // Notification logic
-                  const notificationMessage = `${req.user.identite} a ajouté une nouvelle Commande`;
+        const famillePromises = familles.map(
+          (famille) =>
+            new Promise((resolve, reject) => {
+              const insertFamilleQuery =
+                "INSERT INTO `familles`(`famille`, `sous_famille`, `article`, `commande_id`) VALUES (?,?,?,?)";
+              db.query(
+                insertFamilleQuery,
+                [
+                  famille.famille,
+                  famille.sous_famille,
+                  famille.article,
+                  commandeId,
+                ],
+                (err) => (err ? reject(err) : resolve())
+              );
+            })
+        );
 
-                  const getComptableQuery =
-                      "SELECT id FROM utilisateurs WHERE role = 'comptable'";
-                  db.query(getComptableQuery, (comptableErr, comptableData) => {
-                    if (comptableErr) {
-                      console.error("Error fetching comptable:", comptableErr);
+        Promise.all([...famillePromises])
+          .then(() => {
+            db.commit((err) => {
+              if (err) {
+                console.error(
+                  "Erreur lors de la validation de la transaction :",
+                  err
+                );
+                return db.rollback(() =>
+                  res.status(500).json({
+                    message: "Erreur lors de la validation de la transaction.",
+                  })
+                );
+              }
+
+              // Notification logic
+              const notificationMessage = `${req.user.identite} a ajouté une nouvelle Commande`;
+
+              const getComptableQuery =
+                "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+              db.query(getComptableQuery, (comptableErr, comptableData) => {
+                if (comptableErr) {
+                  console.error("Error fetching comptable:", comptableErr);
+                  return res.status(500).json({
+                    error: "Failed to fetch comptable",
+                    details: comptableErr.message,
+                  });
+                }
+                if (comptableData.length === 0) {
+                  console.error("No comptable found");
+                  return res.status(404).json({ error: "No comptable found" });
+                }
+
+                const comptableId = comptableData[0].id;
+                const notificationQuery =
+                  "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+                db.query(
+                  notificationQuery,
+                  [comptableId, notificationMessage],
+                  (notifErr, notifData) => {
+                    if (notifErr) {
+                      console.error("Error adding notification:", notifErr);
                       return res.status(500).json({
-                        error: "Failed to fetch comptable",
-                        details: comptableErr.message,
+                        error: "Failed to add notification",
+                        details: notifErr.message,
                       });
                     }
-                    if (comptableData.length === 0) {
-                      console.error("No comptable found");
-                      return res.status(404).json({ error: "No comptable found" });
-                    }
-
-                    const comptableId = comptableData[0].id;
-                    const notificationQuery =
-                        "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-                    db.query(
-                        notificationQuery,
-                        [comptableId, notificationMessage],
-                        (notifErr, notifData) => {
-                          if (notifErr) {
-                            console.error("Error adding notification:", notifErr);
-                            return res.status(500).json({
-                              error: "Failed to add notification",
-                              details: notifErr.message,
-                            });
-                          }
-                          return res.status(200).json({
-                            message:
-                                "Commande ajoutée avec succès et notification envoyée",
-                          });
-                        }
-                    );
-                  });
-                });
-              })
-              .catch((err) => {
-                console.error("Erreur lors de l'insertion des familles :", err);
-                db.rollback(() =>
-                    res
-                        .status(500)
-                        .json({ message: "Erreur lors de l'insertion des familles." })
+                    return res.status(200).json({
+                      message:
+                        "Commande ajoutée avec succès et notification envoyée",
+                    });
+                  }
                 );
               });
-        }
+            });
+          })
+          .catch((err) => {
+            console.error("Erreur lors de l'insertion des familles :", err);
+            db.rollback(() =>
+              res
+                .status(500)
+                .json({ message: "Erreur lors de l'insertion des familles." })
+            );
+          });
+      }
     );
   });
 });
@@ -2479,24 +2524,24 @@ app.put("/api/commande/:id", async (req, res) => {
   try {
     // Vérifier l'existence de la commande
     const existingCommande = await db.query(
-        "SELECT * FROM `commandes` WHERE id = ?",
-        [commandeID]
+      "SELECT * FROM `commandes` WHERE id = ?",
+      [commandeID]
     );
     if (existingCommande.length === 0) {
       return res
-          .status(404)
-          .json({ error: "La commande spécifiée n'a pas été trouvée." });
+        .status(404)
+        .json({ error: "La commande spécifiée n'a pas été trouvée." });
     }
 
     // Vérifier si le code_tiers existe dans la table tiers
     const existingTier = await db.query(
-        "SELECT * FROM `tiers` WHERE code_tiers = ?",
-        [commande.code_tiers]
+      "SELECT * FROM `tiers` WHERE code_tiers = ?",
+      [commande.code_tiers]
     );
     if (existingTier.length === 0) {
       return res
-          .status(400)
-          .json({ error: "Le code_tiers spécifié n'existe pas." });
+        .status(400)
+        .json({ error: "Le code_tiers spécifié n'existe pas." });
     }
 
     // Mettre à jour la commande
@@ -2550,8 +2595,8 @@ app.get("/api/commande/:id", (req, res) => {
     if (err) {
       console.error("Erreur lors de la récupération du commande:", err);
       return res
-          .status(500)
-          .json({ message: "Erreur lors de la récupération du commande." });
+        .status(500)
+        .json({ message: "Erreur lors de la récupération du commande." });
     }
 
     if (commandeRows.length === 0) {
@@ -2567,8 +2612,8 @@ app.get("/api/commande/:id", (req, res) => {
       if (err) {
         console.error("Erreur lors de la récupération des familles:", err);
         return res
-            .status(500)
-            .json({ message: "Erreur lors de la récupération des familles." });
+          .status(500)
+          .json({ message: "Erreur lors de la récupération des familles." });
       }
 
       familles = familleRows;
@@ -2658,7 +2703,7 @@ app.post("/api/livraison", verifyToken, (req, res) => {
     return res.status(400).json({ error: "User ID is required to add achat" });
   }
   const q =
-      "INSERT INTO `livraisons`( `date_BL`, `num_BL`, `code_tiers`, `tiers_saisie`, `reference_commande`, `montant_HT_BL`, `TVA_BL`, `montant_total_BL`, `observations`, `document_fichier`, `ajoute_par`) VALUES (?)";
+    "INSERT INTO `livraisons`( `date_BL`, `num_BL`, `code_tiers`, `tiers_saisie`, `reference_commande`, `montant_HT_BL`, `TVA_BL`, `montant_total_BL`, `observations`, `document_fichier`, `ajoute_par`) VALUES (?)";
   const values = [
     req.body.date_BL,
     req.body.num_BL,
@@ -2678,7 +2723,7 @@ app.post("/api/livraison", verifyToken, (req, res) => {
     // Notification logic
     const notificationMessage = `${req.user.identite} a ajouté une nouvelle Livraison`;
     const getComptableQuery =
-        "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+      "SELECT id FROM utilisateurs WHERE role = 'comptable'";
     db.query(getComptableQuery, (comptableErr, comptableData) => {
       if (comptableErr) {
         console.error("Error fetching comptable:", comptableErr);
@@ -2694,22 +2739,22 @@ app.post("/api/livraison", verifyToken, (req, res) => {
 
       const comptableId = comptableData[0].id;
       const notificationQuery =
-          "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+        "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
       db.query(
-          notificationQuery,
-          [comptableId, notificationMessage],
-          (notifErr, notifData) => {
-            if (notifErr) {
-              console.error("Error adding notification:", notifErr);
-              return res.status(500).json({
-                error: "Failed to add notification",
-                details: notifErr.message,
-              });
-            }
-            return res.status(200).json({
-              message: "Livraison ajoutée avec succès et notification envoyée",
+        notificationQuery,
+        [comptableId, notificationMessage],
+        (notifErr, notifData) => {
+          if (notifErr) {
+            console.error("Error adding notification:", notifErr);
+            return res.status(500).json({
+              error: "Failed to add notification",
+              details: notifErr.message,
             });
           }
+          return res.status(200).json({
+            message: "Livraison ajoutée avec succès et notification envoyée",
+          });
+        }
       );
     });
   });
@@ -2811,7 +2856,7 @@ app.get("/api/familles/:famille", (req, res) => {
 
   // Requête SQL pour récupérer les données de famille en fonction de la valeur donnée
   const sql =
-      "SELECT famille, sous_famille, article FROM familles WHERE famille = ?";
+    "SELECT famille, sous_famille, article FROM familles WHERE famille = ?";
 
   // Exécution de la requête SQL avec la valeur donnée
   db.query(sql, [famille], (err, results) => {
@@ -2839,8 +2884,8 @@ app.delete("/api/familles/:id", async (req, res) => {
   try {
     // Avant de supprimer la famille, vérifiez si la famille existe et récupérez le commande_id associé
     const familleResult = await db.query(
-        "SELECT commande_id FROM familles WHERE id = ?",
-        [familleId]
+      "SELECT commande_id FROM familles WHERE id = ?",
+      [familleId]
     );
     if (familleResult.length === 0) {
       return res.status(404).json({ error: "famille not found." });
@@ -2856,8 +2901,8 @@ app.delete("/api/familles/:id", async (req, res) => {
   } catch (error) {
     console.error("Erreur lors de la suppression du famille :", error);
     res
-        .status(500)
-        .json({ error: "Erreur lors de la suppression du famille." });
+      .status(500)
+      .json({ error: "Erreur lors de la suppression du famille." });
   }
 });
 
@@ -2870,8 +2915,8 @@ app.get("/api/articles", (req, res) => {
     if (err) {
       console.error("Erreur lors de la récupération des articles:", err);
       res
-          .status(500)
-          .json({ error: "Erreur lors de la récupération des articles" });
+        .status(500)
+        .json({ error: "Erreur lors de la récupération des articles" });
       return;
     }
     res.json(results);
@@ -2947,8 +2992,8 @@ app.post("/api/facture", verifyToken, (req, res) => {
 
   if (!userId) {
     return res
-        .status(400)
-        .json({ error: "User ID is required to add facture" });
+      .status(400)
+      .json({ error: "User ID is required to add facture" });
   }
 
   let facture;
@@ -2957,16 +3002,16 @@ app.post("/api/facture", verifyToken, (req, res) => {
   } catch (e) {
     console.error("Erreur lors du parsing des données:", e);
     return res
-        .status(400)
-        .json({ error: "Invalid JSON format for facture data" });
+      .status(400)
+      .json({ error: "Invalid JSON format for facture data" });
   }
 
   db.beginTransaction((err) => {
     if (err) {
       console.error("Erreur lors de la création de la transaction:", err);
       return res
-          .status(500)
-          .json({ message: "Erreur lors de la création de la transaction." });
+        .status(500)
+        .json({ message: "Erreur lors de la création de la transaction." });
     }
 
     const insertFactureQuery = `
@@ -2978,100 +3023,100 @@ app.post("/api/facture", verifyToken, (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     db.query(
-        insertFactureQuery,
-        [
-          facture.date_facture,
-          facture.num_facture,
-          facture.code_tiers,
-          facture.tiers_saisie,
-          facture.reference_livraison,
-          facture.montant_HT_facture,
-          facture.FODEC_sur_facture,
-          facture.TVA_facture,
-          facture.timbre_facture,
-          facture.autre_montant_facture,
-          facture.montant_total_facture,
-          facture.observations,
-          facture.document_fichier,
-          facture.etat_payement,
-          userId,
-        ],
-        (err, result) => {
+      insertFactureQuery,
+      [
+        facture.date_facture,
+        facture.num_facture,
+        facture.code_tiers,
+        facture.tiers_saisie,
+        facture.reference_livraison,
+        facture.montant_HT_facture,
+        facture.FODEC_sur_facture,
+        facture.TVA_facture,
+        facture.timbre_facture,
+        facture.autre_montant_facture,
+        facture.montant_total_facture,
+        facture.observations,
+        facture.document_fichier,
+        facture.etat_payement,
+        userId,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("Erreur lors de l'insertion du facture:", err);
+          return db.rollback(() =>
+            res
+              .status(500)
+              .json({ message: "Erreur lors de l'insertion du facture." })
+          );
+        }
+
+        // Ajouter la notification
+        const notificationMessage = `${identite} a ajouté une nouvelle facture`;
+
+        const getComptableQuery =
+          "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+        db.query(getComptableQuery, (err, data) => {
           if (err) {
-            console.error("Erreur lors de l'insertion du facture:", err);
+            console.error("Erreur lors de la récupération du comptable:", err);
             return db.rollback(() =>
-                res
-                    .status(500)
-                    .json({ message: "Erreur lors de l'insertion du facture." })
+              res
+                .status(500)
+                .json({ error: "Erreur lors de la récupération du comptable." })
             );
           }
 
-          // Ajouter la notification
-          const notificationMessage = `${identite} a ajouté une nouvelle facture`;
-
-          const getComptableQuery =
-              "SELECT id FROM utilisateurs WHERE role = 'comptable'";
-          db.query(getComptableQuery, (err, data) => {
-            if (err) {
-              console.error("Erreur lors de la récupération du comptable:", err);
-              return db.rollback(() =>
-                  res
-                      .status(500)
-                      .json({ error: "Erreur lors de la récupération du comptable." })
-              );
-            }
-
-            if (data.length === 0) {
-              console.error("Aucun comptable trouvé.");
-              return db.rollback(() =>
-                  res.status(404).json({ error: "Aucun comptable trouvé." })
-              );
-            }
-
-            const comptableId = data[0].id;
-            const notificationQuery =
-                "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-            db.query(
-                notificationQuery,
-                [comptableId, notificationMessage],
-                (err) => {
-                  if (err) {
-                    console.error(
-                        "Erreur lors de l'insertion de la notification:",
-                        err
-                    );
-                    return db.rollback(() =>
-                        res
-                            .status(500)
-                            .json({
-                              error: "Erreur lors de l'insertion de la notification.",
-                            })
-                    );
-                  }
-
-                  db.commit((err) => {
-                    if (err) {
-                      console.error(
-                          "Erreur lors du commit de la transaction:",
-                          err
-                      );
-                      return db.rollback(() =>
-                          res
-                              .status(500)
-                              .json({
-                                message: "Erreur lors du commit de la transaction.",
-                              })
-                      );
-                    }
-
-                    res
-                        .status(201)
-                        .json({ message: "Facture ajoutée avec succès" });
-                  });
-                }
+          if (data.length === 0) {
+            console.error("Aucun comptable trouvé.");
+            return db.rollback(() =>
+              res.status(404).json({ error: "Aucun comptable trouvé." })
             );
-          });
-        }
+          }
+
+          const comptableId = data[0].id;
+          const notificationQuery =
+            "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+          db.query(
+            notificationQuery,
+            [comptableId, notificationMessage],
+            (err) => {
+              if (err) {
+                console.error(
+                  "Erreur lors de l'insertion de la notification:",
+                  err
+                );
+                return db.rollback(() =>
+                  res
+                    .status(500)
+                    .json({
+                      error: "Erreur lors de l'insertion de la notification.",
+                    })
+                );
+              }
+
+              db.commit((err) => {
+                if (err) {
+                  console.error(
+                    "Erreur lors du commit de la transaction:",
+                    err
+                  );
+                  return db.rollback(() =>
+                    res
+                      .status(500)
+                      .json({
+                        message: "Erreur lors du commit de la transaction.",
+                      })
+                  );
+                }
+
+                res
+                  .status(201)
+                  .json({ message: "Facture ajoutée avec succès" });
+              });
+            }
+          );
+        });
+      }
     );
   });
 });
@@ -3081,7 +3126,7 @@ app.get("/api/factures/:num_facture", (req, res) => {
   const num_facture = req.params.num_facture;
 
   const sql =
-      "SELECT `id`,`date_facture`, `montant_total_facture`, `document_fichier` FROM `facturations` WHERE num_facture = ?";
+    "SELECT `id`,`date_facture`, `montant_total_facture`, `document_fichier` FROM `facturations` WHERE num_facture = ?";
 
   // Exécution de la requête SQL avec la valeur donnée
   db.query(sql, [num_facture], (err, results) => {
@@ -3105,7 +3150,7 @@ app.get("/api/factures/:num_facture", (req, res) => {
 // Route pour gérer les suggestions de factures
 app.get("/api/num_facture", (req, res) => {
   const query =
-      "SELECT DISTINCT id , num_facture FROM facturations WHERE etat_payement = 1";
+    "SELECT DISTINCT id , num_facture FROM facturations WHERE etat_payement = 1";
   db.query(query, (err, results) => {
     if (err) {
       console.error("Erreur lors de l'exécution de la requête SQL:", err);
@@ -3137,8 +3182,8 @@ app.get("/api/facture/:id", (req, res) => {
     if (err) {
       console.error("Erreur lors de la récupération du facture:", err);
       return res
-          .status(500)
-          .json({ message: "Erreur lors de la récupération du facture." });
+        .status(500)
+        .json({ message: "Erreur lors de la récupération du facture." });
     }
 
     if (factureRows.length === 0) {
@@ -3213,8 +3258,8 @@ app.put("/api/facture/:id", async (req, res) => {
   } catch (error) {
     console.error("Erreur lors de la mise à jour de la facture :", error);
     res
-        .status(500)
-        .json({ message: "Erreur lors de la mise à jour de la facture" });
+      .status(500)
+      .json({ message: "Erreur lors de la mise à jour de la facture" });
   }
 });
 
@@ -3321,124 +3366,124 @@ app.get("/api/reglements_recus", verifyToken, (req, res) => {
 app.post("/api/reglements_recus", verifyToken, (req, res) => {
   if (!req.user || !req.user.id) {
     console.error(
-        "User ID is undefined. Cannot proceed with adding reglement."
+      "User ID is undefined. Cannot proceed with adding reglement."
     );
     return res
-        .status(400)
-        .json({ error: "User ID is required to add reglement" });
+      .status(400)
+      .json({ error: "User ID is required to add reglement" });
   }
   const userId = req.user.id;
   const { reglement, payements, factures } = req.body;
 
   // Insertion du règlement reçu
   db.query(
-      "INSERT INTO reglements_recus (code_tiers, tierId, tiers_saisie, montant_total_a_regler, observations, ajoute_par ) VALUES (?, ?, ?, ?, ?)",
-      [
-        reglement.code_tiers,
-        reglement.tierId,
-        reglement.tiers_saisie,
-        reglement.montant_total_a_regler,
-        reglement.observations,
-        userId,
-      ],
-      (err, result) => {
-        if (err) {
-          console.error("Erreur lors de l'ajout du règlement reçu :", err);
-          return res
-              .status(500)
-              .json({ error: "Erreur lors de l'ajout du règlement reçu." });
+    "INSERT INTO reglements_recus (code_tiers, tierId, tiers_saisie, montant_total_a_regler, observations, ajoute_par ) VALUES (?, ?, ?, ?, ?)",
+    [
+      reglement.code_tiers,
+      reglement.tierId,
+      reglement.tiers_saisie,
+      reglement.montant_total_a_regler,
+      reglement.observations,
+      userId,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Erreur lors de l'ajout du règlement reçu :", err);
+        return res
+          .status(500)
+          .json({ error: "Erreur lors de l'ajout du règlement reçu." });
+      }
+
+      // Récupération de l'ID du règlement reçu inséré
+      const reglementRecuId = result.insertId;
+
+      // Insertion des payements
+      payements.forEach((payement) => {
+        db.query(
+          "INSERT INTO payements (modalite, num, banque, date_echeance, montant, reglement_recus_id) VALUES (?, ?, ?, ?, ?, ?)",
+          [
+            payement.modalite,
+            payement.num,
+            payement.banque,
+            payement.date_echeance,
+            payement.montant,
+            reglementRecuId,
+          ],
+          (err) => {
+            if (err) {
+              console.error("Erreur lors de l'ajout du payement :", err);
+              return res
+                .status(500)
+                .json({ error: "Erreur lors de l'ajout du payement." });
+            }
+          }
+        );
+      });
+
+      // Insertion des factures
+      factures.forEach((facture) => {
+        db.query(
+          "INSERT INTO reglements_recus_factures (reglement_recu_id, facture_id) VALUES (?, ?)",
+          [reglementRecuId, facture.id],
+          (err) => {
+            if (err) {
+              console.error("Erreur lors de l'ajout de la facture :", err);
+              return res
+                .status(500)
+                .json({ error: "Erreur lors de l'ajout de la facture." });
+            }
+          }
+        );
+      });
+
+      // Ajout de la notification pour le comptable
+      const notificationMessage = `${req.user.identite} a ajouté un nouveau règlement reçu.`;
+
+      // Récupérer le comptable
+      const getComptableQuery =
+        "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+      db.query(getComptableQuery, (comptableErr, comptableData) => {
+        if (comptableErr) {
+          console.error(
+            "Erreur lors de la récupération du comptable :",
+            comptableErr
+          );
+          return res.status(500).json({
+            error: "Erreur lors de la récupération du comptable.",
+            details: comptableErr.message,
+          });
+        }
+        if (comptableData.length === 0) {
+          console.error("Aucun comptable trouvé");
+          return res.status(404).json({ error: "Aucun comptable trouvé." });
         }
 
-        // Récupération de l'ID du règlement reçu inséré
-        const reglementRecuId = result.insertId;
+        const comptableId = comptableData[0].id;
 
-        // Insertion des payements
-        payements.forEach((payement) => {
-          db.query(
-              "INSERT INTO payements (modalite, num, banque, date_echeance, montant, reglement_recus_id) VALUES (?, ?, ?, ?, ?, ?)",
-              [
-                payement.modalite,
-                payement.num,
-                payement.banque,
-                payement.date_echeance,
-                payement.montant,
-                reglementRecuId,
-              ],
-              (err) => {
-                if (err) {
-                  console.error("Erreur lors de l'ajout du payement :", err);
-                  return res
-                      .status(500)
-                      .json({ error: "Erreur lors de l'ajout du payement." });
-                }
-              }
-          );
-        });
-
-        // Insertion des factures
-        factures.forEach((facture) => {
-          db.query(
-              "INSERT INTO reglements_recus_factures (reglement_recu_id, facture_id) VALUES (?, ?)",
-              [reglementRecuId, facture.id],
-              (err) => {
-                if (err) {
-                  console.error("Erreur lors de l'ajout de la facture :", err);
-                  return res
-                      .status(500)
-                      .json({ error: "Erreur lors de l'ajout de la facture." });
-                }
-              }
-          );
-        });
-
-        // Ajout de la notification pour le comptable
-        const notificationMessage = `${req.user.identite} a ajouté un nouveau règlement reçu.`;
-
-        // Récupérer le comptable
-        const getComptableQuery =
-            "SELECT id FROM utilisateurs WHERE role = 'comptable'";
-        db.query(getComptableQuery, (comptableErr, comptableData) => {
-          if (comptableErr) {
-            console.error(
-                "Erreur lors de la récupération du comptable :",
-                comptableErr
-            );
-            return res.status(500).json({
-              error: "Erreur lors de la récupération du comptable.",
-              details: comptableErr.message,
+        // Ajouter la notification pour le comptable
+        const notificationQuery =
+          "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+        db.query(
+          notificationQuery,
+          [comptableId, notificationMessage],
+          (notifErr) => {
+            if (notifErr) {
+              console.error(
+                "Erreur lors de l'ajout de la notification :",
+                notifErr
+              );
+              return res.status(500).json({
+                error: "Erreur lors de l'ajout de la notification.",
+                details: notifErr.message,
+              });
+            }
+            return res.status(200).json({
+              message: "Règlement reçu, notifications ajoutées avec succès.",
             });
           }
-          if (comptableData.length === 0) {
-            console.error("Aucun comptable trouvé");
-            return res.status(404).json({ error: "Aucun comptable trouvé." });
-          }
-
-          const comptableId = comptableData[0].id;
-
-          // Ajouter la notification pour le comptable
-          const notificationQuery =
-              "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-          db.query(
-              notificationQuery,
-              [comptableId, notificationMessage],
-              (notifErr) => {
-                if (notifErr) {
-                  console.error(
-                      "Erreur lors de l'ajout de la notification :",
-                      notifErr
-                  );
-                  return res.status(500).json({
-                    error: "Erreur lors de l'ajout de la notification.",
-                    details: notifErr.message,
-                  });
-                }
-                return res.status(200).json({
-                  message: "Règlement reçu, notifications ajoutées avec succès.",
-                });
-              }
-          );
-        });
-      }
+        );
+      });
+    }
   );
 });
 
@@ -3475,13 +3520,13 @@ app.get("/api/reglements_recus/:id", (req, res) => {
 
     // Requête pour obtenir les payements
     const payementQuery =
-        "SELECT * FROM payements WHERE reglement_recus_id  = ?";
+      "SELECT * FROM payements WHERE reglement_recus_id  = ?";
     db.query(payementQuery, [reglementID], (err, payementRows) => {
       if (err) {
         console.error("Erreur lors de la récupération des payements:", err);
         return res
-            .status(500)
-            .json({ message: "Erreur lors de la récupération des payements." });
+          .status(500)
+          .json({ message: "Erreur lors de la récupération des payements." });
       }
 
       payements = payementRows;
@@ -3496,8 +3541,8 @@ app.get("/api/reglements_recus/:id", (req, res) => {
         if (err) {
           console.error("Erreur lors de la récupération des factures:", err);
           return res
-              .status(500)
-              .json({ message: "Erreur lors de la récupération des factures." });
+            .status(500)
+            .json({ message: "Erreur lors de la récupération des factures." });
         }
 
         factures = factureRows;
@@ -3572,15 +3617,15 @@ app.put("/api/reglements_recus/:id", async (req, res) => {
     await db.commit();
 
     res
-        .status(200)
-        .json({ message: "Le règlement reçu a été mis à jour avec succès." });
+      .status(200)
+      .json({ message: "Le règlement reçu a été mis à jour avec succès." });
   } catch (error) {
     // Rollback transaction in case of error
     await db.rollback();
     console.error("Erreur lors de la mise à jour du règlement reçu :", error);
     res.status(500).json({
       error:
-          "Une erreur s'est produite lors de la mise à jour du règlement reçu.",
+        "Une erreur s'est produite lors de la mise à jour du règlement reçu.",
     });
   }
 });
@@ -3664,11 +3709,11 @@ app.post("/api/versement", verifyToken, (req, res) => {
 
   if (!userId) {
     console.error(
-        "User ID is undefined. Cannot proceed with adding versement."
+      "User ID is undefined. Cannot proceed with adding versement."
     );
     return res
-        .status(400)
-        .json({ error: "User ID is required to add versement" });
+      .status(400)
+      .json({ error: "User ID is required to add versement" });
   }
 
   const { versement, payements } = req.body;
@@ -3678,90 +3723,90 @@ app.post("/api/versement", verifyToken, (req, res) => {
 
   // Insérer le versement dans la table versements_en_banque
   db.query(
-      "INSERT INTO versements_en_banque SET ?",
-      versementData,
-      (err, result) => {
-        if (err) {
-          console.error("Erreur lors de l'insertion du versement :", err);
-          return res.status(500).send("Erreur lors de l'insertion du versement");
-        }
+    "INSERT INTO versements_en_banque SET ?",
+    versementData,
+    (err, result) => {
+      if (err) {
+        console.error("Erreur lors de l'insertion du versement :", err);
+        return res.status(500).send("Erreur lors de l'insertion du versement");
+      }
 
-        const versementId = result.insertId;
+      const versementId = result.insertId;
 
-        // Préparer les valeurs des payements pour l'insertion
-        const payementsValues = payements.map((payement) => [
-          payement.modalite,
-          payement.num,
-          payement.banque,
-          payement.date_echeance,
-          payement.montant,
-          payement.code_tiers,
-          payement.tierId,
-          payement.tiers_saisie,
-          versementId,
-        ]);
+      // Préparer les valeurs des payements pour l'insertion
+      const payementsValues = payements.map((payement) => [
+        payement.modalite,
+        payement.num,
+        payement.banque,
+        payement.date_echeance,
+        payement.montant,
+        payement.code_tiers,
+        payement.tierId,
+        payement.tiers_saisie,
+        versementId,
+      ]);
 
-        // Insérer les payements dans la table payements
-        db.query(
-            "INSERT INTO payements (modalite, num, banque, date_echeance, montant, code_tiers, tierId, tiers_saisie, versement_id) VALUES ?",
-            [payementsValues],
-            (err, result) => {
-              if (err) {
-                console.error("Erreur lors de l'insertion des payements :", err);
-                return res
-                    .status(500)
-                    .send("Erreur lors de l'insertion des payements");
-              }
+      // Insérer les payements dans la table payements
+      db.query(
+        "INSERT INTO payements (modalite, num, banque, date_echeance, montant, code_tiers, tierId, tiers_saisie, versement_id) VALUES ?",
+        [payementsValues],
+        (err, result) => {
+          if (err) {
+            console.error("Erreur lors de l'insertion des payements :", err);
+            return res
+              .status(500)
+              .send("Erreur lors de l'insertion des payements");
+          }
 
-              // Logique de notification
-              const notificationMessage = `${req.user.identite} a ajouté un nouveau versement`;
+          // Logique de notification
+          const notificationMessage = `${req.user.identite} a ajouté un nouveau versement`;
 
-              const getComptableQuery =
-                  "SELECT id FROM utilisateurs WHERE role = 'comptable'";
-              db.query(getComptableQuery, (comptableErr, comptableData) => {
-                if (comptableErr) {
-                  console.error(
-                      "Erreur lors de la récupération des comptables :",
-                      comptableErr
-                  );
-                  return res.status(500).json({
-                    error: "Erreur lors de la récupération des comptables",
-                    details: comptableErr.message,
-                  });
-                }
-                if (comptableData.length === 0) {
-                  console.error("Aucun comptable trouvé");
-                  return res.status(404).json({ error: "Aucun comptable trouvé" });
-                }
-
-                const comptableId = comptableData[0].id;
-                const notificationQuery =
-                    "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-                db.query(
-                    notificationQuery,
-                    [comptableId, notificationMessage],
-                    (notifErr, notifData) => {
-                      if (notifErr) {
-                        console.error(
-                            "Erreur lors de l'ajout de la notification :",
-                            notifErr
-                        );
-                        return res.status(500).json({
-                          error: "Erreur lors de l'ajout de la notification",
-                          details: notifErr.message,
-                        });
-                      }
-
-                      return res.status(200).json({
-                        message:
-                            "Versement ajouté et notification envoyée avec succès",
-                      });
-                    }
-                );
+          const getComptableQuery =
+            "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+          db.query(getComptableQuery, (comptableErr, comptableData) => {
+            if (comptableErr) {
+              console.error(
+                "Erreur lors de la récupération des comptables :",
+                comptableErr
+              );
+              return res.status(500).json({
+                error: "Erreur lors de la récupération des comptables",
+                details: comptableErr.message,
               });
             }
-        );
-      }
+            if (comptableData.length === 0) {
+              console.error("Aucun comptable trouvé");
+              return res.status(404).json({ error: "Aucun comptable trouvé" });
+            }
+
+            const comptableId = comptableData[0].id;
+            const notificationQuery =
+              "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+            db.query(
+              notificationQuery,
+              [comptableId, notificationMessage],
+              (notifErr, notifData) => {
+                if (notifErr) {
+                  console.error(
+                    "Erreur lors de l'ajout de la notification :",
+                    notifErr
+                  );
+                  return res.status(500).json({
+                    error: "Erreur lors de l'ajout de la notification",
+                    details: notifErr.message,
+                  });
+                }
+
+                return res.status(200).json({
+                  message:
+                    "Versement ajouté et notification envoyée avec succès",
+                });
+              }
+            );
+          });
+        }
+      );
+    }
   );
 });
 
@@ -3784,8 +3829,8 @@ app.get("/api/versement/:id", (req, res) => {
     if (err) {
       console.error("Erreur lors de la récupération du versement:", err);
       return res
-          .status(500)
-          .json({ message: "Erreur lors de la récupération du versement." });
+        .status(500)
+        .json({ message: "Erreur lors de la récupération du versement." });
     }
 
     if (versementRows.length === 0) {
@@ -3801,8 +3846,8 @@ app.get("/api/versement/:id", (req, res) => {
       if (err) {
         console.error("Erreur lors de la récupération des payements:", err);
         return res
-            .status(500)
-            .json({ message: "Erreur lors de la récupération des payements." });
+          .status(500)
+          .json({ message: "Erreur lors de la récupération des payements." });
       }
 
       payements = payementRows;
@@ -3825,7 +3870,7 @@ app.put("/api/versement/:id", async (req, res) => {
 
     // Update received payment data
     const updateVersementQuery =
-        "UPDATE `versements_en_banque` SET `date_versement`=?,`reference_bordereau_bulletin`=?,`observations`=?,`document_fichier`=? WHERE id = ?";
+      "UPDATE `versements_en_banque` SET `date_versement`=?,`reference_bordereau_bulletin`=?,`observations`=?,`document_fichier`=? WHERE id = ?";
     await db.query(updateVersementQuery, [
       versement.date_versement,
       versement.reference_bordereau_bulletin,
@@ -3844,7 +3889,7 @@ app.put("/api/versement/:id", async (req, res) => {
     // Insert new payments
     for (const payment of payements) {
       const { modalite, num, banque, montant, code_tiers, tiers_saisie } =
-          payment;
+        payment;
       const insertPaymentQuery = `
         INSERT INTO payements (modalite, num, banque, montant, code_tiers,tierId ,tiers_saisie, Versement_id)
         VALUES (?, ?, ? ,?, ?, ?, ?, ?)
@@ -3865,8 +3910,8 @@ app.put("/api/versement/:id", async (req, res) => {
     await db.commit();
 
     res
-        .status(200)
-        .json({ message: "Le Versement a été mis à jour avec succès." });
+      .status(200)
+      .json({ message: "Le Versement a été mis à jour avec succès." });
   } catch (error) {
     // Rollback transaction in case of error
     await db.rollback();
@@ -3955,7 +4000,7 @@ app.get("/api/pointage", verifyToken, (req, res) => {
 });
 
 
-// POST - Pointage
+// POST - Pointage 
 app.post("/api/pointage", verifyToken, async (req, res) => {
   const userId = req.user.id;
 
@@ -4172,52 +4217,52 @@ app.post("/api/documents_comptabilite", verifyToken, (req, res) => {
 
   // Insert the new document into the database
   db.query(
-      "INSERT INTO documents_comptabilite (date, nature, designation, destinataire, document_fichier, priorite, observations) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [date, nature, designation, destinataire, document_fichier, priorite, observations],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          // Notification logic
-          const notificationMessage = `${req.user.identite} a ajouté un nouveau Document pour la Comptabilité`;
-          const getComptableQuery =
-              "SELECT id FROM utilisateurs WHERE role = 'comptable'";
-          db.query(getComptableQuery, (comptableErr, comptableData) => {
-            if (comptableErr) {
-              console.error("Error fetching comptable:", comptableErr);
-              return res.status(500).json({
-                error: "Failed to fetch comptable",
-                details: comptableErr.message,
+    "INSERT INTO documents_comptabilite (date, nature, designation, destinataire, document_fichier, priorite, observations) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [date, nature, designation, destinataire, document_fichier, priorite, observations],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        // Notification logic
+        const notificationMessage = `${req.user.identite} a ajouté un nouveau Document pour la Comptabilité`;
+        const getComptableQuery =
+          "SELECT id FROM utilisateurs WHERE role = 'comptable'";
+        db.query(getComptableQuery, (comptableErr, comptableData) => {
+          if (comptableErr) {
+            console.error("Error fetching comptable:", comptableErr);
+            return res.status(500).json({
+              error: "Failed to fetch comptable",
+              details: comptableErr.message,
+            });
+          }
+          if (comptableData.length === 0) {
+            console.error("No comptable found");
+            return res.status(404).json({ error: "No comptable found" });
+          }
+
+          const comptableId = comptableData[0].id;
+          const notificationQuery =
+            "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+          db.query(
+            notificationQuery,
+            [comptableId, notificationMessage],
+            (notifErr, notifData) => {
+              if (notifErr) {
+                console.error("Error adding notification:", notifErr);
+                return res.status(500).json({
+                  error: "Failed to add notification",
+                  details: notifErr.message,
+                });
+              }
+              // Success response
+              return res.status(200).json({
+                message: "Document créé avec succès et notification envoyée",
               });
             }
-            if (comptableData.length === 0) {
-              console.error("No comptable found");
-              return res.status(404).json({ error: "No comptable found" });
-            }
-
-            const comptableId = comptableData[0].id;
-            const notificationQuery =
-                "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-            db.query(
-                notificationQuery,
-                [comptableId, notificationMessage],
-                (notifErr, notifData) => {
-                  if (notifErr) {
-                    console.error("Error adding notification:", notifErr);
-                    return res.status(500).json({
-                      error: "Failed to add notification",
-                      details: notifErr.message,
-                    });
-                  }
-                  // Success response
-                  return res.status(200).json({
-                    message: "Document créé avec succès et notification envoyée",
-                  });
-                }
-            );
-          });
-        }
+          );
+        });
       }
+    }
   );
 });
 
@@ -4235,24 +4280,24 @@ app.put("/api/documents_comptabilite/:id", (req, res) => {
     observations,
   } = req.body;
   db.query(
-      "UPDATE documents_comptabilite SET date = ?, nature = ?, designation = ?, destinataire = ?, document_fichier = ?, priorite = ?, observations = ? WHERE id = ?",
-      [
-        date,
-        nature,
-        designation,
-        destinataire,
-        document_fichier,
-        priorite,
-        observations,
-        id,
-      ],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send("Document modifié");
-        }
+    "UPDATE documents_comptabilite SET date = ?, nature = ?, designation = ?, destinataire = ?, document_fichier = ?, priorite = ?, observations = ? WHERE id = ?",
+    [
+      date,
+      nature,
+      designation,
+      destinataire,
+      document_fichier,
+      priorite,
+      observations,
+      id,
+    ],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send("Document modifié");
       }
+    }
   );
 });
 
@@ -4362,55 +4407,55 @@ app.post("/api/documents_direction", verifyToken, (req, res) => {
   } = req.body;
 
   const query =
-      "INSERT INTO documents_direction (date, nature, designation, destinataire, document_fichier, priorite, observations) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO documents_direction (date, nature, designation, destinataire, document_fichier, priorite, observations) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
   // Insert the new document into the database
   db.query(
-      query,
-      [date, nature, designation, destinataire, document_fichier, priorite, observations],
-      (err, results) => {
-        if (err) {
-          return res.status(500).send(err);
-        } else {
-          // Notification logic
-          const notificationMessage = `${req.user.identite} a ajouté un nouveau Document pour la Direction`;
-          const getUserQuery = "SELECT id FROM utilisateurs WHERE role = 'utilisateur'";  // Modified role
+    query,
+    [date, nature, designation, destinataire, document_fichier, priorite, observations],
+    (err, results) => {
+      if (err) {
+        return res.status(500).send(err);
+      } else {
+        // Notification logic
+        const notificationMessage = `${req.user.identite} a ajouté un nouveau Document pour la Direction`;
+        const getUserQuery = "SELECT id FROM utilisateurs WHERE role = 'utilisateur'";  // Modified role
 
-          db.query(getUserQuery, (userErr, userData) => {
-            if (userErr) {
-              console.error("Error fetching users:", userErr);
+        db.query(getUserQuery, (userErr, userData) => {
+          if (userErr) {
+            console.error("Error fetching users:", userErr);
+            return res.status(500).json({
+              error: "Failed to fetch users",
+              details: userErr.message,
+            });
+          }
+          if (userData.length === 0) {
+            console.error("No users found");
+            return res.status(404).json({ error: "No users found" });
+          }
+
+          // Send notifications to all users with role 'utilisateur'
+          const userIds = userData.map(user => user.id);
+          const notificationQuery =
+            "INSERT INTO notifications (user_id, message) VALUES ?";
+          const notificationValues = userIds.map(userId => [userId, notificationMessage]);
+
+          db.query(notificationQuery, [notificationValues], (notifErr, notifData) => {
+            if (notifErr) {
+              console.error("Error adding notifications:", notifErr);
               return res.status(500).json({
-                error: "Failed to fetch users",
-                details: userErr.message,
+                error: "Failed to add notifications",
+                details: notifErr.message,
               });
             }
-            if (userData.length === 0) {
-              console.error("No users found");
-              return res.status(404).json({ error: "No users found" });
-            }
-
-            // Send notifications to all users with role 'utilisateur'
-            const userIds = userData.map(user => user.id);
-            const notificationQuery =
-                "INSERT INTO notifications (user_id, message) VALUES ?";
-            const notificationValues = userIds.map(userId => [userId, notificationMessage]);
-
-            db.query(notificationQuery, [notificationValues], (notifErr, notifData) => {
-              if (notifErr) {
-                console.error("Error adding notifications:", notifErr);
-                return res.status(500).json({
-                  error: "Failed to add notifications",
-                  details: notifErr.message,
-                });
-              }
-              // Success response
-              return res.status(200).json({
-                message: "Document créé avec succès et notifications envoyées",
-              });
+            // Success response
+            return res.status(200).json({
+              message: "Document créé avec succès et notifications envoyées",
             });
           });
-        }
+        });
       }
+    }
   );
 });
 
@@ -4429,27 +4474,27 @@ app.put("/api/documents_direction/:id", (req, res) => {
     observations,
   } = req.body;
   const query =
-      "UPDATE documents_direction SET date = ?, nature = ?, designation = ?, destinataire = ?, document_fichier = ?, priorite = ?, observations = ? WHERE id = ?";
+    "UPDATE documents_direction SET date = ?, nature = ?, designation = ?, destinataire = ?, document_fichier = ?, priorite = ?, observations = ? WHERE id = ?";
 
   db.query(
-      query,
-      [
-        date,
-        nature,
-        designation,
-        destinataire,
-        document_fichier,
-        priorite,
-        observations,
-        id,
-      ],
-      (err, results) => {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.send("Document modifié");
-        }
+    query,
+    [
+      date,
+      nature,
+      designation,
+      destinataire,
+      document_fichier,
+      priorite,
+      observations,
+      id,
+    ],
+    (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send("Document modifié");
       }
+    }
   );
 });
 
@@ -4566,8 +4611,8 @@ app.get("/api/etat-de-facturation", (req, res) => {
   // Check if the startDate and endDate are provided
   if (!startDate || !endDate) {
     return res
-        .status(400)
-        .send({ error: "startDate and endDate are required" });
+      .status(400)
+      .send({ error: "startDate and endDate are required" });
   }
 
   // Base SQL query to get the total turnover
@@ -4592,8 +4637,8 @@ app.get("/api/etat-de-facturation", (req, res) => {
     if (err) {
       console.error("Error fetching total CA:", err);
       return res
-          .status(500)
-          .send({ error: "An error occurred while fetching the total CA" });
+        .status(500)
+        .send({ error: "An error occurred while fetching the total CA" });
     }
 
     // Return the result
@@ -4794,7 +4839,7 @@ app.get("/api/factures-non-payees", (req, res) => {
 app.get("/api/statistics", (req, res) => {
   const stats = {};
 
-  db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs`, (err, totalUsers) => {
+  db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs WHERE role="utilisateur"`, (err, totalUsers) => {
     if (err) return res.status(500).json({ error: "Error fetching total users" });
 
     stats.totalUsers = totalUsers[0].totalUsers;
@@ -4821,6 +4866,47 @@ app.get("/api/statistics", (req, res) => {
   });
 });
 
+// Route pour récupérer les commandes par période
+app.get('/api/orders-per-period', async (req, res) => {
+  try {
+    // Requête SQL MySQL
+    const query = `
+            SELECT 
+                DATE_FORMAT(date_commande, '%Y-%m') AS period, 
+                COUNT(*) AS count 
+            FROM commandes 
+            GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
+            ORDER BY period;
+        `;
+
+    // Exécution de la requête et traitement du résultat
+    db.query(query, (err, rows) => {
+      if (err) {
+        console.error("Erreur lors de l'exécution de la requête:", err.message);
+        return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+      }
+
+      // Vérification du format des données
+      if (!Array.isArray(rows)) {
+        console.error("Format inattendu des données:", rows);
+        return res.status(500).json({ error: "Format inattendu des données reçues" });
+      }
+
+      // Transformation des résultats pour le frontend
+      const ordersPerPeriod = rows.map(row => ({
+        label: row.period,
+        count: parseInt(row.count, 10),
+      }));
+
+      // Réponse au client
+      res.json({ ordersPerPeriod });
+    });
+  } catch (err) {
+    console.error("Erreur lors de la récupération des commandes par période:", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+  }
+});
+
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -4829,13 +4915,8 @@ app.get('*', (req, res) => {
 
 /***************************************************************** */
 
-
-
-
-
-
 // Démarrage du serveur
-const PORT = 5001;
+const PORT = 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Le serveur est en écoute sur le port ${PORT}`);
 });

@@ -9,7 +9,7 @@ services:
 
   backend:
     build:
-      context: ./backend 
+      context: ./backend
       dockerfile: Dockerfile
     environment:
       - DATABASE_HOST=cloud-db.cpseqi6mmsuu.us-east-1.rds.amazonaws.com
@@ -18,5 +18,3 @@ services:
       - DATABASE_NAME=cloud
     ports:
       - "5000:5000"
-    volumes:
-      - ./backend/certs:/var/www/myapp/backend/certs

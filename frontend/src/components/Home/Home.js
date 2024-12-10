@@ -10,13 +10,11 @@ import {
   Title,
   Tooltip,
   Legend,
-  ArcElement,
-} from 'chart.js';
+} from "chart.js";
+import { Bar } from "react-chartjs-2";  // Import Bar chart from react-chartjs-2
 
-import { Bar } from 'react-chartjs-2';
-
-// Register the required Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+// Enregistrer les composants nécessaires pour les graphiques en barres
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function Home({ isSidebarOpen }) {
   const [error, setError] = useState("");
@@ -26,7 +24,7 @@ function Home({ isSidebarOpen }) {
     totalDeliveries: 0,
     unpaidInvoices: 0,
   });
-
+  const [ordersPerPeriod, setOrdersPerPeriod] = useState([]);
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserContext);
 
@@ -62,27 +60,112 @@ function Home({ isSidebarOpen }) {
       }
     };
 
+    const fetchOrdersPerPeriod = async () => {
+      try {
+        const response = await axios.get("https://comptaonline.line.pm/api/orders-per-period");
+
+        // Validation : vérifier si ordersPerPeriod est bien un tableau
+        if (response.data && Array.isArray(response.data.ordersPerPeriod)) {
+          setOrdersPerPeriod(response.data.ordersPerPeriod);
+        } else {
+          console.error("Unexpected response format:", response.data);
+          setError("Erreur de format des données reçues pour les commandes.");
+        }
+      } catch (error) {
+        console.error("Error fetching orders per period:", error);
+        setError("Une erreur est survenue lors de la récupération des commandes par période.");
+      }
+    };
+
     fetchUserData();
     fetchStatistics();
+    fetchOrdersPerPeriod();
   }, [setUser, navigate]);
 
-  // Data for Bar Chart
-  const barChartData = {
+  // Data for Bar Chart for Stats (comptable)
+  const statsChartData = {
     labels: ["Utilisateurs", "Commandes", "Livraisons", "Factures Non Payées"],
     datasets: [
       {
         label: "Statistiques",
         data: [stats.totalUsers, stats.totalOrders, stats.totalDeliveries, stats.unpaidInvoices],
-        backgroundColor: ["#36A2EB", "#FFCE56", "#4BC0C0", "#FF6384"],
+        backgroundColor: [
+          "rgba(54, 162, 235, 0.5)",   // Utilisateurs
+          "rgba(255, 99, 132, 0.5)",   // Commandes
+          "rgba(255, 159, 64, 0.5)",   // Livraisons
+          "rgba(153, 102, 255, 0.5)"   // Factures Non Payées
+        ],
+        borderColor: [
+          "#36A2EB", "#FF6384", "#4BC0C0", "#9966FF"
+        ],
+        borderWidth: 1,
       },
     ],
   };
 
-  const barChartOptions = {
+  // Data for Bar Chart for Orders (utilisateur)
+  const ordersChartData = {
+    labels: Array.isArray(ordersPerPeriod) ? ordersPerPeriod.map(order => order.label) : [],
+    datasets: [
+      {
+        label: "Commandes par Mois",
+        data: Array.isArray(ordersPerPeriod) ? ordersPerPeriod.map(order => order.count) : [],
+        backgroundColor: [
+          "rgba(255, 99, 132, 0.5)",  // Mois 1
+          "rgba(54, 162, 235, 0.5)",  // Mois 2
+          "rgba(75, 192, 192, 0.5)",  // Mois 3
+          "rgba(153, 102, 255, 0.5)", // Mois 4
+          "rgba(255, 159, 64, 0.5)"   // Mois 5
+        ],
+        borderColor: [
+          "#FF6384", "#36A2EB", "#4BC0C0", "#9966FF", "#FF9F40"
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Options for Orders Chart
+  const ordersChartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        display: true,
+      legend: { display: true },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Périodes",
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Nombre de Commandes",
+        },
+        beginAtZero: true,
+      },
+    },
+  };
+
+  // Options for Stats Chart
+  const statsChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: true },
+    },
+    scales: {
+      x: {
+        title: {
+          display: false, // Aucun titre pour l'axe X dans les statistiques
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Nombre", // Titre de l'axe Y pour les statistiques
+        },
+        beginAtZero: true,
       },
     },
   };
@@ -98,40 +181,23 @@ function Home({ isSidebarOpen }) {
                   <br />
                   {error && <p style={{ color: "red" }}>{error}</p>}
 
-                  {user && user.role !== "utilisateur" && (
-                      <div className="row text-center">
-                        <div className="col-md-3">
-                          <div className="stat-card">
-                            <h4>Total Utilisateurs</h4>
-                            <p>{stats.totalUsers}</p>
-                          </div>
+                  {user.role === "comptable" && (
+                      <>
+                        <h4>Statistiques Générales</h4>
+                        <div className="mt-5">
+                          <Bar data={statsChartData} options={statsChartOptions} />
                         </div>
-                        <div className="col-md-3">
-                          <div className="stat-card">
-                            <h4>Total Commandes</h4>
-                            <p>{stats.totalOrders}</p>
-                          </div>
-                        </div>
-                        <div className="col-md-3">
-                          <div className="stat-card">
-                            <h4>Total Livraisons</h4>
-                            <p>{stats.totalDeliveries}</p>
-                          </div>
-                        </div>
-                        <div className="col-md-3">
-                          <div className="stat-card">
-                            <h4>Factures Non Payées</h4>
-                            <p>{stats.unpaidInvoices}</p>
-                          </div>
-                        </div>
-                      </div>
+                      </>
                   )}
 
-                  {/* Bar Chart for Stats */}
-                  <div className="mt-5">
-                    <Bar data={barChartData} options={barChartOptions} />
-                  </div>
-
+                  {user.role === "utilisateur" && (
+                      <>
+                        <h4>Commandes par Mois</h4>
+                        <div className="mt-5">
+                          <Bar data={ordersChartData} options={ordersChartOptions} />
+                        </div>
+                      </>
+                  )}
                 </div>
               </div>
             </div>

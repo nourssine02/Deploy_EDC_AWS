@@ -64,7 +64,7 @@ const UpdateAchat = ({ isSidebarOpen }) => {
       setShowModal(true);
     }
   };
-
+  
 
   const validateForm = () => {
     const newErrors = {};
@@ -144,7 +144,7 @@ const UpdateAchat = ({ isSidebarOpen }) => {
   const handleCancel = () => {
     navigate("/achats");
   };
-
+  
   const openImageViewer = (documentBase64) => {
     const imageWindow = window.open("", "_blank");
     const img = document.createElement("img");
@@ -154,327 +154,327 @@ const UpdateAchat = ({ isSidebarOpen }) => {
     img.style.marginLeft = "400px";
     imageWindow.document.body.appendChild(img);
   };
-
+  
 
   return (
-      <div className="main-panel">
-        <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
-          <div className="card">
-            <div className="card-body">
-              <h2 className="text-center">Modifier un Achat</h2>
-              <br />
-              <form className="forms-sample">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="form-group">
-                      <label>Date de Saisie:</label>
-                      <input
-                          type="date"
-                          className={`form-control ${errors.date_saisie && "is-invalid"}`}
-                          name="date_saisie"
-                          onChange={handleChange}
-                          value={achat.date_saisie || ""}
-                      />
-                      {errors.date_saisie && (
-                          <div className="invalid-feedback">
-                            {errors.date_saisie}
-                          </div>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>Date de la Pièce:</label>
-                      <input
-                          type="date"
-                          className={`form-control ${errors.date_piece && "is-invalid"}`}
-                          name="date_piece"
-                          onChange={handleChange}
-                          value={achat.date_piece || ""}
-                      />
-                      {errors.date_piece && (
-                          <div className="invalid-feedback">
-                            {errors.date_piece}
-                          </div>
-                      )}
-                    </div>
+    <div className="main-panel">
+      <div className={`content-wrapper ${isSidebarOpen ? "shifted" : ""}`}>
+        <div className="card">
+          <div className="card-body">
+            <h2 className="text-center">Modifier un Achat</h2>
+            <br />
+            <form className="forms-sample">
+              <div className="row">
+                <div className="col-md-4">
+                  <div className="form-group">
+                    <label>Date de Saisie:</label>
+                    <input
+                      type="date"
+                      className={`form-control ${errors.date_saisie && "is-invalid"}`}
+                      name="date_saisie"
+                      onChange={handleChange}
+                      value={achat.date_saisie || ""}
+                    />
+                    {errors.date_saisie && (
+                      <div className="invalid-feedback">
+                        {errors.date_saisie}
+                      </div>
+                    )}
                   </div>
-                  <div className="col-md-4">
-                    <div className="form-group">
-                      <label>Code Tiers:</label>
-                      <select
-                          style={{ color: "black" }}
-                          className="form-control"
-                          name="code_tiers"
-                          onChange={handleChange}
-                          value={achat.code_tiers || ""}
-                      >
-                        <option value="" style={{ color: "black" }}>
+                  <div className="form-group">
+                    <label>Date de la Pièce:</label>
+                    <input
+                      type="date"
+                      className={`form-control ${errors.date_piece && "is-invalid"}`}
+                      name="date_piece"
+                      onChange={handleChange}
+                      value={achat.date_piece || ""}
+                    />
+                    {errors.date_piece && (
+                      <div className="invalid-feedback">
+                        {errors.date_piece}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="form-group">
+                    <label>Code Tiers:</label>
+                    <select
+                      style={{ color: "black" }}
+                      className="form-control"
+                      name="code_tiers"
+                      onChange={handleChange}
+                      value={achat.code_tiers || ""}
+                    >
+                      <option value="" style={{ color: "black" }}>
                           Sélectionner le Code Tiers
-                        </option>
-                        {codeTiers.map((codeTier) => (
-                            <option
-                                key={codeTier.code_tiers}
-                                value={codeTier.code_tiers || ""}
-                                style={{ color: "black" }}
-                            >
-                              {`${codeTier.code_tiers} - ${codeTier.identite}`}
-                            </option>
-                        ))}
-                      </select>
-
-                    </div>
-                    <div className="form-group">
-                      <label>N° de la Pièce :</label>
-                      <input
-                          type="text"
-                          className={`form-control ${errors.num_piece && "is-invalid"}`}
-                          name="num_piece"
-                          onChange={handleChange}
-                          value={achat.num_piece || ""}
-                      />
-                      {errors.num_piece && (
-                          <div className="invalid-feedback">
-                            {errors.num_piece}
-                          </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="form-group">
-                      <label>Tiers à ajouter:</label>
-                      <input
-                          type="text"
-                          className="form-control"
-                          name="tiers_saisie"
-                          onChange={handleChange}
-                          value={achat.tiers_saisie || ""}
-                          onClick={handleModalShow}
-                          disabled={!!achat.code_tiers}
-
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Type de la Pièce :</label>
-                      <select
+                      </option>
+                      {codeTiers.map((codeTier) => (
+                        <option
+                          key={codeTier.code_tiers}
+                          value={codeTier.code_tiers || ""}
                           style={{ color: "black" }}
-                          className={`form-control ${errors.type_piece && "is-invalid"}`}
-                          name="type_piece"
-                          onChange={handleChange}
-                          value={achat.type_piece || ""}
-                      >
-                        <option value="">Sélectionnez...</option>
-                        <option value="facture">Facture</option>
-                        <option value="note d'honoraire">Note d'honoraire</option>
-                        <option value="bon de livraison">Bon de livraison</option>
-                        <option value="quittance">Quittance</option>
-                        <option value="reçu">Reçu</option>
-                        <option value="contrat">Contrat</option>
-                        <option value="autre">Autre</option>
-                      </select>
-                      {errors.type_piece && (
-                          <div className="invalid-feedback">
-                            {errors.type_piece}
-                          </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="form-group">
-                      <label>Statut :</label>
-                      <select
-                          style={{ color: "black" }}
-                          className="form-control"
-                          name="statut"
-                          onChange={handleChange}
-                          value={achat.statut || ""}
-                      >
-                        <option value="">Sélectionnez...</option>
-                        <option value="réglée en espèces">
-                          Réglée en espèces
+                        >
+                          {`${codeTier.code_tiers} - ${codeTier.identite}`}
                         </option>
-                        <option value="partiellement réglée">
-                          Partiellement réglée
-                        </option>
-                        <option value="totalement réglée">
-                          Totalement réglée
-                        </option>
-                        <option value="non réglée">Non Réglée</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label>FODEC sur la Pièce:</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                            type="text"
-                            className={`form-control ${errors.FODEC_piece && "is-invalid"}`}
-                            name="FODEC_piece"
-                            onChange={handleChange}
-                            value={achat.FODEC_piece || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
-                      </div>
-                      {errors.FODEC_piece && (
-                          <div className="invalid-feedback">
-                            {errors.FODEC_piece}
-                          </div>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>Montant Total de la Pièce:</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                            type="text"
-                            className={`form-control ${errors.montant_total_piece && "is-invalid"}`}
-                            name="montant_total_piece"
-                            onChange={handleChange}
-                            value={achat.montant_total_piece || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
-                      </div>
-                      {errors.montant_total_piece && (
-                          <div className="invalid-feedback">
-                            {errors.montant_total_piece}
-                          </div>
-                      )}
-                    </div>
+                      ))}
+                    </select>
+                   
                   </div>
-                  <div className="col-md-4">
-                    <div className="form-group">
-                      <label>Montant HT de la Pièce:</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                            type="text"
-                            className={`form-control ${errors.montant_HT_piece && "is-invalid"}`}
-                            name="montant_HT_piece"
-                            onChange={handleChange}
-                            value={achat.montant_HT_piece || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
+                  <div className="form-group">
+                    <label>N° de la Pièce :</label>
+                    <input
+                      type="text"
+                      className={`form-control ${errors.num_piece && "is-invalid"}`}
+                      name="num_piece"
+                      onChange={handleChange}
+                      value={achat.num_piece || ""}
+                    />
+                    {errors.num_piece && (
+                      <div className="invalid-feedback">
+                        {errors.num_piece}
                       </div>
-                      {errors.montant_HT_piece && (
-                          <div className="invalid-feedback">
-                            {errors.montant_HT_piece}
-                          </div>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>Timbre sur la Pièce:</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                            type="text"
-                            className={`form-control ${errors.timbre_piece && "is-invalid"}`}
-                            name="timbre_piece"
-                            onChange={handleChange}
-                            value={achat.timbre_piece || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
-                      </div>
-                      {errors.timbre_piece && (
-                          <div className="invalid-feedback">
-                            {errors.timbre_piece}
-                          </div>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>Document / Fichier à Insérer :</label>
-                      <input
-                          type="file"
-                          className={`form-control ${errors.document_fichier && "is-invalid"}`}
-                          name="document_fichier"
-                          onChange={handleChange}
-                      />
-                      {errors.document_fichier && (
-                          <div className="invalid-feedback">
-                            {errors.document_fichier}
-                          </div>
-                      )}
-                      <br />
-                      {achat.document_fichier && (
-                          <img
-                              src={achat.document_fichier}
-                              alt="Facture Document"
-                              style={{
-                                width: "100px",
-                                height: "auto",
-                                cursor: "pointer",
-                              }}
-                              onClick={() => openImageViewer(achat.document_fichier)}
-                          />
-
-                      )}
-
-
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="form-group">
-                      <label>TVA sur la Pièce:</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                            type="text"
-                            className={`form-control ${errors.TVA_piece && "is-invalid"}`}
-                            name="TVA_piece"
-                            onChange={handleChange}
-                            value={achat.TVA_piece || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
-                      </div>
-                      {errors.TVA_piece && (
-                          <div className="invalid-feedback">
-                            {errors.TVA_piece}
-                          </div>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>Autres Montants sur la Pièce:</label>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <input
-                            type="text"
-                            className={`form-control ${errors.autre_montant_piece && "is-invalid"}`}
-                            name="autre_montant_piece"
-                            onChange={handleChange}
-                            value={achat.autre_montant_piece || ""}
-                        />
-                        &nbsp;
-                        <span>DT</span>
-                      </div>
-                      {errors.autre_montant_piece && (
-                          <div className="invalid-feedback">
-                            {errors.autre_montant_piece}
-                          </div>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>Observations:</label>
-                      <textarea
-                          className="form-control"
-                          name="observations"
-                          onChange={handleChange}
-                          value={achat.observations || ""}
-                      />
-                    </div>
+                    )}
                   </div>
                 </div>
-                <br />
-                <div className="d-flex justify-content-center">
-                  <button className="btn btn-primary mr-2" onClick={handleClick}>
-                    Modifier
-                  </button>
-                  <button className="btn btn-light" onClick={handleCancel}>
-                    Annuler
-                  </button>
-                </div>
-              </form>
-              <TiersSaisie showModal={showModal} setShowModal={setShowModal} />
+                <div className="col-md-4">
+                  <div className="form-group">
+                    <label>Tiers à ajouter:</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="tiers_saisie"
+                      onChange={handleChange}
+                      value={achat.tiers_saisie || ""}
+                      onClick={handleModalShow}
+                      disabled={!!achat.code_tiers}
 
-            </div>
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Type de la Pièce :</label>
+                    <select
+                      style={{ color: "black" }}
+                      className={`form-control ${errors.type_piece && "is-invalid"}`}
+                      name="type_piece"
+                      onChange={handleChange}
+                      value={achat.type_piece || ""}
+                    >
+                      <option value="">Sélectionnez...</option>
+                      <option value="facture">Facture</option>
+                      <option value="note d'honoraire">Note d'honoraire</option>
+                      <option value="bon de livraison">Bon de livraison</option>
+                      <option value="quittance">Quittance</option>
+                      <option value="reçu">Reçu</option>
+                      <option value="contrat">Contrat</option>
+                      <option value="autre">Autre</option>
+                    </select>
+                    {errors.type_piece && (
+                      <div className="invalid-feedback">
+                        {errors.type_piece}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="form-group">
+                    <label>Statut :</label>
+                    <select
+                      style={{ color: "black" }}
+                      className="form-control"
+                      name="statut"
+                      onChange={handleChange}
+                      value={achat.statut || ""}
+                    >
+                      <option value="">Sélectionnez...</option>
+                      <option value="réglée en espèces">
+                        Réglée en espèces
+                      </option>
+                      <option value="partiellement réglée">
+                        Partiellement réglée
+                      </option>
+                      <option value="totalement réglée">
+                        Totalement réglée
+                      </option>
+                      <option value="non réglée">Non Réglée</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>FODEC sur la Pièce:</label>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.FODEC_piece && "is-invalid"}`}
+                        name="FODEC_piece"
+                        onChange={handleChange}
+                        value={achat.FODEC_piece || ""}
+                      />
+                      &nbsp;
+                      <span>DT</span>
+                    </div>
+                    {errors.FODEC_piece && (
+                      <div className="invalid-feedback">
+                        {errors.FODEC_piece}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Montant Total de la Pièce:</label>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.montant_total_piece && "is-invalid"}`}
+                        name="montant_total_piece"
+                        onChange={handleChange}
+                        value={achat.montant_total_piece || ""}
+                      />
+                      &nbsp;
+                      <span>DT</span>
+                    </div>
+                    {errors.montant_total_piece && (
+                      <div className="invalid-feedback">
+                        {errors.montant_total_piece}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="form-group">
+                    <label>Montant HT de la Pièce:</label>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.montant_HT_piece && "is-invalid"}`}
+                        name="montant_HT_piece"
+                        onChange={handleChange}
+                        value={achat.montant_HT_piece || ""}
+                      />
+                      &nbsp;
+                      <span>DT</span>
+                    </div>
+                    {errors.montant_HT_piece && (
+                      <div className="invalid-feedback">
+                        {errors.montant_HT_piece}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Timbre sur la Pièce:</label>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.timbre_piece && "is-invalid"}`}
+                        name="timbre_piece"
+                        onChange={handleChange}
+                        value={achat.timbre_piece || ""}
+                      />
+                      &nbsp;
+                      <span>DT</span>
+                    </div>
+                    {errors.timbre_piece && (
+                      <div className="invalid-feedback">
+                        {errors.timbre_piece}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Document / Fichier à Insérer :</label>
+                    <input
+                      type="file"
+                      className={`form-control ${errors.document_fichier && "is-invalid"}`}
+                      name="document_fichier"
+                      onChange={handleChange}
+                    />
+                    {errors.document_fichier && (
+                      <div className="invalid-feedback">
+                        {errors.document_fichier}
+                      </div>
+                    )}
+                    <br />
+                    {achat.document_fichier && (
+                      <img
+                      src={achat.document_fichier}
+                      alt="Facture Document"
+                      style={{
+                        width: "100px",
+                        height: "auto",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => openImageViewer(achat.document_fichier)}
+                    />
+                    
+                    )}
+
+
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="form-group">
+                    <label>TVA sur la Pièce:</label>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.TVA_piece && "is-invalid"}`}
+                        name="TVA_piece"
+                        onChange={handleChange}
+                        value={achat.TVA_piece || ""}
+                      />
+                      &nbsp;
+                      <span>DT</span>
+                    </div>
+                    {errors.TVA_piece && (
+                      <div className="invalid-feedback">
+                        {errors.TVA_piece}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Autres Montants sur la Pièce:</label>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        className={`form-control ${errors.autre_montant_piece && "is-invalid"}`}
+                        name="autre_montant_piece"
+                        onChange={handleChange}
+                        value={achat.autre_montant_piece || ""}
+                      />
+                      &nbsp;
+                      <span>DT</span>
+                    </div>
+                    {errors.autre_montant_piece && (
+                      <div className="invalid-feedback">
+                        {errors.autre_montant_piece}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Observations:</label>
+                    <textarea
+                      className="form-control"
+                      name="observations"
+                      onChange={handleChange}
+                      value={achat.observations || ""}
+                    />
+                  </div>
+                </div>
+              </div>
+              <br />
+              <div className="d-flex justify-content-center">
+                <button className="btn btn-primary mr-2" onClick={handleClick}>
+                  Modifier
+                </button>
+                <button className="btn btn-light" onClick={handleCancel}>
+                  Annuler
+                </button>
+              </div>
+            </form>
+            <TiersSaisie showModal={showModal} setShowModal={setShowModal} />
+
           </div>
         </div>
       </div>
+    </div>
   );
 };
 
