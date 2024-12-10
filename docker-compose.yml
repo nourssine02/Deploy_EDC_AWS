@@ -17,4 +17,4 @@ services:
       - DATABASE_PASSWORD=Nourssine02
       - DATABASE_NAME=cloud
     ports:
-      - "5000:5000"
+      - "5001:5000"
