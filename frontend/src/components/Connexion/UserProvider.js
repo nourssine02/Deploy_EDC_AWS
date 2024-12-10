@@ -70,25 +70,25 @@ export const UserProvider = ({ children }) => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center', 
-            alignItems: 'center',
-            height: '100vh',
-            width: '100vw',
-          }}
-        >
-          <CircularProgress />
-        </div>
-      </Box>
+        <Box sx={{ display: 'flex' }}>
+          <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                width: '100vw',
+              }}
+          >
+            <CircularProgress />
+          </div>
+        </Box>
     );
   }
 
   return (
-    <UserContext.Provider value={{ user, setUser, selectedClient, setSelectedClient }}>
-      {children}
-    </UserContext.Provider>
+      <UserContext.Provider value={{ user, setUser, selectedClient, setSelectedClient }}>
+        {children}
+      </UserContext.Provider>
   );
 };
