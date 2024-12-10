@@ -15,8 +15,8 @@ RUN npm install --only=production
 # Copier le reste du code source dans le conteneur
 COPY . .
 
-# Exposer le port 5001 pour accéder à l'application
-EXPOSE 5001
+# Exposer le port 5000 pour accéder à l'application
+EXPOSE 5000
 
 # Démarrer l'application
 CMD ["node", "server.js"]

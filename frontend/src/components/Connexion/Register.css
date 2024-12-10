@@ -1,0 +1,47 @@
+/* Register.css */
+
+/* Style for the Role Toggle Buttons */
+.btn-toggle {
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border-radius: 30px;
+    font-weight: bold;
+}
+
+.btn-toggle:hover {
+    opacity: 0.8;
+}
+
+.btn-toggle.btn-active {
+    background-color: #4CAF50; /* Green for active state */
+    color: white;
+}
+
+.btn-toggle:not(.btn-active) {
+    background-color: #f0f0f0; /* Grey for inactive state */
+    color: #333;
+}
+
+input, select {
+    margin-bottom: 15px;
+}
+
+/* Style for input fields */
+.form-control-lg {
+    font-size: 14px;
+    padding: 12px;
+}
+
+/* Remove extra space around inputs */
+.form-group {
+    margin-bottom: 10px;
+}
+
+/* Add styles for invalid feedback */
+.invalid-feedback {
+    font-size: 12px;
+    color: red;
+}
