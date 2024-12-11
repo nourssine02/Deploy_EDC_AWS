@@ -1734,13 +1734,13 @@ app.delete("/api/achats/:id", (req, res) => {
 app.get("/api/code_tiers", (req, res) => {
   // Requête SQL pour récupérer les tiers associés à l'utilisateur connecté
   const query = `
-    SELECT t.id, t.code_tiers, u.identite
+    SELECT t.id, t.code_tiers, t.identite
     FROM tiers t
     LEFT JOIN utilisateurs u ON t.ajoute_par = u.id
     WHERE u.identite = ?
   `;
 
-  // Exécution de la requête SQL
+  // Exécution de la requête SQL avec le paramètre de l'utilisateur
   db.query(query, [req.user.identite], (err, results) => {
     if (err) {
       console.error("Erreur lors de l'exécution de la requête :", err);
