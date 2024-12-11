@@ -1731,8 +1731,13 @@ app.delete("/api/achats/:id", (req, res) => {
 /************************ code_tiers **************************************** */
 
 //Affichier Code Tiers
-app.get("/api/code_tiers", (req, res) => {
-  // Requête SQL pour récupérer les tiers associés à l'utilisateur connecté
+app.get("/api/code_tiers", verifyToken, (req, res) => {
+  // Vérification de l'utilisateur authentifié
+  if (!req.user || !req.user.identite) {
+    return res.status(401).json({ error: "Utilisateur non authentifié" });
+  }
+
+  // Requête SQL pour récupérer les tiers associés
   const query = `
     SELECT t.id, t.code_tiers, t.identite
     FROM tiers t
@@ -1744,7 +1749,7 @@ app.get("/api/code_tiers", (req, res) => {
   db.query(query, [req.user.identite], (err, results) => {
     if (err) {
       console.error("Erreur lors de l'exécution de la requête :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
+      return res.status(500).json({ error: "Erreur serveur", details: err.message });
     }
 
     // Si aucun tiers n'est trouvé pour cet utilisateur

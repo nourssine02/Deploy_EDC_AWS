@@ -85,7 +85,11 @@ const UpdateLivraison = ({ isSidebarOpen }) => {
   useEffect(() => {
     const fetchCodeTiers = async () => {
       try {
-        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers");
+        const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         setCodeTiers(res.data);
       } catch (err) {
         console.log(err);
