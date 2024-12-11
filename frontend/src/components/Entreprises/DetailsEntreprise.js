@@ -112,7 +112,7 @@ const DetailsEntreprise = ({ isSidebarOpen }) => {
                   </li>
                 </ul>
                 <div className="d-flex justify-content-center">
-                {user.role !== "client" && (
+                {user.role !== "utilisateur" && (
                   <Link
                     to={`/updateEntreprise/${id}`}
                     className="btn btn-success mr-2"

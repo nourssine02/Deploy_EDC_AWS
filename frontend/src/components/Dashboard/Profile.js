@@ -27,6 +27,7 @@ const Profile = ({ isSidebarOpen }) => {
   });
 
   const [imagePreview, setImagePreview] = useState(user?.profile_image || "");
+  const [alertMessage, setAlertMessage] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -46,7 +47,8 @@ const Profile = ({ isSidebarOpen }) => {
 
   useEffect(() => {
     if (user) {
-      axios.get(`https://comptaonline.linkpc.net/api/users/${user.id}`)
+      axios
+          .get(`https://comptaonline.linkpc.net/api/users/${user.id}`)
           .then((response) => {
             setFormData({
               code_entreprise: response.data.code_entreprise || "",
@@ -62,10 +64,10 @@ const Profile = ({ isSidebarOpen }) => {
           })
           .catch((err) => {
             console.error("Error fetching user data:", err);
-            alert("Error loading user data");
+            setAlertMessage({ type: "error", text: "Error loading user data" });
           });
     }
-  }, [user]);  // Re-run when user data is updated
+  }, [user]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -89,18 +91,18 @@ const Profile = ({ isSidebarOpen }) => {
     e.preventDefault();
 
     axios
-        .put(`https://comptaonline.linkpc.net/api/users/${user.id}`, formData)
+        .put(`https://comptaonline.linkpc.net/api/users/${user?.id}`, formData)
         .then((res) => {
-          if (res.data) {
+          if (res.data && res.data.code_user) {
             setUser(res.data);
             setFormData(res.data);
-            setImagePreview(res.data.profile_image);
-            alert("Profile updated successfully");
+            setImagePreview(res.data.profile_image || "");
+            setAlertMessage({ type: "success", text: "Profile updated successfully" });
           }
         })
         .catch((err) => {
           console.error("Error updating profile:", err);
-          alert("Error updating profile");
+          setAlertMessage({ type: "error", text: "Error updating profile" });
         });
   };
 
@@ -164,6 +166,16 @@ const Profile = ({ isSidebarOpen }) => {
                         <MDBCardBody className="p-4">
                           <form onSubmit={handleSubmit}>
                             <MDBTypography tag="h2">Mes Informations</MDBTypography>
+                            {alertMessage && (
+                                <div
+                                    className={`alert alert-${
+                                        alertMessage.type === "success" ? "success" : "danger"
+                                    }`}
+                                    role="alert"
+                                >
+                                  {alertMessage.text}
+                                </div>
+                            )}
                             <hr className="mt-0 mb-4" />
                             <MDBRow className="pt-1">
                               <MDBCol size="6" className="mb-3">

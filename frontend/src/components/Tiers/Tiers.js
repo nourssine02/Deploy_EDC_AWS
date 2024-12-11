@@ -173,7 +173,7 @@ const Tiers = ({ isSidebarOpen }) => {
                           <option value="">Tous les Entreprises</option>
                           {clients.map((client) => (
                               <option key={client.code_entreprise} value={client.code_entreprise}>
-                                {`${client.code_entreprise} - ${client.nom_utilisateur}`} {/* Renamed */}
+                                {`${client.code_entreprise} - ${client.identite}`}
                               </option>
                           ))}
                         </select>
