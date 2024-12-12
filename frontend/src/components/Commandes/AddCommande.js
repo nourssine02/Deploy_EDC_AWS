@@ -125,34 +125,18 @@ const AddCommande = ({ isSidebarOpen }) => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        axios.post("https://comptaonline.linkpc.net/api/commande",
+        await axios.post("https://comptaonline.linkpc.net/api/commande",
             { commande, familles },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`, // Assurez-vous que le jeton est correctement lu
-              },
-            }
+            { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
         );
-        setCommande(initialCommandeState);
-        setFamilles([initialFamilleState]);
-        // Notification si l'utilisateur est un comptable
-        if (user.role === "comptable") {
-          const notificationMessage = `${user.identite} a ajouté une nouvelle Commande`;
-
-          const notificationData = {
-            userId: user.id,
-            message: notificationMessage,
-          };
-
-          await axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
-        }
-        Swal.fire({
-          icon: "success",
-          title: "Succès",
-          text: "Commande ajoutée avec succès!",
-        });
-        navigate("/commandes");
       } catch (error) {
+        console.error("Erreur lors de l'ajout de la commande :", error.response || error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur",
+          text: error.response ? error.response.data.message : "Erreur inconnue",
+        });
+      }
         console.error("Erreur lors de l'ajout du commande :", error);
         Swal.fire({
           icon: "error",

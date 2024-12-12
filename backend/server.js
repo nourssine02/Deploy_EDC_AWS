@@ -2417,11 +2417,11 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 
 // Route pour ajouter une commande
 app.post("/api/commande", verifyToken, (req, res) => {
+  const userId = req.user.id;
   if (!userId) {
     console.error("User ID is undefined. Cannot proceed with adding achat.");
     return res.status(400).json({ error: "User ID is required to add achat" });
   }
-  const userId = req.user.id;
   const { commande, familles } = req.body;
 
   db.beginTransaction((err) => {
