@@ -1739,13 +1739,13 @@ app.get("/api/code_tiers", verifyToken, (req, res) => {
 
   // Requête SQL pour récupérer les tiers associés
   const query = `
-    SELECT t.id, t.code_tiers, u.identite
+    SELECT t.id, t.code_tiers, t.identite
     FROM tiers t
     LEFT JOIN utilisateurs u ON t.ajoute_par = u.id
     WHERE u.identite = ?
   `;
 
-  // Exécution de la requête SQL
+  // Exécution de la requête SQL avec le paramètre de l'utilisateur
   db.query(query, [req.user.identite], (err, results) => {
     if (err) {
       console.error("Erreur lors de l'exécution de la requête :", err);
@@ -2417,11 +2417,11 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 
 // Route pour ajouter une commande
 app.post("/api/commande", verifyToken, (req, res) => {
+  const userId = req.user.id;
   if (!userId) {
     console.error("User ID is undefined. Cannot proceed with adding achat.");
     return res.status(400).json({ error: "User ID is required to add achat" });
   }
-  const userId = req.user.id;
   const { commande, familles } = req.body;
 
   db.beginTransaction((err) => {
@@ -4948,7 +4948,7 @@ app.get('*', (req, res) => {
 
 
 //Démarrage du serveur
-const PORT = 5001;
+const PORT = 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Le serveur est en écoute sur le port ${PORT}`);
 });
