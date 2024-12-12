@@ -95,8 +95,6 @@ const Profile = ({ isSidebarOpen }) => {
         .then((res) => {
           if (res.data && res.data.code_user) {
             setUser(res.data);
-            setFormData(res.data);
-            setImagePreview(res.data.profile_image || "");
             setAlertMessage({ type: "success", text: "Profile updated successfully" });
           }
         })

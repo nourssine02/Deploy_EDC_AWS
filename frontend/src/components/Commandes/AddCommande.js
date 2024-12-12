@@ -125,7 +125,14 @@ const AddCommande = ({ isSidebarOpen }) => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        await axios.post("https://comptaonline.linkpc.net/api/commande", { commande, familles });
+        axios.post("https://comptaonline.linkpc.net/api/commande",
+            { commande, familles },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`, // Assurez-vous que le jeton est correctement lu
+              },
+            }
+        );
         setCommande(initialCommandeState);
         setFamilles([initialFamilleState]);
         // Notification si l'utilisateur est un comptable
