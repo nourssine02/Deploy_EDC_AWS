@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import axios from "axios";
-import { Link, Navigate } from "react-router-dom";
+import {Link, Navigate} from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReactPaginate from "react-paginate";
@@ -11,10 +11,11 @@ const Tiers = ({ isSidebarOpen }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage] = useState(4);
-  const [banksVisible, setBanksVisible] = useState({});
+  const [banksVisible, setBanksVisible] = useState({}); // To track which tier has banks visible
   const { user } = useContext(UserContext);
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState("");
+
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -29,7 +30,9 @@ const Tiers = ({ isSidebarOpen }) => {
     fetchClients();
   }, []);
 
+
   useEffect(() => {
+
     const fetchTiers = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -42,7 +45,13 @@ const Tiers = ({ isSidebarOpen }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-        setTiers(res.data);
+        setTiers(res.data.map(tier => ({
+          ...tier,
+          type: tier.type || "",
+          identite: tier.identite || "",
+          "MF/CIN": tier["MF/CIN"] || "",
+          tel: tier.tel || ""
+        })));
       } catch (err) {
         console.log(err);
       }
@@ -79,22 +88,27 @@ const Tiers = ({ isSidebarOpen }) => {
     setCurrentPage(0);
   };
 
+
   const filtered = tiers.filter((tier) => {
+    if (!tier) return false;
+
     const searchTermLower = searchTerm.toLowerCase();
-    const isInClient = !selectedClient || tier.code_entreprise === selectedClient;
+    const isInClient =
+        !selectedClient || tier.code_entreprise === selectedClient; // Filtrer par code_entreprise
 
     return (
         isInClient &&
         (
-            tier.code_tiers.toLowerCase().includes(searchTermLower) ||
-            new Date(tier.date_creation).toLocaleDateString().includes(searchTermLower) ||
-            tier.type.toString().includes(searchTermLower) ||
-            tier.nom_utilisateur.toString().includes(searchTermLower) || // Renamed to 'nom_utilisateur'
-            tier["MF/CIN"].toString().includes(searchTermLower) ||
-            tier.tel.toString().includes(searchTermLower)
+            (tier.code_tiers?.toLowerCase() || "").includes(searchTermLower) ||
+            (new Date(tier.date_creation).toLocaleDateString() || "").includes(searchTermLower) ||
+            (tier.type?.toString() || "").includes(searchTermLower) ||
+            (tier.identite?.toString() || "").includes(searchTermLower) ||
+            (tier["MF/CIN"]?.toString() || "").includes(searchTermLower) ||
+            (tier.tel?.toString() || "").includes(searchTermLower)
         )
     );
   });
+
 
   const handleClientChange = (e) => {
     setSelectedClient(e.target.value);
@@ -172,7 +186,10 @@ const Tiers = ({ isSidebarOpen }) => {
                         >
                           <option value="">Tous les Entreprises</option>
                           {clients.map((client) => (
-                              <option key={client.code_entreprise} value={client.code_entreprise}>
+                              <option
+                                  key={client.code_entreprise}
+                                  value={client.code_entreprise}
+                              >
                                 {`${client.code_entreprise} - ${client.identite}`}
                               </option>
                           ))}
@@ -200,7 +217,7 @@ const Tiers = ({ isSidebarOpen }) => {
                           <React.Fragment key={tier.id}>
                             <tr>
                               {user.role === "comptable" && (
-                                  <td>{tier.identite_utilisateur}</td>
+                                  <td>{tier.identite}</td>
                               )}
                               <td>{tier.code_tiers}</td>
                               <td>{new Date(tier.date_creation).toLocaleDateString()}</td>
