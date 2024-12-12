@@ -45,13 +45,18 @@ const Tiers = ({ isSidebarOpen }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-        setTiers(res.data.map(tier => ({
-          ...tier,
-          type: tier.type || "",
-          identite: tier.identite || "",
-          "MF/CIN": tier["MF/CIN"] || "",
-          tel: tier.tel || ""
-        })));
+        setTiers(res.data.map((tier) => {
+          if (!tier.type || !tier.identite || !tier["MF/CIN"] || !tier.tel) {
+            console.error("Incomplete tier data:", tier);
+          }
+          return {
+            ...tier,
+            type: tier.type || "",
+            identite: tier.identite || "",
+            "MF/CIN": tier["MF/CIN"] || "",
+            tel: tier.tel || "",
+          };
+        }));
       } catch (err) {
         console.log(err);
       }
