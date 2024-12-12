@@ -45,7 +45,13 @@ const Tiers = ({ isSidebarOpen }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-        setTiers(res.data);
+        setTiers(res.data.map(tier => ({
+          ...tier,
+          type: tier.type || "",
+          identite: tier.identite || "",
+          "MF/CIN": tier["MF/CIN"] || "",
+          tel: tier.tel || ""
+        })));
       } catch (err) {
         console.log(err);
       }
@@ -84,6 +90,8 @@ const Tiers = ({ isSidebarOpen }) => {
 
 
   const filtered = tiers.filter((tier) => {
+    if (!tier) return false;
+
     const searchTermLower = searchTerm.toLowerCase();
     const isInClient =
         !selectedClient || tier.code_entreprise === selectedClient; // Filtrer par code_entreprise
@@ -91,12 +99,12 @@ const Tiers = ({ isSidebarOpen }) => {
     return (
         isInClient &&
         (
-            tier.code_tiers.toLowerCase().includes(searchTermLower) ||
-            new Date(tier.date_creation).toLocaleDateString().includes(searchTermLower) ||
-            tier.type.toString().includes(searchTermLower) ||
-            tier.identite.toString().includes(searchTermLower) ||
-            tier["MF/CIN"].toString().includes(searchTermLower) ||
-            tier.tel.toString().includes(searchTermLower)
+            (tier.code_tiers?.toLowerCase() || "").includes(searchTermLower) ||
+            (new Date(tier.date_creation).toLocaleDateString() || "").includes(searchTermLower) ||
+            (tier.type?.toString() || "").includes(searchTermLower) ||
+            (tier.identite?.toString() || "").includes(searchTermLower) ||
+            (tier["MF/CIN"]?.toString() || "").includes(searchTermLower) ||
+            (tier.tel?.toString() || "").includes(searchTermLower)
         )
     );
   });
