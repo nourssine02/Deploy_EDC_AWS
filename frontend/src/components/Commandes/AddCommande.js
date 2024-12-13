@@ -3,7 +3,8 @@ import React, { useContext, useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { useNavigate } from "react-router-dom";
 import TiersSaisie from "../TiersSaisie";
-import Swal from "sweetalert2";
+import Swal from 'sweetalert2';
+import "react-toastify/dist/ReactToastify.css";
 import { UserContext } from "../Connexion/UserProvider";
 
 const AddCommande = ({ isSidebarOpen }) => {
@@ -32,6 +33,8 @@ const AddCommande = ({ isSidebarOpen }) => {
   const [options, setOptions] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
+  const handleModalShow = () => setShowModal(true);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,12 +42,12 @@ const AddCommande = ({ isSidebarOpen }) => {
       try {
         const res = await axios.get("https://comptaonline.linkpc.net/api/code_tiers", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Exemple de gestion de token
           },
         });
         setCodeTiers(res.data);
       } catch (err) {
-        console.error("Error fetching code_tiers:", err);
+        console.log(err);
       }
     };
     fetchCodeTiers();
@@ -60,7 +63,7 @@ const AddCommande = ({ isSidebarOpen }) => {
         }));
         setOptions(options);
       } catch (err) {
-        console.error("Error fetching familles:", err);
+        console.log(err);
       }
     };
     fetchFamilles();
@@ -77,6 +80,7 @@ const AddCommande = ({ isSidebarOpen }) => {
         setCommande((prev) => ({ ...prev, document_fichier: url }));
       };
       reader.readAsDataURL(files[0]);
+
     } else {
       setCommande((prev) => ({ ...prev, [name]: value }));
     }
@@ -122,28 +126,25 @@ const AddCommande = ({ isSidebarOpen }) => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        await axios.post(
-            "https://comptaonline.linkpc.net/api/commande",
-            { commande, familles },
+        await axios.post("https://comptaonline.linkpc.net/api/commande", { commande, familles },
             {
               headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                Authorization: `Bearer ${localStorage.getItem("token")}`, // Assurez-vous que le jeton est correctement lu
               },
-            }
-        );
+            });
         setCommande(initialCommandeState);
         setFamilles([initialFamilleState]);
-
-        // Notification if the user is a comptable
+        // Notification si l'utilisateur est un comptable
         if (user.role === "comptable") {
           const notificationMessage = `${user.identite} a ajouté une nouvelle Commande`;
+
           const notificationData = {
             userId: user.id,
             message: notificationMessage,
           };
+
           await axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
         }
-
         Swal.fire({
           icon: "success",
           title: "Succès",
@@ -164,6 +165,7 @@ const AddCommande = ({ isSidebarOpen }) => {
         title: "Erreur",
         text: "Veuillez corriger les erreurs dans le formulaire.",
       });
+
     }
   };
 
@@ -178,6 +180,7 @@ const AddCommande = ({ isSidebarOpen }) => {
             <div className="card-body">
               <h2 className="text-center">Ajouter une Commande</h2>
               <br />
+              <br />
               <form className="forms-sample" onSubmit={handleSubmit}>
                 <div className="row">
                   <div className="col-md-4">
@@ -190,19 +193,25 @@ const AddCommande = ({ isSidebarOpen }) => {
                           onChange={handleChange}
                           value={commande.date_commande}
                       />
-                      {errors.date_commande && <div className="text-danger">{errors.date_commande}</div>}
+                      {errors.date_commande && (
+                          <div className="text-danger">{errors.date_commande}</div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>N° de la commande:</label>
                       <input
                           type="text"
-                          className={`form-control ${errors.num_commande && "is-invalid"}`}
+                          className={`form-control ${
+                              errors.num_commande && "is-invalid"
+                          }`}
                           name="num_commande"
                           onChange={handleChange}
                           value={commande.num_commande}
                           placeholder="N° de la commande"
                       />
-                      {errors.num_commande && <div className="text-danger">{errors.num_commande}</div>}
+                      {errors.num_commande && (
+                          <div className="text-danger">{errors.num_commande}</div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-4">
@@ -215,20 +224,28 @@ const AddCommande = ({ isSidebarOpen }) => {
                           onChange={handleChange}
                           value={commande.code_tiers}
                       >
-                        <option value="" style={{ color: "black" }}>Sélectionner le Code Tiers</option>
+                        <option value="" style={{ color: "black" }}>
+                          Sélectionner le Code Tiers
+                        </option>
                         {codeTiers.map((tier) => (
-                            <option key={tier.id} value={tier.id}>
+                            <option
+                                key={tier.code_tiers}
+                                value={tier.code_tiers}
+                            >
                               {`${tier.code_tiers} - ${tier.identite}`}
                             </option>
                         ))}
                       </select>
+
                     </div>
                     <div className="form-group">
                       <label>Montant de la Commande:</label>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         <input
                             type="text"
-                            className={`form-control ${errors.montant_commande && "is-invalid"}`}
+                            className={`form-control ${
+                                errors.montant_commande && "is-invalid"
+                            }`}
                             name="montant_commande"
                             onChange={handleChange}
                             value={commande.montant_commande}
@@ -237,7 +254,11 @@ const AddCommande = ({ isSidebarOpen }) => {
                         &nbsp;
                         <span>DT</span>
                       </div>
-                      {errors.montant_commande && <div className="text-danger">{errors.montant_commande}</div>}
+                      {errors.montant_commande && (
+                          <div className="text-danger">
+                            {errors.montant_commande}
+                          </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-4">
@@ -248,7 +269,7 @@ const AddCommande = ({ isSidebarOpen }) => {
                           className="form-control"
                           name="tiers_saisie"
                           onChange={handleChange}
-                          onClick={() => setShowModal(true)}
+                          onClick={handleModalShow}
                           value={commande.tiers_saisie}
                           disabled={!!commande.code_tiers}
                       />
@@ -257,12 +278,18 @@ const AddCommande = ({ isSidebarOpen }) => {
                       <label>Date de livraison prévue:</label>
                       <input
                           type="date"
-                          className={`form-control ${errors.date_livraison_prevue && "is-invalid"}`}
+                          className={`form-control ${
+                              errors.date_livraison_prevue && "is-invalid"
+                          }`}
                           name="date_livraison_prevue"
                           onChange={handleChange}
                           value={commande.date_livraison_prevue}
                       />
-                      {errors.date_livraison_prevue && <div className="text-danger">{errors.date_livraison_prevue}</div>}
+                      {errors.date_livraison_prevue && (
+                          <div className="text-danger">
+                            {errors.date_livraison_prevue}
+                          </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-4">
@@ -270,11 +297,17 @@ const AddCommande = ({ isSidebarOpen }) => {
                       <label>Document fichier:</label>
                       <input
                           type="file"
-                          className={`form-control ${errors.document_fichier && "is-invalid"}`}
+                          className={`form-control ${
+                              errors.document_fichier && "is-invalid"
+                          }`}
                           name="document_fichier"
                           onChange={handleChange}
                       />
-                      {errors.document_fichier && <div className="text-danger">{errors.document_fichier}</div>}
+                      {errors.document_fichier && (
+                          <div className="text-danger">
+                            {errors.document_fichier}
+                          </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-4">
@@ -303,8 +336,12 @@ const AddCommande = ({ isSidebarOpen }) => {
                             <label>Famille:</label>
                             <CreatableSelect
                                 options={options}
-                                onChange={(value) => handleChangeFamille(value, index)}
-                                value={options.find((option) => option.value === famille.famille)}
+                                onChange={(value) =>
+                                    handleChangeFamille(value, index)
+                                }
+                                value={options.find(
+                                    (option) => option.value === famille.famille
+                                )}
                                 isClearable
                             />
                           </div>
@@ -316,7 +353,9 @@ const AddCommande = ({ isSidebarOpen }) => {
                                 type="text"
                                 className="form-control"
                                 value={famille.sous_famille}
-                                onChange={(e) => handleChangeFamille(e, index, "sous_famille")}
+                                onChange={(e) =>
+                                    handleChangeFamille(e, index, "sous_famille")
+                                }
                             />
                           </div>
                         </div>
@@ -327,7 +366,9 @@ const AddCommande = ({ isSidebarOpen }) => {
                                 type="text"
                                 className="form-control"
                                 value={famille.article}
-                                onChange={(e) => handleChangeFamille(e, index, "article")}
+                                onChange={(e) =>
+                                    handleChangeFamille(e, index, "article")
+                                }
                             />
                           </div>
                         </div>
@@ -339,7 +380,8 @@ const AddCommande = ({ isSidebarOpen }) => {
                                 className="btn btn-danger btn-sm mt-3"
                                 onClick={() => removeFamille(index)}
                             >
-                              <i className="bi bi-trash3"></i> Supprimer
+                              <i className="bi bi-trash3"></i>
+                              Supprimer
                             </button>
                           </div>
                         </div>
@@ -359,7 +401,11 @@ const AddCommande = ({ isSidebarOpen }) => {
                   <button type="submit" className="btn btn-primary mr-2">
                     Enregistrer
                   </button>
-                  <button type="button" className="btn btn-light" onClick={handleCancel}>
+                  <button
+                      type="button"
+                      className="btn btn-light"
+                      onClick={handleCancel}
+                  >
                     Annuler
                   </button>
                 </div>

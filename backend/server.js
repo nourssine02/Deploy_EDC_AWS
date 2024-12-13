@@ -380,7 +380,9 @@ app.get("/api/verify-email/:verificationCode", (req, res) => {
 });
 
 // Register Route
-app.post("/api/register", async (req, res) => {
+app.post('/api/register', async (req, res) => {
+  console.log('Données reçues côté serveur:', req.body); // Affiche les données reçues
+
   const {
     code_entreprise,
     code_user,
@@ -392,38 +394,47 @@ app.post("/api/register", async (req, res) => {
     role,
   } = req.body;
 
+  // Hachage du mot de passe
+  let hashedPassword;
   try {
-    const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
-    const sql =
-        "INSERT INTO utilisateurs (code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    const values = [
-      code_entreprise,
-      code_user,
-      identite,
-      position,
-      tel,
-      email,
-      hashedPassword,
-      role,
-    ];
+    const saltRounds = 10; // Nombre de tours pour la génération du sel
+    hashedPassword = await bcrypt.hash(mot_de_passe, saltRounds);
+    console.log('Mot de passe haché:', hashedPassword);
+  } catch (err) {
+    console.error('Erreur lors du hachage du mot de passe:', err);
+    return res.status(500).send({ message: "Erreur interne lors du traitement du mot de passe" });
+  }
 
-    db.query(sql, values, async (err, result) => {
-      if (err) {
-        console.error("Erreur lors de l'inscription :", err);
-        return res.status(500).json({ error: "Erreur du serveur" });
-      }
+  const query = `
+    INSERT INTO utilisateurs 
+      (code_entreprise, code_user, identite, position, tel, email, mot_de_passe, role)
+    VALUES 
+      (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
 
-      // Si aucune erreur ne s'est produite lors de l'insertion, renvoyer une réponse réussie
-      return res.status(200).json({
-        message: "User registered successfully.",
-      });
+  try {
+    console.log("Exécution de la requête SQL..."); // Log avant exécution de la requête SQL
+    await new Promise((resolve, reject) => {
+      db.query(
+          query,
+          [code_entreprise, code_user, identite, position, tel, email, hashedPassword, role],
+          (err, result) => {
+            if (err) {
+              console.error('Erreur SQL:', err); // Log d'erreur SQL
+              reject(err);
+            } else {
+              resolve(result);
+            }
+          }
+      );
     });
-  } catch (error) {
-    console.error("Error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+
+    res.status(200).send({ message: 'Utilisateur inscrit avec succès' });
+  } catch (err) {
+    console.error('Erreur lors de l\'insertion:', err); // Log d'erreur
+    res.status(500).send({ message: 'Erreur lors de l\'inscription' });
   }
 });
-
 // Login route
 app.post("/api/login", (req, res) => {
   const { identite, mot_de_passe } = req.body;
@@ -2417,172 +2428,86 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 
 // Route pour ajouter une commande
 app.post("/api/commande", verifyToken, (req, res) => {
-  const userId = req.user.id;
-  if (!userId) {
-    return res
-        .status(400)
-        .json({ error: "User ID is required to add a commande." });
+  if (!req.user || !req.user.id) {
+    console.error("User ID is undefined. Cannot proceed with adding achat.");
+    return res.status(400).json({ error: "User ID is required to add achat" });
   }
+  const userId = req.user.id;
+  const { commande, familles } = req.body;
 
-  try {
-    const commande = JSON.parse(req.body.commande);
-    const familles = JSON.parse(req.body.familles);
-
-    // Validation pour les champs requis
-    if (!commande || !commande.date_commande || !commande.num_commande) {
-      return res
-          .status(400)
-          .json({ error: "'date_commande' and 'num_commande' are required." });
+  db.beginTransaction((err) => {
+    if (err) {
+      console.error("Erreur lors de la création de la transaction:", err);
+      return res.status(500).json({ message: "Erreur lors de la création de la transaction." });
     }
 
-    db.beginTransaction((err) => {
+    const insertCommandeQuery = `
+            INSERT INTO commandes 
+            (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, 
+             date_livraison_prevue, observations, document_fichier, ajoute_par) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+    const commandeData = [
+      commande.date_commande,
+      commande.num_commande,
+      commande.code_tiers,
+      commande.tiers_saisie,
+      commande.montant_commande,
+      commande.date_livraison_prevue,
+      commande.observations,
+      commande.document_fichier,
+      userId,
+    ];
+
+    db.query(insertCommandeQuery, commandeData, (err, result) => {
       if (err) {
-        console.error("Transaction creation error:", err);
-        return res
-            .status(500)
-            .json({ message: "Error creating transaction." });
+        console.error("Erreur lors de l'insertion de la commande :", err);
+        return db.rollback(() =>
+            res.status(500).json({ message: "Erreur lors de l'insertion de la commande." })
+        );
       }
 
-      const insertCommandeQuery = `
-        INSERT INTO commandes (
-          date_commande, num_commande, code_tiers, tiers_saisie,
-          montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
+      const commandeId = result.insertId;
+      console.log("Commande insérée avec ID :", commandeId);
 
-      db.query(
-          insertCommandeQuery,
-          [
-            commande.date_commande,
-            commande.num_commande,
-            commande.code_tiers || null,
-            commande.tiers_saisie || null,
-            commande.montant_commande || 0,
-            commande.date_livraison_prevue || null,
-            commande.observations || null,
-            commande.document_fichier || null,
-            userId,
-          ],
-          (err, result) => {
-            if (err) {
-              console.error("Error inserting commande:", err);
-              return db.rollback(() =>
-                  res.status(500).json({
-                    message: "Error inserting commande.",
-                    details: err.sqlMessage || err.message,
-                  })
-              );
-            }
+      const famillePromises = familles.map((famille) => {
+        return new Promise((resolve, reject) => {
+          const insertFamilleQuery = `
+                        INSERT INTO familles (famille, sous_famille, article, commande_id) 
+                        VALUES (?, ?, ?, ?)
+                    `;
+          db.query(
+              insertFamilleQuery,
+              [famille.famille, famille.sous_famille, famille.article, commandeId],
+              (err) => (err ? reject(err) : resolve())
+          );
+        });
+      });
 
-            const commandeId = result.insertId;
+      Promise.all(famillePromises)
+          .then(() => {
+            db.commit((err) => {
+              if (err) {
+                console.error("Erreur lors de la validation de la transaction :", err);
+                return db.rollback(() =>
+                    res.status(500).json({ message: "Erreur lors de la validation de la transaction." })
+                );
+              }
 
-            const famillePromises = familles
-                ? familles.map((famille) => {
-                  return new Promise((resolve, reject) => {
-                    const insertFamilleQuery = `
-                    INSERT INTO familles (famille, sous_famille, article, commande_id)
-                    VALUES (?, ?, ?, ?)
-                  `;
-                    db.query(
-                        insertFamilleQuery,
-                        [
-                          famille.famille || null,
-                          famille.sous_famille || null,
-                          famille.article || null,
-                          commandeId,
-                        ],
-                        (err) => (err ? reject(err) : resolve())
-                    );
-                  });
-                })
-                : [];
-
-            Promise.all(famillePromises)
-                .then(() => {
-                  db.commit((err) => {
-                    if (err) {
-                      console.error("Transaction commit error:", err);
-                      return db.rollback(() =>
-                          res.status(500).json({
-                            message: "Transaction commit failed.",
-                          })
-                      );
-                    }
-
-                    const notificationMessage = `${req.user.identite} a ajouté une nouvelle commande.`;
-                    const getComptableQuery = `
-                  SELECT id FROM utilisateurs WHERE role = 'comptable'
-                `;
-                    db.query(getComptableQuery, (comptableErr, comptableData) => {
-                      if (comptableErr) {
-                        console.error(
-                            "Error fetching comptable:",
-                            comptableErr
-                        );
-                        return res
-                            .status(500)
-                            .json({
-                              error: "Error fetching comptable.",
-                              details: comptableErr.message,
-                            });
-                      }
-
-                      if (comptableData.length === 0) {
-                        console.error("No comptable found.");
-                        return res
-                            .status(404)
-                            .json({ error: "No comptable found." });
-                      }
-
-                      const comptableId = comptableData[0].id;
-                      const notificationQuery = `
-                    INSERT INTO notifications (user_id, message)
-                    VALUES (?, ?)
-                  `;
-                      db.query(
-                          notificationQuery,
-                          [comptableId, notificationMessage],
-                          (notifErr) => {
-                            if (notifErr) {
-                              console.error(
-                                  "Error adding notification:",
-                                  notifErr
-                              );
-                              return res
-                                  .status(500)
-                                  .json({
-                                    error: "Error adding notification.",
-                                    details: notifErr.message,
-                                  });
-                            }
-
-                            return res.status(200).json({
-                              message:
-                                  "Commande ajoutée avec succès et notification envoyée.",
-                            });
-                          }
-                      );
-                    });
-                  });
-                })
-                .catch((err) => {
-                  console.error("Error inserting familles:", err);
-                  db.rollback(() =>
-                      res.status(500).json({
-                        message: "Error inserting familles.",
-                        details: err.message,
-                      })
-                  );
-                });
-          }
-      );
+              console.log("Transaction validée avec succès !");
+              res.status(200).json({ message: "Commande ajoutée avec succès !" });
+            });
+          })
+          .catch((err) => {
+            console.error("Erreur lors de l'insertion des familles :", err);
+            db.rollback(() =>
+                res.status(500).json({ message: "Erreur lors de l'insertion des familles." })
+            );
+          });
     });
-  } catch (e) {
-    console.error("Error processing data:", e);
-    return res.status(500).json({ message: "Error processing data." });
-  }
+  });
 });
-
 // Route pour mettre a jour une commande
 app.put("/api/commande/:id", async (req, res) => {
   const commandeID = req.params.id;
@@ -4932,45 +4857,53 @@ app.get("/api/statistics", async (req, res) => {
 });
 
 // Route pour récupérer les commandes par période pour un utilisateur
-app.get("/api/orders-per-period", verifyToken, async (req, res) => {
+app.get('/api/orders-per-period/:userId', async (req, res) => {
+  const { userId } = req.params; // Récupère l'identifiant utilisateur des paramètres
+
+  if (!userId) {
+    return res.status(400).json({ error: "L'identifiant utilisateur est requis" });
+  }
+
   try {
-    const userId = req.user.id;
-
-    if (!userId) {
-      return res.status(400).json({ error: "User ID is required." });
-    }
-
-    // Requête SQL pour récupérer les commandes par période pour l'utilisateur
+    // Requête SQL MySQL pour récupérer les commandes d'un utilisateur spécifique
     const query = `
-      SELECT 
-        DATE_FORMAT(date_commande, '%Y-%m') AS period, 
-        COUNT(*) AS count 
-      FROM commandes 
-      WHERE ajoute_par = ? 
-      GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
-      ORDER BY period;
-    `;
+            SELECT 
+                DATE_FORMAT(date_commande, '%Y-%m') AS period, 
+                COUNT(*) AS count 
+            FROM commandes 
+            WHERE user_id = ? -- Filtrer par utilisateur
+            GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
+            ORDER BY period;
+        `;
 
-    const rows = await db.query(query, [userId]);
+    // Exécution de la requête avec l'utilisateur spécifié
+    db.query(query, [userId], (err, rows) => {
+      if (err) {
+        console.error("Erreur lors de l'exécution de la requête:", err.message);
+        return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+      }
 
-    if (!Array.isArray(rows)) {
-      console.error("Format inattendu des données :", rows);
-      return res.status(500).json({ error: "Format inattendu des données reçues." });
-    }
+      // Vérification du format des données
+      if (!Array.isArray(rows)) {
+        console.error("Format inattendu des données:", rows);
+        return res.status(500).json({ error: "Format inattendu des données reçues" });
+      }
 
-    // Transformation des résultats pour le frontend
-    const ordersPerPeriod = rows.map(row => ({
-      label: row.period,
-      count: parseInt(row.count, 10),
-    }));
+      // Transformation des résultats pour le frontend
+      const ordersPerPeriod = rows.map(row => ({
+        label: row.period,
+        count: parseInt(row.count, 10),
+      }));
 
-    // Réponse au client
-    res.json({ ordersPerPeriod });
+      // Réponse au client
+      res.json({ ordersPerPeriod });
+    });
   } catch (err) {
-    console.error("Erreur lors de la récupération des commandes par période :", err.message);
-    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période." });
+    console.error("Erreur lors de la récupération des commandes par période:", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
   }
 });
+
 
 // Route pour servir le fichier index.html de React
 app.get('*', (req, res) => {
