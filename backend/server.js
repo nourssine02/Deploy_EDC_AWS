@@ -2418,131 +2418,81 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 // Route pour ajouter une commande
 app.post("/api/commande", verifyToken, (req, res) => {
   const userId = req.user.id;
-  if (!userId) {
-    console.error("User ID is undefined. Cannot proceed with adding achat.");
-    return res.status(400).json({ error: "User ID is required to add achat" });
-  }
   const { commande, familles } = req.body;
+
+  if (!commande || !commande.date_commande || !commande.num_commande) {
+    return res.status(400).json({
+      error: "Invalid data: 'date_commande' and 'num_commande' are required.",
+    });
+  }
 
   db.beginTransaction((err) => {
     if (err) {
-      console.error("Erreur lors de la création de la transaction:", err);
-      return res
-          .status(500)
-          .json({ message: "Erreur lors de la création de la transaction." });
+      console.error("Transaction creation error:", err);
+      return res.status(500).json({ message: "Transaction creation failed." });
     }
 
-    const insertCommandeQuery =
-        "INSERT INTO `commandes`(`date_commande`, `num_commande`, `code_tiers`, `tiers_saisie`, `montant_commande`, `date_livraison_prevue`, `observations`, `document_fichier`, `ajoute_par` ) VALUES (?,?,?,?,?,?,?,?,?)";
-    db.query(
-        insertCommandeQuery,
-        [
-          commande.date_commande,
-          commande.num_commande,
-          commande.code_tiers,
-          commande.tiers_saisie,
-          commande.montant_commande,
-          commande.date_livraison_prevue,
-          commande.observations,
-          commande.document_fichier,
-          userId,
-        ],
-        (err, result) => {
-          if (err) {
-            console.error("Erreur lors de l'insertion de la commande :", err);
-            return db.rollback(() =>
-                res
-                    .status(500)
-                    .json({ message: "Erreur lors de l'insertion de la commande." })
-            );
-          }
+    const insertCommandeQuery = `
+      INSERT INTO commandes (
+        date_commande, num_commande, code_tiers, tiers_saisie,
+        montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-          const commandeId = result.insertId;
+    const commandeValues = [
+      commande.date_commande,
+      commande.num_commande,
+      commande.code_tiers,
+      commande.tiers_saisie,
+      commande.montant_commande,
+      commande.date_livraison_prevue,
+      commande.observations,
+      commande.document_fichier,
+      userId,
+    ];
 
-          const famillePromises = familles.map(
-              (famille) =>
-                  new Promise((resolve, reject) => {
-                    const insertFamilleQuery =
-                        "INSERT INTO `familles`(`famille`, `sous_famille`, `article`, `commande_id`) VALUES (?,?,?,?)";
-                    db.query(
-                        insertFamilleQuery,
-                        [
-                          famille.famille,
-                          famille.sous_famille,
-                          famille.article,
-                          commandeId,
-                        ],
-                        (err) => (err ? reject(err) : resolve())
-                    );
-                  })
-          );
+    db.query(insertCommandeQuery, commandeValues, (err, result) => {
+      if (err) {
+        console.error("Error inserting commande:", err.sqlMessage || err);
+        return db.rollback(() =>
+            res.status(500).json({ message: "Error inserting commande.", details: err.message })
+        );
+      }
 
-          Promise.all([...famillePromises])
-              .then(() => {
-                db.commit((err) => {
-                  if (err) {
-                    console.error(
-                        "Erreur lors de la validation de la transaction :",
-                        err
-                    );
-                    return db.rollback(() =>
-                        res.status(500).json({
-                          message: "Erreur lors de la validation de la transaction.",
-                        })
-                    );
-                  }
+      const commandeId = result.insertId;
 
-                  // Notification logic
-                  const notificationMessage = `${req.user.identite} a ajouté une nouvelle Commande`;
+      if (Array.isArray(familles) && familles.length > 0) {
+        const insertFamilleQuery = `
+          INSERT INTO familles (famille, sous_famille, article, commande_id)
+          VALUES (?, ?, ?, ?)
+        `;
 
-                  const getComptableQuery =
-                      "SELECT id FROM utilisateurs WHERE role = 'comptable'";
-                  db.query(getComptableQuery, (comptableErr, comptableData) => {
-                    if (comptableErr) {
-                      console.error("Error fetching comptable:", comptableErr);
-                      return res.status(500).json({
-                        error: "Failed to fetch comptable",
-                        details: comptableErr.message,
-                      });
-                    }
-                    if (comptableData.length === 0) {
-                      console.error("No comptable found");
-                      return res.status(404).json({ error: "No comptable found" });
-                    }
+        const famillePromises = familles.map((famille) =>
+            new Promise((resolve, reject) => {
+              const familleValues = [
+                famille.famille,
+                famille.sous_famille,
+                famille.article,
+                commandeId,
+              ];
+              db.query(insertFamilleQuery, familleValues, (err) =>
+                  err ? reject(err) : resolve()
+              );
+            })
+        );
 
-                    const comptableId = comptableData[0].id;
-                    const notificationQuery =
-                        "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-                    db.query(
-                        notificationQuery,
-                        [comptableId, notificationMessage],
-                        (notifErr, notifData) => {
-                          if (notifErr) {
-                            console.error("Error adding notification:", notifErr);
-                            return res.status(500).json({
-                              error: "Failed to add notification",
-                              details: notifErr.message,
-                            });
-                          }
-                          return res.status(200).json({
-                            message:
-                                "Commande ajoutée avec succès et notification envoyée",
-                          });
-                        }
-                    );
-                  });
-                });
-              })
-              .catch((err) => {
-                console.error("Erreur lors de l'insertion des familles :", err);
-                db.rollback(() =>
-                    res
-                        .status(500)
-                        .json({ message: "Erreur lors de l'insertion des familles." })
-                );
-              });
-        }
-    );
+        Promise.all(famillePromises)
+            .then(() => commitTransactionWithNotification(commandeId, userId, res))
+            .catch((err) => {
+              console.error("Error inserting familles:", err);
+              db.rollback(() =>
+                  res.status(500).json({ message: "Error inserting familles.", details: err.message })
+              );
+            });
+      } else {
+        commitTransactionWithNotification(commandeId, userId, res);
+      }
+    });
   });
 });
 
