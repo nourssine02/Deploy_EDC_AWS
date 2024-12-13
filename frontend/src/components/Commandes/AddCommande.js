@@ -122,9 +122,14 @@ const AddCommande = ({ isSidebarOpen }) => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        await axios.post("https://comptaonline.linkpc.net/api/commande",
+        await axios.post(
+            "https://comptaonline.linkpc.net/api/commande",
             { commande, familles },
-            { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
         );
         setCommande(initialCommandeState);
         setFamilles([initialFamilleState]);
@@ -146,11 +151,11 @@ const AddCommande = ({ isSidebarOpen }) => {
         });
         navigate("/commandes");
       } catch (error) {
-        console.error("Erreur lors de l'ajout de la commande :", error.response || error.message);
+        console.error("Erreur lors de l'ajout du commande :", error);
         Swal.fire({
           icon: "error",
           title: "Erreur",
-          text: error.response ? error.response.data.message : "Erreur inconnue",
+          text: "Erreur lors de l'ajout du Commande. Veuillez réessayer.",
         });
       }
     } else {
