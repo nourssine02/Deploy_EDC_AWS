@@ -2418,82 +2418,169 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 // Route pour ajouter une commande
 app.post("/api/commande", verifyToken, (req, res) => {
   const userId = req.user.id;
-  const { commande, familles } = req.body;
-
-  if (!commande || !commande.date_commande || !commande.num_commande) {
-    return res.status(400).json({
-      error: "Invalid data: 'date_commande' and 'num_commande' are required.",
-    });
+  if (!userId) {
+    return res
+        .status(400)
+        .json({ error: "User ID is required to add a commande." });
   }
 
-  db.beginTransaction((err) => {
-    if (err) {
-      console.error("Transaction creation error:", err);
-      return res.status(500).json({ message: "Transaction creation failed." });
+  try {
+    const commande = JSON.parse(req.body.commande);
+    const familles = JSON.parse(req.body.familles);
+
+    // Validation pour les champs requis
+    if (!commande || !commande.date_commande || !commande.num_commande) {
+      return res
+          .status(400)
+          .json({ error: "'date_commande' and 'num_commande' are required." });
     }
 
-    const insertCommandeQuery = `
-      INSERT INTO commandes (
-        date_commande, num_commande, code_tiers, tiers_saisie,
-        montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const commandeValues = [
-      commande.date_commande,
-      commande.num_commande,
-      commande.code_tiers,
-      commande.tiers_saisie,
-      commande.montant_commande,
-      commande.date_livraison_prevue,
-      commande.observations,
-      commande.document_fichier,
-      userId,
-    ];
-
-    db.query(insertCommandeQuery, commandeValues, (err, result) => {
+    db.beginTransaction((err) => {
       if (err) {
-        console.error("Error inserting commande:", err.sqlMessage || err);
-        return db.rollback(() =>
-            res.status(500).json({ message: "Error inserting commande.", details: err.message })
-        );
+        console.error("Transaction creation error:", err);
+        return res
+            .status(500)
+            .json({ message: "Error creating transaction." });
       }
 
-      const commandeId = result.insertId;
+      const insertCommandeQuery = `
+        INSERT INTO commandes (
+          date_commande, num_commande, code_tiers, tiers_saisie,
+          montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
 
-      if (Array.isArray(familles) && familles.length > 0) {
-        const insertFamilleQuery = `
-          INSERT INTO familles (famille, sous_famille, article, commande_id)
-          VALUES (?, ?, ?, ?)
-        `;
-
-        const famillePromises = familles.map((famille) =>
-            new Promise((resolve, reject) => {
-              const familleValues = [
-                famille.famille,
-                famille.sous_famille,
-                famille.article,
-                commandeId,
-              ];
-              db.query(insertFamilleQuery, familleValues, (err) =>
-                  err ? reject(err) : resolve()
+      db.query(
+          insertCommandeQuery,
+          [
+            commande.date_commande,
+            commande.num_commande,
+            commande.code_tiers || null,
+            commande.tiers_saisie || null,
+            commande.montant_commande || 0,
+            commande.date_livraison_prevue || null,
+            commande.observations || null,
+            commande.document_fichier || null,
+            userId,
+          ],
+          (err, result) => {
+            if (err) {
+              console.error("Error inserting commande:", err);
+              return db.rollback(() =>
+                  res.status(500).json({
+                    message: "Error inserting commande.",
+                    details: err.sqlMessage || err.message,
+                  })
               );
-            })
-        );
+            }
 
-        Promise.all(famillePromises)
-            .then(() => commitTransactionWithNotification(commandeId, userId, res))
-            .catch((err) => {
-              console.error("Error inserting familles:", err);
-              db.rollback(() =>
-                  res.status(500).json({ message: "Error inserting familles.", details: err.message })
-              );
-            });
-      } else {
-        commitTransactionWithNotification(commandeId, userId, res);
-      }
+            const commandeId = result.insertId;
+
+            const famillePromises = familles
+                ? familles.map((famille) => {
+                  return new Promise((resolve, reject) => {
+                    const insertFamilleQuery = `
+                    INSERT INTO familles (famille, sous_famille, article, commande_id)
+                    VALUES (?, ?, ?, ?)
+                  `;
+                    db.query(
+                        insertFamilleQuery,
+                        [
+                          famille.famille || null,
+                          famille.sous_famille || null,
+                          famille.article || null,
+                          commandeId,
+                        ],
+                        (err) => (err ? reject(err) : resolve())
+                    );
+                  });
+                })
+                : [];
+
+            Promise.all(famillePromises)
+                .then(() => {
+                  db.commit((err) => {
+                    if (err) {
+                      console.error("Transaction commit error:", err);
+                      return db.rollback(() =>
+                          res.status(500).json({
+                            message: "Transaction commit failed.",
+                          })
+                      );
+                    }
+
+                    const notificationMessage = `${req.user.identite} a ajouté une nouvelle commande.`;
+                    const getComptableQuery = `
+                  SELECT id FROM utilisateurs WHERE role = 'comptable'
+                `;
+                    db.query(getComptableQuery, (comptableErr, comptableData) => {
+                      if (comptableErr) {
+                        console.error(
+                            "Error fetching comptable:",
+                            comptableErr
+                        );
+                        return res
+                            .status(500)
+                            .json({
+                              error: "Error fetching comptable.",
+                              details: comptableErr.message,
+                            });
+                      }
+
+                      if (comptableData.length === 0) {
+                        console.error("No comptable found.");
+                        return res
+                            .status(404)
+                            .json({ error: "No comptable found." });
+                      }
+
+                      const comptableId = comptableData[0].id;
+                      const notificationQuery = `
+                    INSERT INTO notifications (user_id, message)
+                    VALUES (?, ?)
+                  `;
+                      db.query(
+                          notificationQuery,
+                          [comptableId, notificationMessage],
+                          (notifErr) => {
+                            if (notifErr) {
+                              console.error(
+                                  "Error adding notification:",
+                                  notifErr
+                              );
+                              return res
+                                  .status(500)
+                                  .json({
+                                    error: "Error adding notification.",
+                                    details: notifErr.message,
+                                  });
+                            }
+
+                            return res.status(200).json({
+                              message:
+                                  "Commande ajoutée avec succès et notification envoyée.",
+                            });
+                          }
+                      );
+                    });
+                  });
+                })
+                .catch((err) => {
+                  console.error("Error inserting familles:", err);
+                  db.rollback(() =>
+                      res.status(500).json({
+                        message: "Error inserting familles.",
+                        details: err.message,
+                      })
+                  );
+                });
+          }
+      );
     });
-  });
+  } catch (e) {
+    console.error("Error processing data:", e);
+    return res.status(500).json({ message: "Error processing data." });
+  }
 });
 
 // Route pour mettre a jour une commande
@@ -4815,75 +4902,73 @@ app.get("/api/factures-non-payees", (req, res) => {
   });
 });
 
+// Route pour récupérer les statistiques globales
+app.get("/api/statistics", async (req, res) => {
+  try {
+    const stats = {};
 
-app.get("/api/statistics", (req, res) => {
-  const stats = {};
+    // Requête pour le nombre total d'utilisateurs
+    const [totalUsers] = await db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs WHERE role = "utilisateur"`);
+    stats.totalUsers = totalUsers.totalUsers;
 
-  db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs WHERE role="utilisateur"`, (err, totalUsers) => {
-    if (err) return res.status(500).json({ error: "Error fetching total users" });
+    // Requête pour le nombre total de commandes
+    const [totalOrders] = await db.query(`SELECT COUNT(*) as totalOrders FROM commandes`);
+    stats.totalOrders = totalOrders.totalOrders;
 
-    stats.totalUsers = totalUsers[0].totalUsers;
+    // Requête pour le nombre total de livraisons prévues
+    const [totalDeliveries] = await db.query(`SELECT COUNT(*) as totalDeliveries FROM commandes WHERE date_livraison_prevue IS NOT NULL`);
+    stats.totalDeliveries = totalDeliveries.totalDeliveries;
 
-    db.query(`SELECT COUNT(*) as totalOrders FROM commandes`, (err, totalOrders) => {
-      if (err) return res.status(500).json({ error: "Error fetching total orders" });
+    // Requête pour le nombre de factures impayées
+    const [unpaidInvoices] = await db.query(`SELECT COUNT(*) as unpaidInvoices FROM facturations WHERE etat_payement = 0`);
+    stats.unpaidInvoices = unpaidInvoices.unpaidInvoices;
 
-      stats.totalOrders = totalOrders[0].totalOrders;
-
-      db.query(`SELECT COUNT(*) as totalDeliveries FROM commandes WHERE date_livraison_prevue IS NOT NULL`, (err, totalDeliveries) => {
-        if (err) return res.status(500).json({ error: "Error fetching total deliveries" });
-
-        stats.totalDeliveries = totalDeliveries[0].totalDeliveries;
-
-        db.query(`SELECT COUNT(*) as unpaidInvoices FROM facturations WHERE etat_payement = 0`, (err, unpaidInvoices) => {
-          if (err) return res.status(500).json({ error: "Error fetching unpaid invoices" });
-
-          stats.unpaidInvoices = unpaidInvoices[0].unpaidInvoices;
-
-          res.json(stats);
-        });
-      });
-    });
-  });
+    // Renvoi des statistiques
+    res.json(stats);
+  } catch (err) {
+    console.error("Erreur lors de la récupération des statistiques :", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des statistiques." });
+  }
 });
 
-// Route pour récupérer les commandes par période
-app.get('/api/orders-per-period', async (req, res) => {
+// Route pour récupérer les commandes par période pour un utilisateur
+app.get("/api/orders-per-period", verifyToken, async (req, res) => {
   try {
-    // Requête SQL MySQL
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required." });
+    }
+
+    // Requête SQL pour récupérer les commandes par période pour l'utilisateur
     const query = `
-            SELECT 
-                DATE_FORMAT(date_commande, '%Y-%m') AS period, 
-                COUNT(*) AS count 
-            FROM commandes 
-            GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
-            ORDER BY period;
-        `;
+      SELECT 
+        DATE_FORMAT(date_commande, '%Y-%m') AS period, 
+        COUNT(*) AS count 
+      FROM commandes 
+      WHERE ajoute_par = ? 
+      GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
+      ORDER BY period;
+    `;
 
-    // Exécution de la requête et traitement du résultat
-    db.query(query, (err, rows) => {
-      if (err) {
-        console.error("Erreur lors de l'exécution de la requête:", err.message);
-        return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
-      }
+    const rows = await db.query(query, [userId]);
 
-      // Vérification du format des données
-      if (!Array.isArray(rows)) {
-        console.error("Format inattendu des données:", rows);
-        return res.status(500).json({ error: "Format inattendu des données reçues" });
-      }
+    if (!Array.isArray(rows)) {
+      console.error("Format inattendu des données :", rows);
+      return res.status(500).json({ error: "Format inattendu des données reçues." });
+    }
 
-      // Transformation des résultats pour le frontend
-      const ordersPerPeriod = rows.map(row => ({
-        label: row.period,
-        count: parseInt(row.count, 10),
-      }));
+    // Transformation des résultats pour le frontend
+    const ordersPerPeriod = rows.map(row => ({
+      label: row.period,
+      count: parseInt(row.count, 10),
+    }));
 
-      // Réponse au client
-      res.json({ ordersPerPeriod });
-    });
+    // Réponse au client
+    res.json({ ordersPerPeriod });
   } catch (err) {
-    console.error("Erreur lors de la récupération des commandes par période:", err.message);
-    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+    console.error("Erreur lors de la récupération des commandes par période :", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période." });
   }
 });
 

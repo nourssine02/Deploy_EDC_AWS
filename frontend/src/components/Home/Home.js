@@ -11,9 +11,9 @@ import {
   Tooltip,
   Legend,
   ArcElement,
-} from 'chart.js';
+} from "chart.js";
 
-import { Bar } from 'react-chartjs-2';
+import { Bar } from "react-chartjs-2";
 
 // Register the required Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
@@ -26,12 +26,12 @@ function Home({ isSidebarOpen }) {
     totalDeliveries: 0,
     unpaidInvoices: 0,
   });
-
+  const [ordersPerPeriod, setOrdersPerPeriod] = useState([]);
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserContext);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -40,33 +40,27 @@ function Home({ isSidebarOpen }) {
           return;
         }
 
-        const response = await axios.get("https://comptaonline.line.pm/api/home", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        // Récupération des statistiques globales
+        const statsResponse = await axios.get("https://comptaonline.line.pm/api/statistics", {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        setStats(statsResponse.data);
 
-        setUser(response.data.user);
-      } catch (error) {
-        setError("Erreur lors de la récupération des données");
+        // Récupération des commandes par période pour l'utilisateur connecté
+        const ordersResponse = await axios.get("https://comptaonline.line.pm/api/orders-per-period", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setOrdersPerPeriod(ordersResponse.data.ordersPerPeriod);
+      } catch (err) {
+        console.error("Erreur lors de la récupération des données:", err);
+        setError(err.response?.data?.message || "Erreur lors de la récupération des données.");
       }
     };
 
-    const fetchStatistics = async () => {
-      try {
-        const response = await axios.get("https://comptaonline.line.pm/api/statistics");
-        setStats(response.data);
-      } catch (error) {
-        console.error("Error fetching statistics", error);
-        setError("Une erreur est survenue lors de la récupération des statistiques.");
-      }
-    };
+    fetchData();
+  }, [navigate]);
 
-    fetchUserData();
-    fetchStatistics();
-  }, [setUser, navigate]);
-
-  // Data for Bar Chart
+  // Data for Bar Chart (Statistiques globales)
   const barChartData = {
     labels: ["Utilisateurs", "Commandes", "Livraisons", "Factures Non Payées"],
     datasets: [
@@ -81,9 +75,26 @@ function Home({ isSidebarOpen }) {
   const barChartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        display: true,
+      legend: { display: true },
+    },
+  };
+
+  // Data for Bar Chart (Commandes par période)
+  const ordersChartData = {
+    labels: ordersPerPeriod.map((order) => order.label),
+    datasets: [
+      {
+        label: "Commandes par période",
+        data: ordersPerPeriod.map((order) => order.count),
+        backgroundColor: "#36A2EB",
       },
+    ],
+  };
+
+  const ordersChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: true },
     },
   };
 
@@ -127,11 +138,17 @@ function Home({ isSidebarOpen }) {
                       </div>
                   )}
 
-                  {/* Bar Chart for Stats */}
+                  {/* Bar Chart for Global Stats */}
                   <div className="mt-5">
+                    <h4 className="text-center">Statistiques Globales</h4>
                     <Bar data={barChartData} options={barChartOptions} />
                   </div>
 
+                  {/* Bar Chart for Orders Per Period */}
+                  <div className="mt-5">
+                    <h4 className="text-center">Commandes par Période</h4>
+                    <Bar data={ordersChartData} options={ordersChartOptions} />
+                  </div>
                 </div>
               </div>
             </div>
