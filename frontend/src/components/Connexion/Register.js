@@ -1,93 +1,99 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import "./Register.css";
 
 const Register = () => {
-  const [userData, setUserData] = useState({
-    role: "", // "utilisateur" ou "comptable"
-    email: "",
-    identite: "",
-    mot_de_passe: "",
-    tel: "",
-    position: "",
-  });
-
-  const [comptableData, setComptableData] = useState({
-    code_comptable: "",
-    code_entreprise: "",
-    email: "",
-    identite: "",
-    mot_de_passe: "",
-    tel: "",
-  });
-
   const [entrepriseCodes, setEntrepriseCodes] = useState([]);
   const [comptableCodes, setComptableCodes] = useState([]);
+  const [identites, setIdentites] = useState([]);
+  const [userData, setUserData] = useState({
+    code_entreprise: "",
+    code_comptable: "",
+    code_user: "",
+    identite: "",
+    position: "",
+    tel: "",
+    email: "",
+    mot_de_passe: "",
+    role: "utilisateur", // Role par défaut
+  });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
+  const [inputValidity, setInputValidity] = useState({});
+  const [roleSelected, setRoleSelected] = useState("utilisateur"); // Par défaut utilisateur
   const navigate = useNavigate();
 
-  const handleRoleChange = (e) => {
-    const { value } = e.target;
-    setUserData((prev) => ({ ...prev, role: value }));
-    setErrors({});
-  };
-
-  const handleChange = (e, setData) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    if (name === "role" && value === "comptable") {
+      setUserData({ ...userData, [name]: value, code_entreprise: "", code_comptable: "" });
+    } else {
+      setUserData({ ...userData, [name]: value });
+    }
+
+    setErrors({ ...errors, [name]: "" });
+    validateField(name, value);
   };
 
-  const validate = () => {
-    const currentData = userData.role === "utilisateur" ? userData : comptableData;
-    const validationErrors = {};
-    // Champs communs
-    if (!currentData.email || !/\S+@\S+\.\S+/.test(currentData.email)) {
-      validationErrors.email = "Email invalide";
-    }
-    if (!currentData.identite) {
-      validationErrors.identite = "Identité est obligatoire";
-    }
-    if (!currentData.mot_de_passe || currentData.mot_de_passe.length < 4) {
-      validationErrors.mot_de_passe = "Mot de passe doit contenir au moins 4 caractères";
-    }
-    if (!currentData.tel || !/^\d{8}$/.test(currentData.tel)) {
-      validationErrors.tel = "Téléphone doit contenir exactement 8 chiffres";
-    }
+  const handleRoleChange = (role) => {
+    setRoleSelected(role);
+    setUserData({ ...userData, role }); // Update userData with the selected role
+  };
 
-    // Champs spécifiques
-    if (userData.role === "utilisateur") {
-      if (!userData.position) {
-        validationErrors.position = "Position est obligatoire";
-      }
-    } else if (userData.role === "comptable") {
-      if (!comptableData.code_comptable) {
-        validationErrors.code_comptable = "Code comptable est obligatoire";
-      }
-      if (!comptableData.code_entreprise) {
-        validationErrors.code_entreprise = "Code entreprise est obligatoire";
-      }
+  const validateField = (name, value) => {
+    let valid;
+    switch (name) {
+      case "code_user":
+        valid = value !== "";
+        setErrors((prev) => ({ ...prev, code_user: valid ? "" : "Code Utilisateur is required" }));
+        break;
+      case "identite":
+        valid = value !== "" && !identites.some((item) => item.identite === value);
+        setErrors((prev) => ({
+          ...prev,
+          identite: valid ? "" : "Identite déjà existe ou vide",
+        }));
+        break;
+      case "tel":
+        valid = /^\d{8}$/.test(value);
+        setErrors((prev) => ({ ...prev, tel: valid ? "" : "Telephone must be 8 digits" }));
+        break;
+      case "email":
+        valid = /\S+@\S+\.\S+/.test(value);
+        setErrors((prev) => ({ ...prev, email: valid ? "" : "Email must be valid" }));
+        break;
+      case "mot_de_passe":
+        valid = value.length >= 4;
+        setErrors((prev) => ({
+          ...prev,
+          mot_de_passe: valid ? "" : "Mot de Passe must be at least 4 characters",
+        }));
+        break;
+      default:
+        break;
     }
-
-    setErrors(validationErrors);
-    return Object.keys(validationErrors).length === 0;
+    setInputValidity((prev) => ({ ...prev, [name]: valid }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
 
-    const payload = userData.role === "utilisateur" ? userData : comptableData;
+    if (!["utilisateur", "comptable"].includes(userData.role)) {
+      setServerError("Rôle invalide sélectionné.");
+      return;
+    }
 
-    try {
-      await axios.post("https://comptaonline.linkpc.net/api/register", payload);
-      navigate("/");
-    } catch (error) {
-      if (error.response?.data?.sqlMessage) {
-        setServerError(error.response.data.sqlMessage);
-      } else {
-        console.error("Erreur :", error);
+    // Validate all fields before submission
+    Object.keys(userData).forEach((key) => validateField(key, userData[key]));
+
+    if (Object.values(inputValidity).every((valid) => valid)) {
+      try {
+        await axios.post("https://comptaonline.linkpc.net/api/register", userData);
+        navigate("/");
+      } catch (error) {
+        setServerError(error.response?.data?.sqlMessage || "Erreur lors de l'inscription");
       }
     }
   };
@@ -98,187 +104,278 @@ const Register = () => {
         const res = await axios.get("https://comptaonline.linkpc.net/api/code_entreprises");
         setEntrepriseCodes(res.data);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     };
+    fetchEntrepriseCodes();
+  }, []);
 
+  useEffect(() => {
     const fetchComptableCodes = async () => {
       try {
         const res = await axios.get("https://comptaonline.linkpc.net/api/comptables");
         setComptableCodes(res.data);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     };
-
-    fetchEntrepriseCodes();
     fetchComptableCodes();
   }, []);
 
+  useEffect(() => {
+    const fetchIdentites = async () => {
+      try {
+        const res = await axios.get("https://comptaonline.linkpc.net/api/identite");
+        setIdentites(res.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchIdentites();
+  }, []);
+
   return (
-      <div className="container-scroller">
-        <div className="content-wrapper d-flex align-items-center auth px-0">
+      <div className="container-fluid page-body-wrapper full-page-wrapper">
+        <div className="content-wrapper d-flex align-items-center auth px-0 pt-4">
           <div className="row w-100 mx-0">
             <div className="col-lg-6 mx-auto">
               <div className="auth-form-light text-left py-5 px-4 px-sm-5">
-                <h4>Inscription</h4>
-                {serverError && <div className="alert alert-danger">{serverError}</div>}
+                <div className="brand-logo mb-3">
+                  <img src="assets/images/logo-compta.png" alt="logo" />
+                </div>
+                <h4>New here?</h4>
+                <h6 className="font-weight-light">Signing up is easy. It only takes a few steps</h6>
                 <form className="pt-3" onSubmit={handleSubmit}>
-                  <div className="form-group">
-                    <select
-                        name="role"
-                        className={`form-control ${errors.role ? "is-invalid" : ""}`}
-                        value={userData.role}
-                        onChange={handleRoleChange}
+                  {serverError && <div className="alert alert-danger">{serverError}</div>}
+
+                  {/* Role Toggle Buttons */}
+                  <div className="form-group text-center mb-4">
+                    <button
+                        type="button"
+                        className={`btn btn-toggle ${roleSelected === "utilisateur" ? "btn-active" : ""}`}
+                        onClick={() => handleRoleChange("utilisateur")}
                     >
-                      <option value="">Choisir un rôle...</option>
-                      <option value="utilisateur">Utilisateur</option>
-                      <option value="comptable">Comptable</option>
-                    </select>
-                    {errors.role && <div className="invalid-feedback">{errors.role}</div>}
+                      Utilisateur
+                    </button>
+                    <button
+                        type="button"
+                        className={`btn btn-toggle ${roleSelected === "comptable" ? "btn-active" : ""}`}
+                        onClick={() => handleRoleChange("comptable")}
+                    >
+                      Comptable
+                    </button>
                   </div>
 
-                  {userData.role === "utilisateur" && (
-                      <>
-                        <div className="form-group">
-                          <input
-                              type="text"
-                              name="position"
-                              className={`form-control ${errors.position ? "is-invalid" : ""}`}
-                              placeholder="Position"
-                              value={userData.position}
-                              onChange={(e) => handleChange(e, setUserData)}
-                          />
-                          {errors.position && <div className="invalid-feedback">{errors.position}</div>}
+
+                  {/* Role-Specific Fields */}
+                  {roleSelected === "utilisateur" && (
+                      <div className="form-group">
+                        <div className="row">
+                          <div className="col-md-6">
+                            <input
+                                type="text"
+                                className={`form-control rounded ${errors.code_user ? "is-invalid" : ""}`}
+                                name="code_user"
+                                value={userData.code_user}
+                                onChange={handleChange}
+                                placeholder="Code Utilisateur"
+                            />
+                            {errors.code_user && <div className="invalid-feedback">{errors.code_user}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="text"
+                                className={`form-control rounded ${errors.identite ? "is-invalid" : ""}`}
+                                name="identite"
+                                value={userData.identite}
+                                onChange={handleChange}
+                                placeholder="Identité"
+                            />
+                            {errors.identite && <div className="invalid-feedback">{errors.identite}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="text"
+                                className={`form-control rounded ${errors.position ? "is-invalid" : ""}`}
+                                name="position"
+                                value={userData.position}
+                                onChange={handleChange}
+                                placeholder="Position"
+                            />
+                            {errors.position && <div className="invalid-feedback">{errors.position}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="tel"
+                                className={`form-control rounded ${errors.tel ? "is-invalid" : ""}`}
+                                name="tel"
+                                value={userData.tel}
+                                onChange={handleChange}
+                                placeholder="Téléphone"
+                            />
+                            {errors.tel && <div className="invalid-feedback">{errors.tel}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="email"
+                                className={`form-control rounded ${errors.email ? "is-invalid" : ""}`}
+                                name="email"
+                                value={userData.email}
+                                onChange={handleChange}
+                                placeholder="Email"
+                            />
+                            {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <select
+                                style={{color: "black"}}
+                                className="form-control rounded"
+                                name="code_entreprise"
+                                value={userData.code_entreprise}
+                                onChange={handleChange}
+                            >
+                              <option value="">Code Entreprise</option>
+                              {entrepriseCodes.map((code) => (
+                                  <option key={code.code_entreprise} value={code.code_entreprise}>
+                                    {code.code_entreprise}
+                                  </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="col-md-6">
+                            <select
+                                className={`form-control rounded ${
+                                    inputValidity.code_comptable
+                                        ? "is-valid"
+                                        : errors.code_comptable
+                                            ? "is-invalid"
+                                            : ""
+                                }`}
+                                style={{color: "black"}}
+                                name="code_comptable"
+                                value={userData.code_comptable}
+                                onChange={handleChange}
+                            >
+                              <option value="" style={{color: "gray"}}>
+                                Code Comptable
+                              </option>
+                              {comptableCodes.map((comptable) => (
+                                  <option
+                                      key={comptable.code_comptable}
+                                      value={comptable.code_comptable}
+                                      style={{color: "black"}}
+                                  >
+                                    {`${comptable.identite} - ${comptable.code_user}`}
+
+                                  </option>
+                              ))}
+                            </select>
+                            {errors.code_comptable && (
+                                <div className="invalid-feedback">
+                                  {errors.code_comptable}
+                                </div>
+                            )}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="password"
+                                className={`form-control rounded ${errors.mot_de_passe ? "is-invalid" : ""}`}
+                                name="mot_de_passe"
+                                value={userData.mot_de_passe}
+                                onChange={handleChange}
+                                placeholder="Mot de Passe"
+                            />
+                            {errors.mot_de_passe && <div className="invalid-feedback">{errors.mot_de_passe}</div>}
+                          </div>
                         </div>
-                      </>
+                      </div>
+
+
                   )}
 
-                  {userData.role === "comptable" && (
-                      <>
-                        <div className="form-group">
-                          <select
-                              name="code_entreprise"
-                              className={`form-control ${errors.code_entreprise ? "is-invalid" : ""}`}
-                              value={comptableData.code_entreprise}
-                              onChange={(e) => handleChange(e, setComptableData)}
-                          >
-                            <option value="">Sélectionner Code Entreprise</option>
-                            {entrepriseCodes.map((code) => (
-                                <option key={code.code_entreprise} value={code.code_entreprise}>
-                                  {code.code_entreprise}
-                                </option>
-                            ))}
-                          </select>
-                          {errors.code_entreprise && (
-                              <div className="invalid-feedback">{errors.code_entreprise}</div>
-                          )}
+                  {roleSelected === "comptable" && (
+                      <div className="form-group">
+                        <div className="row">
+                          <div className="col-md-6">
+                            <input
+                                type="text"
+                                className={`form-control rounded ${errors.code_user ? "is-invalid" : ""}`}
+                                name="code_user"
+                                value={userData.code_user}
+                                onChange={handleChange}
+                                placeholder="Code Comptable"
+                            />
+                            {errors.code_user && <div className="invalid-feedback">{errors.code_user}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="text"
+                                className={`form-control rounded ${errors.identite ? "is-invalid" : ""}`}
+                                name="identite"
+                                value={userData.identite}
+                                onChange={handleChange}
+                                placeholder="Identité"
+                            />
+                            {errors.identite && <div className="invalid-feedback">{errors.identite}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="text"
+                                className={`form-control rounded ${errors.position ? "is-invalid" : ""}`}
+                                name="position"
+                                value={userData.position}
+                                onChange={handleChange}
+                                placeholder="Position"
+                            />
+                            {errors.position && <div className="invalid-feedback">{errors.position}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="tel"
+                                className={`form-control rounded ${errors.tel ? "is-invalid" : ""}`}
+                                name="tel"
+                                value={userData.tel}
+                                onChange={handleChange}
+                                placeholder="Téléphone"
+                            />
+                            {errors.tel && <div className="invalid-feedback">{errors.tel}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="email"
+                                className={`form-control rounded ${errors.email ? "is-invalid" : ""}`}
+                                name="email"
+                                value={userData.email}
+                                onChange={handleChange}
+                                placeholder="Email"
+                            />
+                            {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                          </div>
+                          <div className="col-md-6">
+                            <input
+                                type="password"
+                                className={`form-control rounded ${errors.mot_de_passe ? "is-invalid" : ""}`}
+                                name="mot_de_passe"
+                                value={userData.mot_de_passe}
+                                onChange={handleChange}
+                                placeholder="Mot de Passe"
+                            />
+                            {errors.mot_de_passe && <div className="invalid-feedback">{errors.mot_de_passe}</div>}
+                          </div>
                         </div>
-                        <div className="form-group">
-                          <select
-                              name="code_comptable"
-                              className={`form-control ${errors.code_comptable ? "is-invalid" : ""}`}
-                              value={comptableData.code_comptable}
-                              onChange={(e) => handleChange(e, setComptableData)}
-                          >
-                            <option value="">Sélectionner Code Comptable</option>
-                            {comptableCodes.map((code) => (
-                                <option key={code.code_comptable} value={code.code_comptable}>
-                                  {code.identite} - {code.code_comptable}
-                                </option>
-                            ))}
-                          </select>
-                          {errors.code_comptable && (
-                              <div className="invalid-feedback">{errors.code_comptable}</div>
-                          )}
-                        </div>
-                      </>
+                      </div>
                   )}
 
-                  {/* Champs communs */}
-                  <div className="form-group">
-                    <input
-                        type="text"
-                        name="identite"
-                        className={`form-control ${errors.identite ? "is-invalid" : ""}`}
-                        placeholder="Identité"
-                        value={
-                          userData.role === "utilisateur"
-                              ? userData.identite
-                              : comptableData.identite
-                        }
-                        onChange={(e) =>
-                            userData.role === "utilisateur"
-                                ? handleChange(e, setUserData)
-                                : handleChange(e, setComptableData)
-                        }
-                    />
-                    {errors.identite && <div className="invalid-feedback">{errors.identite}</div>}
-                  </div>
-                  <div className="form-group">
-                    <input
-                        type="email"
-                        name="email"
-                        className={`form-control ${errors.email ? "is-invalid" : ""}`}
-                        placeholder="Email"
-                        value={
-                          userData.role === "utilisateur"
-                              ? userData.email
-                              : comptableData.email
-                        }
-                        onChange={(e) =>
-                            userData.role === "utilisateur"
-                                ? handleChange(e, setUserData)
-                                : handleChange(e, setComptableData)
-                        }
-                    />
-                    {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-                  </div>
-                  <div className="form-group">
-                    <input
-                        type="password"
-                        name="mot_de_passe"
-                        className={`form-control ${errors.mot_de_passe ? "is-invalid" : ""}`}
-                        placeholder="Mot de Passe"
-                        value={
-                          userData.role === "utilisateur"
-                              ? userData.mot_de_passe
-                              : comptableData.mot_de_passe
-                        }
-                        onChange={(e) =>
-                            userData.role === "utilisateur"
-                                ? handleChange(e, setUserData)
-                                : handleChange(e, setComptableData)
-                        }
-                    />
-                    {errors.mot_de_passe && (
-                        <div className="invalid-feedback">{errors.mot_de_passe}</div>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <input
-                        type="tel"
-                        name="tel"
-                        className={`form-control ${errors.tel ? "is-invalid" : ""}`}
-                        placeholder="Téléphone"
-                        value={
-                          userData.role === "utilisateur"
-                              ? userData.tel
-                              : comptableData.tel
-                        }
-                        onChange={(e) =>
-                            userData.role === "utilisateur"
-                                ? handleChange(e, setUserData)
-                                : handleChange(e, setComptableData)
-                        }
-                    />
-                    {errors.tel && <div className="invalid-feedback">{errors.tel}</div>}
-                  </div>
 
-                  <button className="btn btn-primary btn-block mt-3" type="submit">
-                    Inscription
-                  </button>
+                  <div className="mt-3">
+                    <button type="submit" className="btn btn-primary btn-lg btn-block">
+                      SIGN UP
+                    </button>
+                  </div>
                 </form>
+                <div className="text-center mt-4 font-weight-light">
+                  Already have an account? <a href="/" className="text-primary">Login</a>
+                </div>
               </div>
             </div>
           </div>
