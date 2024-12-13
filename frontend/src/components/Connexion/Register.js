@@ -61,6 +61,7 @@ const Register = () => {
     }
   };
 
+
   const validateField = (name, value) => {
     let valid;
     switch (name) {
