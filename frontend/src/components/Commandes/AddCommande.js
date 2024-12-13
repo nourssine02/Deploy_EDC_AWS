@@ -81,6 +81,9 @@ const AddCommande = ({ isSidebarOpen }) => {
       };
       reader.readAsDataURL(files[0]);
 
+      if (name === "code_tiers") {
+        setCommande((prev) => ({ ...prev, code_tiers: value, tiers_saisie: "" }));
+      }
     } else {
       setCommande((prev) => ({ ...prev, [name]: value }));
     }
@@ -229,8 +232,8 @@ const AddCommande = ({ isSidebarOpen }) => {
                         </option>
                         {codeTiers.map((tier) => (
                             <option
-                                key={tier.code_tiers}
-                                value={tier.code_tiers}
+                                key={tier.id}
+                                value={tier.id}
                             >
                               {`${tier.code_tiers} - ${tier.identite}`}
                             </option>

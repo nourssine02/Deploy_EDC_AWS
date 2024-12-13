@@ -2508,6 +2508,9 @@ app.post("/api/commande", verifyToken, (req, res) => {
     });
   });
 });
+
+
+
 // Route pour mettre a jour une commande
 app.put("/api/commande/:id", async (req, res) => {
   const commandeID = req.params.id;
@@ -4827,36 +4830,37 @@ app.get("/api/factures-non-payees", (req, res) => {
   });
 });
 
-// Route pour récupérer les statistiques globales
-app.get("/api/statistics", async (req, res) => {
-  try {
-    const stats = {};
+app.get("/api/statistics", (req, res) => {
+  const stats = {};
 
-    // Requête pour le nombre total d'utilisateurs
-    const [totalUsers] = await db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs WHERE role = "utilisateur"`);
-    stats.totalUsers = totalUsers.totalUsers;
+  db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs WHERE role="utilisateur"`, (err, totalUsers) => {
+    if (err) return res.status(500).json({ error: "Error fetching total users" });
 
-    // Requête pour le nombre total de commandes
-    const [totalOrders] = await db.query(`SELECT COUNT(*) as totalOrders FROM commandes`);
-    stats.totalOrders = totalOrders.totalOrders;
+    stats.totalUsers = totalUsers[0].totalUsers;
 
-    // Requête pour le nombre total de livraisons prévues
-    const [totalDeliveries] = await db.query(`SELECT COUNT(*) as totalDeliveries FROM commandes WHERE date_livraison_prevue IS NOT NULL`);
-    stats.totalDeliveries = totalDeliveries.totalDeliveries;
+    db.query(`SELECT COUNT(*) as totalOrders FROM commandes`, (err, totalOrders) => {
+      if (err) return res.status(500).json({ error: "Error fetching total orders" });
 
-    // Requête pour le nombre de factures impayées
-    const [unpaidInvoices] = await db.query(`SELECT COUNT(*) as unpaidInvoices FROM facturations WHERE etat_payement = 0`);
-    stats.unpaidInvoices = unpaidInvoices.unpaidInvoices;
+      stats.totalOrders = totalOrders[0].totalOrders;
 
-    // Renvoi des statistiques
-    res.json(stats);
-  } catch (err) {
-    console.error("Erreur lors de la récupération des statistiques :", err.message);
-    res.status(500).json({ error: "Erreur lors de la récupération des statistiques." });
-  }
+      db.query(`SELECT COUNT(*) as totalDeliveries FROM commandes WHERE date_livraison_prevue IS NOT NULL`, (err, totalDeliveries) => {
+        if (err) return res.status(500).json({ error: "Error fetching total deliveries" });
+
+        stats.totalDeliveries = totalDeliveries[0].totalDeliveries;
+
+        db.query(`SELECT COUNT(*) as unpaidInvoices FROM facturations WHERE etat_payement = 0`, (err, unpaidInvoices) => {
+          if (err) return res.status(500).json({ error: "Error fetching unpaid invoices" });
+
+          stats.unpaidInvoices = unpaidInvoices[0].unpaidInvoices;
+
+          res.json(stats);
+        });
+      });
+    });
+  });
 });
 
-// Route pour récupérer les commandes par période pour un utilisateur
+// Route pour récupérer les commandes par période
 app.get('/api/orders-per-period/:userId', async (req, res) => {
   const { userId } = req.params; // Récupère l'identifiant utilisateur des paramètres
 
@@ -4903,6 +4907,7 @@ app.get('/api/orders-per-period/:userId', async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
   }
 });
+
 
 
 // Route pour servir le fichier index.html de React
