@@ -4861,7 +4861,7 @@ app.get("/api/statistics", (req, res) => {
 });
 
 // Route pour récupérer les commandes par période
-app.get('/api/orders-per-period/:userId', verifyToken, async (req, res) => {
+app.get('/api/orders-per-period/:userId', async (req, res) => {
   const { userId } = req.params; // Obtenir l'ID utilisateur depuis les paramètres de la route
 
   // Vérification de la présence et du format de l'ID utilisateur
@@ -4876,7 +4876,7 @@ app.get('/api/orders-per-period/:userId', verifyToken, async (req, res) => {
         DATE_FORMAT(date_commande, '%Y-%m') AS period, 
         COUNT(*) AS count 
       FROM commandes 
-      WHERE user_id = ? -- Filtrer par l'ID utilisateur
+      WHERE ajoute_par = ? -- Filtrer par l'ID utilisateur
       GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
       ORDER BY period;
     `;
