@@ -232,8 +232,8 @@ const AddCommande = ({ isSidebarOpen }) => {
                         </option>
                         {codeTiers.map((tier) => (
                             <option
-                                key={tier.id}
-                                value={tier.id}
+                                key={tier.code_tiers}
+                                value={tier.code_tiers}
                             >
                               {`${tier.code_tiers} - ${tier.identite}`}
                             </option>

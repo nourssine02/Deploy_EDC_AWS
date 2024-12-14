@@ -2428,12 +2428,18 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 
 // Route pour ajouter une commande
 app.post("/api/commande", verifyToken, (req, res) => {
+  console.log("Données reçues pour la commande:", req.body);
+
   if (!req.user || !req.user.id) {
     console.error("User ID is undefined. Cannot proceed with adding achat.");
     return res.status(400).json({ error: "User ID is required to add achat" });
   }
+
   const userId = req.user.id;
   const { commande, familles } = req.body;
+
+  console.log("Commande:", commande);
+  console.log("Familles:", familles);
 
   db.beginTransaction((err) => {
     if (err) {
@@ -2459,6 +2465,8 @@ app.post("/api/commande", verifyToken, (req, res) => {
       commande.document_fichier,
       userId,
     ];
+
+    console.log("Données pour la requête d'insertion de commande:", commandeData);
 
     db.query(insertCommandeQuery, commandeData, (err, result) => {
       if (err) {
@@ -4863,18 +4871,21 @@ app.get("/api/statistics", (req, res) => {
 // Route pour récupérer les commandes par période
 app.get('/api/orders-per-period', async (req, res) => {
   try {
-    // Requête SQL MySQL
+    const userId = req.user.id;  // L'ID de l'utilisateur connecté, issu du middleware d'authentification
+
+    // Requête SQL MySQL pour récupérer les commandes de l'utilisateur par période
     const query = `
-            SELECT 
-                DATE_FORMAT(date_commande, '%Y-%m') AS period, 
-                COUNT(*) AS count 
-            FROM commandes 
-            GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
-            ORDER BY period;
-        `;
+      SELECT 
+        DATE_FORMAT(date_commande, '%Y-%m') AS period, 
+        COUNT(*) AS count 
+      FROM commandes 
+      WHERE ajoute_par = ?  -- On filtre par l'utilisateur connecté
+      GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
+      ORDER BY period;
+    `;
 
     // Exécution de la requête et traitement du résultat
-    db.query(query, (err, rows) => {
+    db.query(query, [userId], (err, rows) => {
       if (err) {
         console.error("Erreur lors de l'exécution de la requête:", err.message);
         return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
@@ -4900,7 +4911,6 @@ app.get('/api/orders-per-period', async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
   }
 });
-
 
 
 // Route pour servir le fichier index.html de React
