@@ -63,8 +63,22 @@ function Home({ isSidebarOpen }) {
 
     const fetchOrdersPerPeriod = async () => {
       try {
-        const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period");
+        const token = localStorage.getItem("token");
+        const userId = user?.id; // Get the user ID from the context
+
+        if (!userId) {
+          setError("Utilisateur non authentifié ou identifiant utilisateur manquant");
+          return;
+        }
+
+        const response = await axios.get(`https://comptaonline.linkpc.net/api/orders-per-period/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         console.log("Orders per Period Response:", response); // Log the response
+
         if (
             response.data &&
             Array.isArray(response.data.ordersPerPeriod) &&
