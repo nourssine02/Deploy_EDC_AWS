@@ -80,7 +80,7 @@ function Home({ isSidebarOpen }) {
       try {
         if (user?.role === "utilisateur") {
           const response = await axios.get(
-              "https://comptaonline.linkpc.net/api/orders-per-period",
+              `https://comptaonline.linkpc.net/api/orders-per-period/${user.id}`, // Passer userId dans l'URL
               {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -89,7 +89,7 @@ function Home({ isSidebarOpen }) {
               }
           );
 
-          // Vérifier si la réponse est au format JSON et contient les données attendues
+          // Vérification de la réponse
           if (
               response.headers["content-type"].includes("application/json") &&
               Array.isArray(response.data.ordersPerPeriod)
