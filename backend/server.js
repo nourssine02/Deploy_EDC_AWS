@@ -4861,7 +4861,7 @@ app.get("/api/statistics", (req, res) => {
 });
 
 // Route pour récupérer les commandes par période
-app.get('/api/orders-per-period/:userId', async (req, res) => {
+app.get('/api/orders-per-period/:userId',verifyToken, async (req, res) => {
   const { userId } = req.params; // Récupère l'identifiant utilisateur des paramètres
 
   if (!userId) {
@@ -4874,7 +4874,7 @@ app.get('/api/orders-per-period/:userId', async (req, res) => {
         DATE_FORMAT(date_commande, '%Y-%m') AS period, 
         COUNT(*) AS count 
       FROM commandes 
-      WHERE ajoute_par = ? -- Filtrer par utilisateur
+      WHERE ajoute_par = ?
       GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
       ORDER BY period;
     `;
@@ -4882,13 +4882,8 @@ app.get('/api/orders-per-period/:userId', async (req, res) => {
     // Exécution de la requête SQL
     db.query(query, [userId], (err, rows) => {
       if (err) {
-        console.error("Erreur SQL:", err.message); // Log l'erreur
+        console.error("Erreur SQL:", err.message);
         return res.status(500).json({ error: "Erreur lors de l'exécution de la requête SQL" });
-      }
-
-      if (!Array.isArray(rows)) {
-        console.error("Format inattendu des données SQL:", rows); // Vérification du format
-        return res.status(500).json({ error: "Format inattendu des données reçues" });
       }
 
       // Transformation des données
@@ -4897,9 +4892,10 @@ app.get('/api/orders-per-period/:userId', async (req, res) => {
         count: parseInt(row.count, 10),
       }));
 
-      // Envoi de la réponse
+      console.log("Données formatées pour le frontend:", ordersPerPeriod); // DEBUG
       res.json({ ordersPerPeriod });
     });
+
   } catch (err) {
     console.error("Erreur côté serveur:", err.message); // Log général des erreurs
     res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
