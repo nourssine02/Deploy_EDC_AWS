@@ -64,6 +64,7 @@ function Home({ isSidebarOpen }) {
     const fetchOrdersPerPeriod = async () => {
       try {
         const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period");
+        console.log("Orders per Period Response:", response); // Log the response
         if (
             response.data &&
             Array.isArray(response.data.ordersPerPeriod) &&
@@ -81,6 +82,7 @@ function Home({ isSidebarOpen }) {
         setError("Une erreur est survenue lors de la récupération des commandes par période.");
       }
     };
+
 
     fetchUserData();
 
