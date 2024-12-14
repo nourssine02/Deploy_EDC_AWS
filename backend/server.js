@@ -4861,45 +4861,45 @@ app.get("/api/statistics", (req, res) => {
 });
 
 // Route pour récupérer les commandes par période
-app.get('/api/orders-per-period/:userId', async (req, res) => {
-  const { userId } = req.params; // Récupère l'identifiant utilisateur des paramètres
+app.get('/api/orders-per-period/:userId', verifyToken, async (req, res) => {
+  const { userId } = req.params; // Get the user ID from the route parameter
 
   if (!userId) {
     return res.status(400).json({ error: "L'identifiant utilisateur est requis" });
   }
 
   try {
-    // Requête SQL MySQL pour récupérer les commandes d'un utilisateur spécifique
+    // SQL query to get orders for a specific user
     const query = `
-            SELECT 
-                DATE_FORMAT(date_commande, '%Y-%m') AS period, 
-                COUNT(*) AS count 
-            FROM commandes 
-            WHERE user_id = ? -- Filtrer par utilisateur
-            GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
-            ORDER BY period;
-        `;
+      SELECT 
+        DATE_FORMAT(date_commande, '%Y-%m') AS period, 
+        COUNT(*) AS count 
+      FROM commandes 
+      WHERE user_id = ? -- Filter by user ID
+      GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
+      ORDER BY period;
+    `;
 
-    // Exécution de la requête avec l'utilisateur spécifié
+    // Execute the query
     db.query(query, [userId], (err, rows) => {
       if (err) {
         console.error("Erreur lors de l'exécution de la requête:", err.message);
         return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
       }
 
-      // Vérification du format des données
+      // Check if the data is in the expected format
       if (!Array.isArray(rows)) {
         console.error("Format inattendu des données:", rows);
         return res.status(500).json({ error: "Format inattendu des données reçues" });
       }
 
-      // Transformation des résultats pour le frontend
+      // Transform the data for the frontend
       const ordersPerPeriod = rows.map(row => ({
         label: row.period,
         count: parseInt(row.count, 10),
       }));
 
-      // Réponse au client
+      // Send the response to the frontend
       res.json({ ordersPerPeriod });
     });
   } catch (err) {
