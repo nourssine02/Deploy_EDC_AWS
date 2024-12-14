@@ -88,6 +88,7 @@ function Home({ isSidebarOpen }) {
                 },
               }
           );
+          console.log("Réponse brute de l'API:", response.data);
 
           // Vérification de la réponse
           if (
