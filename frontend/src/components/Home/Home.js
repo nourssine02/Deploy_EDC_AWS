@@ -62,12 +62,7 @@ function Home({ isSidebarOpen }) {
 
     const fetchOrdersPerPeriod = async () => {
       try {
-        // Vérification du rôle utilisateur et récupération des commandes spécifiques
-        const response = await axios.get("https://comptaonline.line.pm/api/orders-per-period", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const response = await axios.get("https://comptaonline.line.pm/api/orders-per-period");
 
         // Validation : vérifier si ordersPerPeriod est bien un tableau
         if (response.data && Array.isArray(response.data.ordersPerPeriod)) {
@@ -84,10 +79,8 @@ function Home({ isSidebarOpen }) {
 
     fetchUserData();
     fetchStatistics();
-    if (user?.role === "utilisateur") {
-      fetchOrdersPerPeriod(); // Appel des commandes uniquement si l'utilisateur est de type 'utilisateur'
-    }
-  }, [setUser, navigate, user?.role]);
+    fetchOrdersPerPeriod();
+  }, [setUser, navigate]);
 
   // Data for Bar Chart for Stats (comptable)
   const statsChartData = {
