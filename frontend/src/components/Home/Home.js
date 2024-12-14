@@ -80,7 +80,7 @@ function Home({ isSidebarOpen }) {
       try {
         if (user?.role === "utilisateur") {
           const response = await axios.get(
-              `https://comptaonline.linkpc.net/api/orders-per-period/${user.id}`, // Passer userId dans l'URL
+              `https://comptaonline.linkpc.net/api/orders-per-period/${user.id}`,
               {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -88,12 +88,12 @@ function Home({ isSidebarOpen }) {
                 },
               }
           );
-          console.log("Réponse brute de l'API:", response.data);
+          console.log("Réponse brute de l'API:", response.data); // Vérification de la réponse
 
-          // Vérification de la réponse
+          // Vérification du format de la réponse
           if (
               response.headers["content-type"].includes("application/json") &&
-              Array.isArray(response.data.ordersPerPeriod)
+              Array.isArray(response.data.ordersPerPeriod) // Vérifie si la réponse est un tableau
           ) {
             setOrdersPerPeriod(response.data.ordersPerPeriod);
           } else {
