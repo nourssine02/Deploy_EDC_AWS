@@ -80,10 +80,6 @@ const AddCommande = ({ isSidebarOpen }) => {
         setCommande((prev) => ({ ...prev, document_fichier: url }));
       };
       reader.readAsDataURL(files[0]);
-
-      if (name === "code_tiers") {
-        setCommande((prev) => ({ ...prev, code_tiers: value, tiers_saisie: "" }));
-      }
     } else {
       setCommande((prev) => ({ ...prev, [name]: value }));
     }
