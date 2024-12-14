@@ -40,9 +40,17 @@ function Home({ isSidebarOpen }) {
                 }
 
                 const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
                 });
-                setUser(response.data.user);
+
+                if (response.data && response.data.user) {
+                    setUser(response.data.user);
+                } else {
+                    throw new Error("Format inattendu des données utilisateur");
+                }
             } catch (error) {
                 console.error("Erreur lors de la récupération des données utilisateur:", error.message);
                 setError("Erreur lors de la récupération des données utilisateur");
@@ -51,8 +59,17 @@ function Home({ isSidebarOpen }) {
 
         const fetchStatistics = async () => {
             try {
-                const response = await axios.get("https://comptaonline.linkpc.net/api/statistics");
-                setStats(response.data);
+                const response = await axios.get("https://comptaonline.linkpc.net/api/statistics", {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (response.data) {
+                    setStats(response.data);
+                } else {
+                    throw new Error("Format inattendu des statistiques");
+                }
             } catch (error) {
                 console.error("Erreur lors de la récupération des statistiques:", error.message);
                 setError("Erreur lors de la récupération des statistiques");
@@ -62,8 +79,21 @@ function Home({ isSidebarOpen }) {
         const fetchOrdersPerPeriod = async () => {
             try {
                 if (user?.role === "utilisateur") {
-                    const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period");
-                    if (Array.isArray(response.data.ordersPerPeriod)) {
+                    const response = await axios.get(
+                        "https://comptaonline.linkpc.net/api/orders-per-period",
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                                "Content-Type": "application/json",
+                            },
+                        }
+                    );
+
+                    // Vérifier si la réponse est au format JSON et contient les données attendues
+                    if (
+                        response.headers["content-type"].includes("application/json") &&
+                        Array.isArray(response.data.ordersPerPeriod)
+                    ) {
                         setOrdersPerPeriod(response.data.ordersPerPeriod);
                     } else {
                         throw new Error("Format inattendu des données pour les commandes");
