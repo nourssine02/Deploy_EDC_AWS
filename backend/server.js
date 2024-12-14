@@ -2429,11 +2429,18 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 // Route pour ajouter une commande
 app.post("/api/commande", verifyToken, (req, res) => {
   if (!req.user || !req.user.id) {
-    console.error("User ID is undefined. Cannot proceed with adding achat.");
-    return res.status(400).json({ error: "User ID is required to add achat" });
+    console.error("User ID is undefined. Cannot proceed with adding commande.");
+    return res.status(400).json({ error: "User ID is required to add commande" });
   }
+
   const userId = req.user.id;
   const { commande, familles } = req.body;
+
+  // Vérifier si les données de commande et familles sont valides
+  if (!commande || !familles || !Array.isArray(familles) || familles.length === 0) {
+    console.error("Commande or familles data is missing or invalid.");
+    return res.status(400).json({ error: "Commande or familles data is invalid." });
+  }
 
   db.beginTransaction((err) => {
     if (err) {
@@ -2442,11 +2449,11 @@ app.post("/api/commande", verifyToken, (req, res) => {
     }
 
     const insertCommandeQuery = `
-            INSERT INTO commandes 
-            (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, 
-             date_livraison_prevue, observations, document_fichier, ajoute_par) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+      INSERT INTO commandes 
+      (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, 
+       date_livraison_prevue, observations, document_fichier, ajoute_par) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
     const commandeData = [
       commande.date_commande,
@@ -2471,20 +2478,28 @@ app.post("/api/commande", verifyToken, (req, res) => {
       const commandeId = result.insertId;
       console.log("Commande insérée avec ID :", commandeId);
 
+      // Insertion des familles associées à la commande
       const famillePromises = familles.map((famille) => {
         return new Promise((resolve, reject) => {
           const insertFamilleQuery = `
-                        INSERT INTO familles (famille, sous_famille, article, commande_id) 
-                        VALUES (?, ?, ?, ?)
-                    `;
+            INSERT INTO familles (famille, sous_famille, article, commande_id) 
+            VALUES (?, ?, ?, ?)
+          `;
           db.query(
               insertFamilleQuery,
               [famille.famille, famille.sous_famille, famille.article, commandeId],
-              (err) => (err ? reject(err) : resolve())
+              (err) => {
+                if (err) {
+                  console.error("Erreur lors de l'insertion de la famille :", err);
+                  return reject(err); // Rejeter la promesse en cas d'erreur
+                }
+                resolve(); // Résoudre la promesse si l'insertion réussit
+              }
           );
         });
       });
 
+      // Attendre que toutes les insertions des familles soient terminées
       Promise.all(famillePromises)
           .then(() => {
             db.commit((err) => {
