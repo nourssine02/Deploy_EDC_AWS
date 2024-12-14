@@ -65,12 +65,17 @@ function Home({ isSidebarOpen }) {
           const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period");
 
           // Validation : vérifier si ordersPerPeriod est bien un tableau
-          if (response.data && Array.isArray(response.data.ordersPerPeriod)) {
+          if (
+              response.data &&
+              Array.isArray(response.data.ordersPerPeriod) &&
+              response.data.ordersPerPeriod.every(order => typeof order.label === 'string' && typeof order.count === 'number')
+          ) {
             setOrdersPerPeriod(response.data.ordersPerPeriod);
           } else {
             console.error("Unexpected response format:", response.data);
             setError("Erreur de format des données reçues pour les commandes.");
           }
+
         }
       } catch (error) {
         console.error("Error fetching orders per period:", error);
