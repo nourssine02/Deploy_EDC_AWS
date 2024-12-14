@@ -4861,7 +4861,7 @@ app.get("/api/statistics", (req, res) => {
 });
 
 // Route pour récupérer les commandes par période
-app.get('/api/orders-per-period/:userId', async (req, res) => {
+app.get('/api/orders-per-period/:userId',  async (req, res) => {
   const { userId } = req.params; // Obtenir l'ID utilisateur depuis les paramètres de la route
 
   // Vérification de la présence et du format de l'ID utilisateur
