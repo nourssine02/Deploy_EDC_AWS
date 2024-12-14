@@ -13,7 +13,7 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
-// Register ChartJS components
+// Enregistrement des composants de Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function Home({ isSidebarOpen }) {
@@ -28,86 +28,87 @@ function Home({ isSidebarOpen }) {
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserContext);
 
-  // Fetch user data and relevant statistics based on user role
+  // Fonction pour récupérer les données utilisateur
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Utilisateur non authentifié");
+        navigate("/");
+        return;
+      }
+
+      const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data && response.data.user) {
+        setUser(response.data.user);
+      } else {
+        throw new Error("Format inattendu des données utilisateur");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données utilisateur:", error.message);
+      setError("Erreur lors de la récupération des données utilisateur");
+    }
+  };
+
+  // Fonction pour récupérer les statistiques (comptable)
+  const fetchStatistics = async () => {
+    try {
+      const response = await axios.get("https://comptaonline.linkpc.net/api/statistics", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data) {
+        setStats(response.data);
+      } else {
+        throw new Error("Format inattendu des statistiques");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques:", error.message);
+      setError("Erreur lors de la récupération des statistiques");
+    }
+  };
+
+  // Fonction pour récupérer les commandes par période (utilisateur)
+  const fetchOrdersPerPeriod = async () => {
+    try {
+      if (user?.role === "utilisateur") {
+        const response = await axios.get(
+            `https://comptaonline.linkpc.net/api/orders-per-period/${user.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+            }
+        );
+        console.log("Réponse brute de l'API:", response.data);  // Vérification des données
+
+        if (
+            response.headers["content-type"].includes("application/json") &&
+            Array.isArray(response.data.data)
+        ) {
+          setOrdersPerPeriod(response.data.data);
+        } else {
+          throw new Error("Format inattendu des données pour les commandes");
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des commandes par période:", error.message);
+      setError("Erreur lors de la récupération des commandes par période");
+    }
+  };
+
+  // Appels à l'API lors du chargement du composant
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Utilisateur non authentifié");
-          navigate("/");
-          return;
-        }
-
-        const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.data && response.data.user) {
-          setUser(response.data.user);
-        } else {
-          throw new Error("Format inattendu des données utilisateur");
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des données utilisateur:", error.message);
-        setError("Erreur lors de la récupération des données utilisateur");
-      }
-    };
-
-    const fetchStatistics = async () => {
-      try {
-        const response = await axios.get("https://comptaonline.linkpc.net/api/statistics", {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.data) {
-          setStats(response.data);
-        } else {
-          throw new Error("Format inattendu des statistiques");
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des statistiques:", error.message);
-        setError("Erreur lors de la récupération des statistiques");
-      }
-    };
-
-    const fetchOrdersPerPeriod = async () => {
-      try {
-        if (user?.role === "utilisateur") {
-          const response = await axios.get(
-              `https://comptaonline.linkpc.net/api/orders-per-period/${user.id}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${localStorage.getItem("token")}`,
-                  "Content-Type": "application/json",
-                },
-              }
-          );
-          console.log("Réponse brute de l'API:", response.data); // Vérification de la réponse
-
-          // Vérification du format de la réponse
-          if (
-              response.headers["content-type"].includes("application/json") &&
-              Array.isArray(response.data.ordersPerPeriod) // Vérifie si la réponse est un tableau
-          ) {
-            setOrdersPerPeriod(response.data.ordersPerPeriod);
-          } else {
-            throw new Error("Format inattendu des données pour les commandes");
-          }
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des commandes par période:", error.message);
-        setError("Erreur lors de la récupération des commandes par période");
-      }
-    };
-
     fetchUserData();
-
     if (user?.role === "comptable") {
       fetchStatistics();
     }
@@ -115,9 +116,9 @@ function Home({ isSidebarOpen }) {
     if (user?.role === "utilisateur") {
       fetchOrdersPerPeriod();
     }
-  }, [setUser, navigate, user]);
+  }, [user]);
 
-  // Data for Bar Chart for Stats (comptable)
+  // Données pour le graphique des statistiques (comptable)
   const statsChartData = {
     labels: ["Utilisateurs", "Commandes", "Livraisons", "Factures Non Payées"],
     datasets: [
@@ -136,13 +137,13 @@ function Home({ isSidebarOpen }) {
     ],
   };
 
-  // Data for Bar Chart for Orders (utilisateur)
+  // Données pour le graphique des commandes par période (utilisateur)
   const ordersChartData = {
-    labels: ordersPerPeriod.map((order) => order.label),
+    labels: ordersPerPeriod.map((order) => order.period),  // Utilise 'period' comme étiquette
     datasets: [
       {
         label: "Commandes par Mois",
-        data: ordersPerPeriod.map((order) => order.count),
+        data: ordersPerPeriod.map((order) => order.count),  // Utilise 'count' comme valeurs
         backgroundColor: "rgba(75, 192, 192, 0.5)",
         borderColor: "#4BC0C0",
         borderWidth: 1,
@@ -150,7 +151,7 @@ function Home({ isSidebarOpen }) {
     ],
   };
 
-  // Options for Charts
+  // Options des graphiques
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -183,6 +184,7 @@ function Home({ isSidebarOpen }) {
                   <h2 className="text-center mb-5">Dashboard</h2>
                   {error && <p style={{ color: "red" }}>{error}</p>}
 
+                  {/* Affichage des statistiques pour le rôle 'comptable' */}
                   {user?.role === "comptable" && (
                       <>
                         <h4>Statistiques Générales</h4>
@@ -192,6 +194,7 @@ function Home({ isSidebarOpen }) {
                       </>
                   )}
 
+                  {/* Affichage des commandes par mois pour le rôle 'utilisateur' */}
                   {user?.role === "utilisateur" && (
                       <>
                         <h4>Commandes par Mois</h4>
