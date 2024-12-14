@@ -2510,7 +2510,6 @@ app.post("/api/commande", verifyToken, (req, res) => {
 });
 
 
-
 // Route pour mettre a jour une commande
 app.put("/api/commande/:id", async (req, res) => {
   const commandeID = req.params.id;
