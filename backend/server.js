@@ -4861,51 +4861,48 @@ app.get("/api/statistics", (req, res) => {
 });
 
 // Route pour récupérer les commandes par période
-app.get('/api/orders-per-period/:userId',  async (req, res) => {
-  const { userId } = req.params; // Obtenir l'ID utilisateur depuis les paramètres de la route
+app.get('/api/orders-per-period/:userId', async (req, res) => {
+  const { userId } = req.params; // Récupère l'identifiant utilisateur des paramètres
 
-  // Vérification de la présence et du format de l'ID utilisateur
-  if (!userId || isNaN(userId)) {
-    return res.status(400).json({ error: "L'identifiant utilisateur est requis et doit être un nombre valide." });
+  if (!userId) {
+    return res.status(400).json({ error: "L'identifiant utilisateur est requis" });
   }
 
   try {
-    // Requête SQL pour récupérer les commandes groupées par période
     const query = `
       SELECT 
         DATE_FORMAT(date_commande, '%Y-%m') AS period, 
         COUNT(*) AS count 
       FROM commandes 
-      WHERE ajoute_par = ? -- Filtrer par l'ID utilisateur
+      WHERE ajoute_par = ? -- Filtrer par utilisateur
       GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
       ORDER BY period;
     `;
 
-    // Exécuter la requête
+    // Exécution de la requête SQL
     db.query(query, [userId], (err, rows) => {
       if (err) {
-        console.error("Erreur lors de l'exécution de la requête SQL :", err.message);
-        return res.status(500).json({ error: "Une erreur est survenue lors de la récupération des commandes." });
+        console.error("Erreur SQL:", err.message); // Log l'erreur
+        return res.status(500).json({ error: "Erreur lors de l'exécution de la requête SQL" });
       }
 
-      // Vérification du format des données retournées
       if (!Array.isArray(rows)) {
-        console.error("Format inattendu des données retournées :", rows);
-        return res.status(500).json({ error: "Format inattendu des données reçues." });
+        console.error("Format inattendu des données SQL:", rows); // Vérification du format
+        return res.status(500).json({ error: "Format inattendu des données reçues" });
       }
 
-      // Transformation des données pour les rendre compatibles avec le frontend
-      const ordersPerPeriod = rows.map(row => ({
+      // Transformation des données
+      const ordersPerPeriod = rows.map((row) => ({
         label: row.period,
         count: parseInt(row.count, 10),
       }));
 
-      // Retourner la réponse au frontend
+      // Envoi de la réponse
       res.json({ ordersPerPeriod });
     });
   } catch (err) {
-    console.error("Erreur lors de la récupération des commandes :", err.message);
-    res.status(500).json({ error: "Une erreur inattendue est survenue." });
+    console.error("Erreur côté serveur:", err.message); // Log général des erreurs
+    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
   }
 });
 
