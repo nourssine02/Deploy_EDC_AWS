@@ -38,7 +38,7 @@ function Home({ isSidebarOpen }) {
           return;
         }
 
-        const response = await axios.get("https://comptaonline.line.pm/api/home", {
+        const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -52,7 +52,7 @@ function Home({ isSidebarOpen }) {
 
     const fetchStatistics = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/statistics");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/statistics");
         setStats(response.data);
       } catch (error) {
         console.error("Error fetching statistics", error);
@@ -62,7 +62,7 @@ function Home({ isSidebarOpen }) {
 
     const fetchOrdersPerPeriod = async () => {
       try {
-        const response = await axios.get("https://comptaonline.line.pm/api/orders-per-period");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period");
 
         // Validation : vérifier si ordersPerPeriod est bien un tableau
         if (response.data && Array.isArray(response.data.ordersPerPeriod)) {
