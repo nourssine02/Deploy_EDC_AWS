@@ -2429,10 +2429,9 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 // Route pour ajouter une commande
 app.post('/api/commande', verifyToken, async (req, res) => {
   try {
-    const userId = req.user.id; // ID utilisateur depuis le token
-    const userName = req.user.identite;
+    const userId = req.user?.id;
+    const userName = req.user?.identite;
 
-    // Vérification de l'utilisateur
     if (!userId) {
       console.error("Erreur : User ID est manquant.");
       return res.status(400).json({ error: "User ID is required" });
@@ -2440,19 +2439,21 @@ app.post('/api/commande', verifyToken, async (req, res) => {
 
     const { commande, familles } = req.body;
 
-    // Vérification des champs obligatoires
-    if (!commande || !commande.date_commande || !commande.num_commande) {
+    // 1. Validation des champs requis
+    if (!commande?.date_commande || !commande?.num_commande) {
       console.error("Erreur : Champs obligatoires manquants.");
-      return res.status(400).json({ error: "Les champs date_commande et num_commande sont requis." });
+      return res.status(400).json({
+        error: "Les champs date_commande et num_commande sont requis.",
+      });
     }
 
-    // Log des données reçues
     console.log("Commande reçue :", commande);
     console.log("Familles reçues :", familles);
 
-    // Étape 1: Insertion dans la table `commandes`
+    // 2. Insertion dans la table `commandes`
     const sqlCommande = `
-      INSERT INTO commandes (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
+      INSERT INTO commandes 
+      (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const commandeValues = [
@@ -2467,17 +2468,15 @@ app.post('/api/commande', verifyToken, async (req, res) => {
       userId,
     ];
 
-    console.log("Insertion dans commandes avec :", commandeValues);
-
     const [result] = await db.promise().execute(sqlCommande, commandeValues);
     const commandeId = result.insertId;
-
     console.log(`Commande insérée avec succès. ID: ${commandeId}`);
 
-    // Étape 2: Insertion des familles (si elles existent)
-    if (familles && familles.length > 0) {
+    // 3. Insertion des familles (si présentes)
+    if (Array.isArray(familles) && familles.length > 0) {
       const sqlFamille = `
-        INSERT INTO familles (commande_id, famille, sous_famille, article) VALUES ?
+        INSERT INTO familles (commande_id, famille, sous_famille, article) 
+        VALUES ?
       `;
       const famillesValues = familles.map(f => [
         commandeId,
@@ -2492,35 +2491,35 @@ app.post('/api/commande', verifyToken, async (req, res) => {
       console.log("Familles insérées avec succès.");
     }
 
-    // Étape 3: Récupération des utilisateurs avec le rôle 'comptable'
-    const getComptableQuery = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
-    const [comptableData] = await db.promise().query(getComptableQuery);
+    // 4. Notification aux utilisateurs ayant le rôle 'comptable'
+    const sqlGetComptable = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
+    const [comptableData] = await db.promise().query(sqlGetComptable);
 
-    if (comptableData.length === 0) {
-      console.warn("Aucun utilisateur avec le rôle 'comptable' trouvé.");
-    } else {
+    if (comptableData.length > 0) {
       const notificationMessage = `${userName} a ajouté une nouvelle commande.`;
-      const notificationQuery = `
+      const sqlNotification = `
         INSERT INTO notifications (user_id, message) VALUES ?
       `;
-
-      const notificationsValues = comptableData.map(comptable => [
+      const notificationValues = comptableData.map(comptable => [
         comptable.id,
         notificationMessage,
       ]);
 
-      console.log("Insertion des notifications avec :", notificationsValues);
+      console.log("Insertion des notifications avec :", notificationValues);
 
-      await db.promise().query(notificationQuery, [notificationsValues]);
+      await db.promise().query(sqlNotification, [notificationValues]);
       console.log("Notifications envoyées aux comptables.");
+    } else {
+      console.warn("Aucun utilisateur avec le rôle 'comptable' trouvé.");
     }
 
-    // Réponse de succès
+    // 5. Réponse finale
     res.status(201).json({
-      message: "Commande ajoutée avec succès, familles insérées (si présentes), et notifications envoyées.",
+      message:
+          "Commande ajoutée avec succès, familles insérées (si présentes), et notifications envoyées.",
     });
   } catch (err) {
-    console.error("Erreur interne du serveur :", err);
+    console.error("Erreur interne du serveur :", err.message);
     res.status(500).json({
       error: "Erreur interne du serveur",
       details: err.message,
@@ -4577,4 +4576,360 @@ app.get("/api/total-commandes-par-periode", (req, res) => {
       });
     }
 
-    // Send the resu
+    // Send the result back to the client
+    res.send(result);
+  });
+});
+
+
+
+app.get("/api/liste-clients-par-periode-creation", (req, res) => {
+  const { dateCreation, company } = req.query;
+
+  if (!dateCreation) {
+    return res.status(400).send({ error: "dateCreation is required" });
+  }
+
+  // Base SQL query
+  let sql = `SELECT * FROM entreprises WHERE date_creation = ?`;
+
+  // SQL parameters
+  let params = [dateCreation];
+
+  // If a company is provided, add the filter for company
+  if (company) {
+    sql += " AND code_entreprise = ?";
+    params.push(company);
+  }
+
+  // Execute the query
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("Error fetching clients:", err);
+      return res.status(500).send({ error: "An error occurred while fetching the clients" });
+    }
+
+    res.send(result);
+  });
+});
+
+
+
+app.get("/api/etat-de-facturation", (req, res) => {
+  const { startDate, endDate, company } = req.query;
+
+  // Check if the startDate and endDate are provided
+  if (!startDate || !endDate) {
+    return res
+        .status(400)
+        .send({ error: "startDate and endDate are required" });
+  }
+
+  // Base SQL query to get the total turnover
+  let sql = `
+    SELECT SUM(f.montant_total_facture) as totalCA 
+    FROM facturations f
+    INNER JOIN utilisateurs u ON f.ajoute_par = u.id 
+    WHERE f.date_facture BETWEEN ? AND ?
+  `;
+
+  // SQL parameters
+  let params = [startDate, endDate];
+
+  // If a company is selected, filter by code_entreprise
+  if (company) {
+    sql += " AND u.code_entreprise = ?";
+    params.push(company);
+  }
+
+  // Execute the query
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("Error fetching total CA:", err);
+      return res
+          .status(500)
+          .send({ error: "An error occurred while fetching the total CA" });
+    }
+
+    // Return the result
+    res.send(result);
+  });
+});
+
+
+app.get("/api/etat-versement-par-periode", (req, res) => {
+  const { startDate, endDate, company } = req.query;
+
+  // Ensure startDate and endDate are provided
+  if (!startDate || !endDate) {
+    return res.status(400).send({ error: "startDate and endDate are required" });
+  }
+
+  // Base SQL query to get the total amount of versements
+  let sql = `
+    SELECT SUM(p.montant) as totalVersement
+    FROM versements_en_banque v
+    INNER JOIN payements p ON v.id = p.versement_id
+    INNER JOIN utilisateurs u ON v.ajoute_par = u.id
+    WHERE v.date_versement BETWEEN ? AND ?
+  `;
+
+  // Parameters for the SQL query
+  let params = [startDate, endDate];
+
+  // If a company is selected, filter by code_entreprise
+  if (company) {
+    sql += " AND u.code_entreprise = ?";
+    params.push(company);
+  }
+
+  // Execute the SQL query
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("Error fetching total versements:", err);
+      return res.status(500).send({
+        error: "An error occurred while fetching the total versements.",
+      });
+    }
+
+    // Send the result back to the client
+    res.send(result);
+  });
+});
+
+
+app.get("/api/commandes-detaillees", (req, res) => {
+  const { startDate, endDate, company } = req.query;
+
+  // Ensure startDate and endDate are provided
+  if (!startDate || !endDate) {
+    return res.status(400).send({ error: "startDate and endDate are required" });
+  }
+
+  // Base SQL query to get detailed commandes
+  let sql = `
+    SELECT c.date_commande, c.num_commande, c.code_tiers, c.montant_commande, c.date_livraison_prevue
+    FROM commandes c
+    INNER JOIN utilisateurs u ON c.ajoute_par = u.id
+    WHERE c.date_commande BETWEEN ? AND ?
+  `;
+
+  // Parameters for the SQL query
+  let params = [startDate, endDate];
+
+  // If a company is selected, filter by code_entreprise
+  if (company) {
+    sql += " AND u.code_entreprise = ?";
+    params.push(company);
+  }
+
+  // Execute the SQL query
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("Error fetching detailed commandes:", err);
+      return res.status(500).send({
+        error: "An error occurred while fetching the detailed commandes.",
+      });
+    }
+
+    // Send the result back to the client
+    res.send(result);
+  });
+});
+
+
+app.get("/api/livraisons-prevues", (req, res) => {
+  const { startDate, endDate, company } = req.query;
+
+  // Ensure startDate and endDate are provided
+  if (!startDate || !endDate) {
+    return res.status(400).send({ error: "startDate and endDate are required" });
+  }
+
+  // Ensure startDate is before endDate
+  if (new Date(startDate) > new Date(endDate)) {
+    return res.status(400).send({ error: "startDate cannot be after endDate" });
+  }
+
+  // Base SQL query to get the list of deliveries within the specified date range
+  let sql = `
+    SELECT c.date_commande, c.num_commande, c.code_tiers, c.montant_commande, c.date_livraison_prevue, u.code_entreprise
+    FROM commandes c
+    INNER JOIN utilisateurs u ON c.ajoute_par = u.id
+    WHERE c.date_livraison_prevue BETWEEN ? AND ?
+  `;
+
+  const params = [startDate, endDate];
+
+  // If a company is selected, filter by the company's code_entreprise
+  if (company) {
+    sql += " AND u.code_entreprise = ?";
+    params.push(company);
+  }
+
+  // Execute the SQL query
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("Error fetching deliveries:", err);
+      return res.status(500).send({
+        error: "An error occurred while fetching the scheduled deliveries.",
+      });
+    }
+
+    // Send the result back to the client
+    res.send(result);
+  });
+});
+
+
+
+
+app.get("/api/commandes-par-code-client", (req, res) => {
+  const { code_entreprise } = req.query;
+
+  // Ensure code_entreprise is provided
+  if (!code_entreprise) {
+    return res.status(400).send({ error: "code_entreprise is required" });
+  }
+
+  // SQL query to get the list of commandes for the specified code_entreprise
+  const sql = `
+    SELECT c.date_commande, c.num_commande, c.code_tiers, c.montant_commande, c.date_livraison_prevue
+    FROM commandes c
+    INNER JOIN utilisateurs u ON c.ajoute_par = u.id
+    WHERE u.code_entreprise = ?
+  `;
+
+  // Execute the SQL query
+  db.query(sql, [code_entreprise], (err, result) => {
+    if (err) {
+      console.error("Error fetching commandes:", err);
+      return res.status(500).send({
+        error: "An error occurred while fetching the commandes.",
+      });
+    }
+
+    // Send the result back to the client
+    res.send(result);
+  });
+});
+
+
+app.get("/api/factures-non-payees", (req, res) => {
+  const { company } = req.query;
+
+  let sql = `
+    SELECT f.id, f.date_facture, f.montant_total_facture, f.etat_payement, u.code_entreprise
+    FROM facturations f
+    INNER JOIN utilisateurs u ON f.ajoute_par = u.id
+    WHERE f.etat_payement = 0
+  `;
+
+  const params = [];
+
+  // If a company is selected, filter by the company's code_entreprise
+  if (company) {
+    sql += " AND u.code_entreprise = ?";
+    params.push(company);
+  }
+
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.error("Error fetching unpaid invoices:", err);
+      return res.status(500).send({
+        error: "An error occurred while fetching the unpaid invoices.",
+      });
+    }
+
+    res.send(result);
+  });
+});
+
+app.get("/api/statistics", (req, res) => {
+  const stats = {};
+
+  db.query(`SELECT COUNT(*) as totalUsers FROM utilisateurs WHERE role="utilisateur"`, (err, totalUsers) => {
+    if (err) return res.status(500).json({ error: "Error fetching total users" });
+
+    stats.totalUsers = totalUsers[0].totalUsers;
+
+    db.query(`SELECT COUNT(*) as totalOrders FROM commandes`, (err, totalOrders) => {
+      if (err) return res.status(500).json({ error: "Error fetching total orders" });
+
+      stats.totalOrders = totalOrders[0].totalOrders;
+
+      db.query(`SELECT COUNT(*) as totalDeliveries FROM commandes WHERE date_livraison_prevue IS NOT NULL`, (err, totalDeliveries) => {
+        if (err) return res.status(500).json({ error: "Error fetching total deliveries" });
+
+        stats.totalDeliveries = totalDeliveries[0].totalDeliveries;
+
+        db.query(`SELECT COUNT(*) as unpaidInvoices FROM facturations WHERE etat_payement = 0`, (err, unpaidInvoices) => {
+          if (err) return res.status(500).json({ error: "Error fetching unpaid invoices" });
+
+          stats.unpaidInvoices = unpaidInvoices[0].unpaidInvoices;
+
+          res.json(stats);
+        });
+      });
+    });
+  });
+});
+
+// Route pour récupérer les commandes par période
+app.get('/api/orders-per-period', async (req, res) => {
+  try {
+    // Requête SQL MySQL
+    const query = `
+            SELECT 
+                DATE_FORMAT(date_commande, '%Y-%m') AS period, 
+                COUNT(*) AS count 
+            FROM commandes 
+            GROUP BY DATE_FORMAT(date_commande, '%Y-%m') 
+            ORDER BY period;
+        `;
+
+    // Exécution de la requête et traitement du résultat
+    db.query(query, (err, rows) => {
+      if (err) {
+        console.error("Erreur lors de l'exécution de la requête:", err.message);
+        return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+      }
+
+      // Vérification du format des données
+      if (!Array.isArray(rows)) {
+        console.error("Format inattendu des données:", rows);
+        return res.status(500).json({ error: "Format inattendu des données reçues" });
+      }
+
+      // Transformation des résultats pour le frontend
+      const ordersPerPeriod = rows.map(row => ({
+        label: row.period,
+        count: parseInt(row.count, 10),
+      }));
+
+      // Réponse au client
+      res.json({ ordersPerPeriod });
+    });
+  } catch (err) {
+    console.error("Erreur lors de la récupération des commandes par période:", err.message);
+    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+  }
+});
+
+
+
+// Route pour servir le fichier index.html de React
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
+
+/***************************************************************** */
+
+
+
+
+//Démarrage du serveur
+const PORT = 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Le serveur est en écoute sur le port ${PORT}`);
+});
