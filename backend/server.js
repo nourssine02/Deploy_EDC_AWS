@@ -2439,7 +2439,6 @@ app.post('/api/commande', verifyToken, async (req, res) => {
 
     const { commande, familles } = req.body;
 
-    // 1. Validation des champs requis
     if (!commande?.date_commande || !commande?.num_commande) {
       console.error("Erreur : Champs obligatoires manquants.");
       return res.status(400).json({
@@ -2450,7 +2449,6 @@ app.post('/api/commande', verifyToken, async (req, res) => {
     console.log("Commande reçue :", commande);
     console.log("Familles reçues :", familles);
 
-    // 2. Insertion dans la table `commandes`
     const sqlCommande = `
       INSERT INTO commandes 
       (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
@@ -2468,11 +2466,10 @@ app.post('/api/commande', verifyToken, async (req, res) => {
       userId,
     ];
 
-    const [result] = await db.promise().execute(sqlCommande, commandeValues);
+    const [result] = await db.query(sqlCommande, commandeValues);
     const commandeId = result.insertId;
     console.log(`Commande insérée avec succès. ID: ${commandeId}`);
 
-    // 3. Insertion des familles (si présentes)
     if (Array.isArray(familles) && familles.length > 0) {
       const sqlFamille = `
         INSERT INTO familles (commande_id, famille, sous_famille, article) 
@@ -2487,13 +2484,12 @@ app.post('/api/commande', verifyToken, async (req, res) => {
 
       console.log("Insertion dans familles avec :", famillesValues);
 
-      await db.promise().query(sqlFamille, [famillesValues]);
+      await db.query(sqlFamille, [famillesValues]);
       console.log("Familles insérées avec succès.");
     }
 
-    // 4. Notification aux utilisateurs ayant le rôle 'comptable'
     const sqlGetComptable = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
-    const [comptableData] = await db.promise().query(sqlGetComptable);
+    const [comptableData] = await db.query(sqlGetComptable);
 
     if (comptableData.length > 0) {
       const notificationMessage = `${userName} a ajouté une nouvelle commande.`;
@@ -2507,13 +2503,12 @@ app.post('/api/commande', verifyToken, async (req, res) => {
 
       console.log("Insertion des notifications avec :", notificationValues);
 
-      await db.promise().query(sqlNotification, [notificationValues]);
+      await db.query(sqlNotification, [notificationValues]);
       console.log("Notifications envoyées aux comptables.");
     } else {
       console.warn("Aucun utilisateur avec le rôle 'comptable' trouvé.");
     }
 
-    // 5. Réponse finale
     res.status(201).json({
       message:
           "Commande ajoutée avec succès, familles insérées (si présentes), et notifications envoyées.",
