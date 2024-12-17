@@ -2427,133 +2427,94 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 });
 
 // Route pour ajouter une commande
-app.post('/api/commande', verifyToken, (req, res) => {
-  const userId = req.user.id;
+app.post('/api/commande', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // ID utilisateur depuis le token
+    const userName = req.user.identite;
 
-  // Vérification que l'ID de l'utilisateur est disponible
-  if (!userId) {
-    console.error("User ID is undefined. Cannot proceed with adding commande.");
-    return res.status(400).json({ error: "User ID is required to add commande" });
+    if (!userId) {
+      console.error("User ID is undefined. Cannot proceed.");
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const { commande, familles } = req.body;
+
+    // Vérification des données requises
+    if (!commande || !commande.date_commande || !commande.num_commande) {
+      return res.status(400).json({ error: "Les champs date_commande et num_commande sont requis." });
+    }
+
+    // Étape 1: Insertion dans la table `commandes`
+    const sqlCommande = `
+      INSERT INTO commandes (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const commandeValues = [
+      commande.date_commande,
+      commande.num_commande,
+      commande.code_tiers || null,
+      commande.tiers_saisie || null,
+      commande.montant_commande || null,
+      commande.date_livraison_prevue || null,
+      commande.observations || null,
+      commande.document_fichier || null,
+      userId,
+    ];
+
+    // Exécution de la première requête
+    const [result] = await db.promise().execute(sqlCommande, commandeValues);
+    const commandeId = result.insertId;
+
+    console.log(`Commande ajoutée avec succès. ID: ${commandeId}`);
+
+    // Étape 2: Insertion dans la table `familles` (si familles existe)
+    if (familles && familles.length > 0) {
+      const sqlFamille = `
+        INSERT INTO familles (commande_id, famille, sous_famille, article) VALUES ?
+      `;
+      const famillesValues = familles.map(f => [
+        commandeId,
+        f.famille || null,
+        f.sous_famille || null,
+        f.article || null,
+      ]);
+
+      await db.promise().query(sqlFamille, [famillesValues]);
+      console.log("Familles ajoutées avec succès.");
+    }
+
+    // Étape 3: Ajouter une notification pour les utilisateurs avec le rôle 'comptable'
+    const getComptableQuery = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
+    const [comptableData] = await db.promise().query(getComptableQuery);
+
+    if (comptableData.length === 0) {
+      console.warn("Aucun utilisateur avec le rôle 'comptable' trouvé.");
+    } else {
+      const notificationMessage = `${userName} a ajouté une nouvelle commande.`;
+      const notificationQuery = `
+        INSERT INTO notifications (user_id, message) VALUES ?
+      `;
+
+      const notificationsValues = comptableData.map(comptable => [
+        comptable.id,
+        notificationMessage,
+      ]);
+
+      await db.promise().query(notificationQuery, [notificationsValues]);
+      console.log("Notification envoyée aux comptables.");
+    }
+
+    // Réponse finale
+    res.status(201).json({
+      message: "Commande ajoutée avec succès, familles (si présentes) insérées, et notification envoyée.",
+    });
+  } catch (err) {
+    console.error("Erreur interne du serveur :", err.message);
+    res.status(500).json({
+      error: "Erreur interne du serveur",
+      details: err.message,
+    });
   }
-
-  const { commande, familles } = req.body;
-
-  const sqlCommande = `INSERT INTO commandes (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-  db.execute(
-      sqlCommande,
-      [
-        commande.date_commande,
-        commande.num_commande,
-        commande.code_tiers || null,
-        commande.tiers_saisie || null,
-        commande.montant_commande || null,
-        commande.date_livraison_prevue || null,
-        commande.observations || null,
-        commande.document_fichier || null,
-        userId,
-      ],
-      (err, result) => {
-        if (err) {
-          console.error("Erreur lors de l'insertion de la commande :", err.message);
-          return res.status(500).json({ error: "Erreur interne du serveur" });
-        }
-
-        const commandeId = result.insertId;
-
-        // Insérer les familles si elles existent
-        if (familles && familles.length > 0) {
-          const sqlFamille = `INSERT INTO familles (commande_id, famille, sous_famille, article) VALUES ?`;
-
-          const famillesValues = familles.map((f) => [
-            commandeId,
-            f.famille || null,
-            f.sous_famille || null,
-            f.article || null,
-          ]);
-
-          db.query(sqlFamille, [famillesValues], (famErr) => {
-            if (famErr) {
-              console.error("Erreur lors de l'insertion des familles :", famErr.message);
-              return res.status(500).json({ error: "Erreur interne du serveur" });
-            }
-
-            // Ajouter une notification pour le comptable
-            const notificationMessage = `${req.user.identite} a ajouté une nouvelle commande`;
-            const getComptableQuery = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
-
-            db.query(getComptableQuery, (comptableErr, comptableData) => {
-              if (comptableErr) {
-                console.error("Erreur lors de la récupération du comptable :", comptableErr.message);
-                return res.status(500).json({
-                  error: "Échec de la récupération du comptable",
-                  details: comptableErr.message,
-                });
-              }
-
-              if (comptableData.length === 0) {
-                console.error("Aucun utilisateur avec le rôle 'comptable' trouvé");
-                return res.status(404).json({ error: "Aucun comptable trouvé" });
-              }
-
-              const comptableId = comptableData[0].id;
-              const notificationQuery = `INSERT INTO notifications (user_id, message) VALUES (?, ?)`;
-
-              db.query(notificationQuery, [comptableId, notificationMessage], (notifErr) => {
-                if (notifErr) {
-                  console.error("Erreur lors de l'ajout de la notification :", notifErr.message);
-                  return res.status(500).json({
-                    error: "Échec de l'ajout de la notification",
-                    details: notifErr.message,
-                  });
-                }
-
-                return res.status(201).json({
-                  message: "Commande et familles ajoutées avec succès, notification envoyée.",
-                });
-              });
-            });
-          });
-        } else {
-          // Cas où il n'y a pas de familles à insérer
-          const notificationMessage = `${req.user.identite} a ajouté une nouvelle commande`;
-          const getComptableQuery = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
-
-          db.query(getComptableQuery, (comptableErr, comptableData) => {
-            if (comptableErr) {
-              console.error("Erreur lors de la récupération du comptable :", comptableErr.message);
-              return res.status(500).json({
-                error: "Échec de la récupération du comptable",
-                details: comptableErr.message,
-              });
-            }
-
-            if (comptableData.length === 0) {
-              console.error("Aucun utilisateur avec le rôle 'comptable' trouvé");
-              return res.status(404).json({ error: "Aucun comptable trouvé" });
-            }
-
-            const comptableId = comptableData[0].id;
-            const notificationQuery = `INSERT INTO notifications (user_id, message) VALUES (?, ?)`;
-
-            db.query(notificationQuery, [comptableId, notificationMessage], (notifErr) => {
-              if (notifErr) {
-                console.error("Erreur lors de l'ajout de la notification :", notifErr.message);
-                return res.status(500).json({
-                  error: "Échec de l'ajout de la notification",
-                  details: notifErr.message,
-                });
-              }
-
-              return res.status(201).json({
-                message: "Commande ajoutée avec succès (aucune famille), notification envoyée.",
-              });
-            });
-          });
-        }
-      }
-  );
 });
 
 // Route pour mettre a jour une commande
@@ -2614,7 +2575,6 @@ app.put("/api/commande/:id", async (req, res) => {
     });
   }
 });
-
 
 // Route pour récupérer une commande par son ID avec ses familles
 app.get("/api/commande/:id", (req, res) => {
