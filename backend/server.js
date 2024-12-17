@@ -2427,25 +2427,20 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 });
 
 // Route pour ajouter une commande
-app.post("/api/commande", verifyToken, (req, res) => {
+app.post('/api/commande', verifyToken, (req, res) => {
   if (!req.user || !req.user.id) {
-    console.error("User ID is undefined. Cannot proceed with adding commande.");
-    return res.status(400).json({ error: "User ID is required to add commande" });
+    console.error('User ID is undefined. Cannot proceed with adding commande.');
+    return res.status(400).json({ error: 'User ID is required to add commande' });
   }
 
-  const userId = req.user.id;
+  const userId = req.user.id; // Récupérer l'ID utilisateur depuis le token
   const { commande, familles } = req.body;
 
-  // Vérifier si les données de commande et familles sont valides
-  if (!commande || !familles || !Array.isArray(familles) || familles.length === 0) {
-    console.error("Commande or familles data is missing or invalid.");
-    return res.status(400).json({ error: "Commande or familles data is invalid." });
-  }
 
   db.beginTransaction((err) => {
     if (err) {
-      console.error("Erreur lors de la création de la transaction:", err);
-      return res.status(500).json({ message: "Erreur lors de la création de la transaction." });
+      console.error('Erreur lors de la création de la transaction:', err);
+      return res.status(500).json({ message: 'Erreur lors de la création de la transaction.' });
     }
 
     const insertCommandeQuery = `
@@ -2469,14 +2464,14 @@ app.post("/api/commande", verifyToken, (req, res) => {
 
     db.query(insertCommandeQuery, commandeData, (err, result) => {
       if (err) {
-        console.error("Erreur lors de l'insertion de la commande :", err);
+        console.error('Erreur lors de l\'insertion de la commande :', err);
         return db.rollback(() =>
-            res.status(500).json({ message: "Erreur lors de l'insertion de la commande." })
+            res.status(500).json({ message: 'Erreur lors de l\'insertion de la commande.' })
         );
       }
 
       const commandeId = result.insertId;
-      console.log("Commande insérée avec ID :", commandeId);
+      console.log('Commande insérée avec ID :', commandeId);
 
       // Insertion des familles associées à la commande
       const famillePromises = familles.map((famille) => {
@@ -2490,7 +2485,7 @@ app.post("/api/commande", verifyToken, (req, res) => {
               [famille.famille, famille.sous_famille, famille.article, commandeId],
               (err) => {
                 if (err) {
-                  console.error("Erreur lors de l'insertion de la famille :", err);
+                  console.error('Erreur lors de l\'insertion de la famille :', err);
                   return reject(err); // Rejeter la promesse en cas d'erreur
                 }
                 resolve(); // Résoudre la promesse si l'insertion réussit
@@ -2504,26 +2499,25 @@ app.post("/api/commande", verifyToken, (req, res) => {
           .then(() => {
             db.commit((err) => {
               if (err) {
-                console.error("Erreur lors de la validation de la transaction :", err);
+                console.error('Erreur lors de la validation de la transaction :', err);
                 return db.rollback(() =>
-                    res.status(500).json({ message: "Erreur lors de la validation de la transaction." })
+                    res.status(500).json({ message: 'Erreur lors de la validation de la transaction.' })
                 );
               }
 
-              console.log("Transaction validée avec succès !");
-              res.status(200).json({ message: "Commande ajoutée avec succès !" });
+              console.log('Transaction validée avec succès !');
+              res.status(200).json({ message: 'Commande ajoutée avec succès !' });
             });
           })
           .catch((err) => {
-            console.error("Erreur lors de l'insertion des familles :", err);
+            console.error('Erreur lors de l\'insertion des familles :', err);
             db.rollback(() =>
-                res.status(500).json({ message: "Erreur lors de l'insertion des familles." })
+                res.status(500).json({ message: 'Erreur lors de l\'insertion des familles.' })
             );
           });
     });
   });
 });
-
 
 // Route pour mettre a jour une commande
 app.put("/api/commande/:id", async (req, res) => {
