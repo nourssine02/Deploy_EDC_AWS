@@ -111,60 +111,83 @@ const AddCommande = ({ isSidebarOpen }) => {
 
   const validateForm = () => {
     let formErrors = {};
-    if (!commande.date_commande) formErrors.date_commande = "La date de la commande est requise";
-    if (!commande.num_commande) formErrors.num_commande = "Le numéro de commande est requis";
-    if (!commande.montant_commande) formErrors.montant_commande = "Le montant de la commande est requis";
-    if (!commande.date_livraison_prevue) formErrors.date_livraison_prevue = "La date de livraison prévue est requise";
-    if (!commande.document_fichier) formErrors.document_fichier = "Document est requis";
+
+    // Validation des champs uniquement pour la commande
+    if (!commande.date_commande) {
+      formErrors.date_commande = "La date de la commande est requise";
+    }
+    if (!commande.num_commande) {
+      formErrors.num_commande = "Le numéro de commande est requis";
+    }
+    if (!commande.montant_commande) {
+      formErrors.montant_commande = "Le montant de la commande est requis";
+    }
+    if (!commande.date_livraison_prevue) {
+      formErrors.date_livraison_prevue = "La date de livraison prévue est requise";
+    }
+    if (!commande.document_fichier) {
+      formErrors.document_fichier = "Document est requis";
+    }
 
     setErrors(formErrors);
+
+    // Retourne true seulement si aucune erreur n'existe pour la partie commande
     return Object.keys(formErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      try {
-        await axios.post("https://comptaonline.linkpc.net/api/commande", { commande, familles },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`, // Assurez-vous que le jeton est correctement lu
-              },
-            });
-        setCommande(initialCommandeState);
-        setFamilles([initialFamilleState]);
-        // Notification si l'utilisateur est un comptable
-        if (user.role === "comptable") {
-          const notificationMessage = `${user.identite} a ajouté une nouvelle Commande`;
 
-          const notificationData = {
-            userId: user.id,
-            message: notificationMessage,
-          };
-
-          await axios.post("https://comptaonline.linkpc.net/api/notifications", notificationData);
-        }
-        Swal.fire({
-          icon: "success",
-          title: "Succès",
-          text: "Commande ajoutée avec succès!",
-        });
-        navigate("/commandes");
-      } catch (error) {
-        console.error("Erreur lors de l'ajout du commande :", error);
-        Swal.fire({
-          icon: "error",
-          title: "Erreur",
-          text: "Erreur lors de l'ajout du Commande. Veuillez réessayer.",
-        });
-      }
-    } else {
+    // Validation des champs de la commande
+    if (!validateForm()) {
       Swal.fire({
         icon: "warning",
         title: "Erreur",
-        text: "Veuillez corriger les erreurs dans le formulaire.",
+        text: "Veuillez remplir tous les champs requis.",
+      });
+      return;
+    }
+
+    // Activation de l'état de chargement
+    setIsLoading(true);
+
+    try {
+      // Envoi des données au serveur
+      const response = await axios.post(
+          "https://comptaonline.linkpc.net/api/commande",
+          { commande, familles }, // On inclut commande et familles
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`, // Token de l'utilisateur
+              "Content-Type": "application/json", // Assurez-vous que le format est correctement défini
+            },
+          }
+      );
+
+      // Affichage du succès après l'envoi
+      Swal.fire({
+        icon: "success",
+        title: "Succès",
+        text: "Commande ajoutée avec succès!",
       });
 
+      // Redirection vers la page des commandes
+      navigate("/commandes");
+
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de la commande :", error);
+
+      // Gestion détaillée des erreurs serveur
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text:
+            error.response?.data?.message ||
+            "Une erreur est survenue lors de l'ajout de la commande.",
+      });
+    } finally {
+      // Désactivation de l'état de chargement
+      setIsLoading(false);
     }
   };
 
@@ -200,9 +223,7 @@ const AddCommande = ({ isSidebarOpen }) => {
                       <label>N° de la commande:</label>
                       <input
                           type="text"
-                          className={`form-control ${
-                              errors.num_commande && "is-invalid"
-                          }`}
+                          className="form-control"
                           name="num_commande"
                           onChange={handleChange}
                           value={commande.num_commande}
@@ -229,7 +250,7 @@ const AddCommande = ({ isSidebarOpen }) => {
                         {codeTiers.map((tier) => (
                             <option
                                 key={tier.id}
-                                value={tier.id}
+                                value={tier.code_tiers}
                             >
                               {`${tier.code_tiers} - ${tier.identite}`}
                             </option>
@@ -242,9 +263,7 @@ const AddCommande = ({ isSidebarOpen }) => {
                       <div style={{ display: "flex", alignItems: "center" }}>
                         <input
                             type="text"
-                            className={`form-control ${
-                                errors.montant_commande && "is-invalid"
-                            }`}
+                            className="form-control"
                             name="montant_commande"
                             onChange={handleChange}
                             value={commande.montant_commande}
@@ -277,9 +296,7 @@ const AddCommande = ({ isSidebarOpen }) => {
                       <label>Date de livraison prévue:</label>
                       <input
                           type="date"
-                          className={`form-control ${
-                              errors.date_livraison_prevue && "is-invalid"
-                          }`}
+                          className="form-control"
                           name="date_livraison_prevue"
                           onChange={handleChange}
                           value={commande.date_livraison_prevue}
@@ -296,9 +313,7 @@ const AddCommande = ({ isSidebarOpen }) => {
                       <label>Document fichier:</label>
                       <input
                           type="file"
-                          className={`form-control ${
-                              errors.document_fichier && "is-invalid"
-                          }`}
+                          className="form-control"
                           name="document_fichier"
                           onChange={handleChange}
                       />
