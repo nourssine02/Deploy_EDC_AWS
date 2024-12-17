@@ -2445,10 +2445,8 @@ app.post('/api/commande', verifyToken, async (req, res) => {
     });
   }
 
-  console.log("Commande reçue :", commande);
-  console.log("Familles reçues :", familles);
-
   try {
+    // Insert into commandes
     const [result] = await db.query(`
       INSERT INTO commandes 
       (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
@@ -2476,6 +2474,7 @@ app.post('/api/commande', verifyToken, async (req, res) => {
         f.article || null,
       ]);
 
+      // Insert into familles
       await db.query(`
         INSERT INTO familles (commande_id, famille, sous_famille, article) 
         VALUES ?
@@ -2484,6 +2483,7 @@ app.post('/api/commande', verifyToken, async (req, res) => {
       console.log("Familles insérées avec succès.");
     }
 
+    // Fetch comptables
     const [comptableData] = await db.query(`SELECT id FROM utilisateurs WHERE role = 'comptable'`);
     if (comptableData.length > 0) {
       const notificationMessage = `${userName} a ajouté une nouvelle commande.`;
@@ -2492,6 +2492,7 @@ app.post('/api/commande', verifyToken, async (req, res) => {
         notificationMessage,
       ]);
 
+      // Insert notifications
       await db.query(`
         INSERT INTO notifications (user_id, message) VALUES ?
       `, [notificationValues]);
@@ -2501,9 +2502,11 @@ app.post('/api/commande', verifyToken, async (req, res) => {
       console.warn("Aucun utilisateur avec le rôle 'comptable' trouvé.");
     }
 
+    // Send success response
     res.status(201).json({
       message: "Commande ajoutée avec succès, familles insérées (si présentes), et notifications envoyées.",
     });
+
   } catch (err) {
     console.error("Erreur interne du serveur :", err.message);
     res.status(500).json({
