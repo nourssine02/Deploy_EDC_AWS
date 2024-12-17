@@ -148,9 +148,6 @@ const AddCommande = ({ isSidebarOpen }) => {
       return;
     }
 
-    // Activation de l'état de chargement
-    setIsLoading(true);
-
     try {
       // Envoi des données au serveur
       const response = await axios.post(
@@ -185,9 +182,6 @@ const AddCommande = ({ isSidebarOpen }) => {
             error.response?.data?.message ||
             "Une erreur est survenue lors de l'ajout de la commande.",
       });
-    } finally {
-      // Désactivation de l'état de chargement
-      setIsLoading(false);
     }
   };
 
