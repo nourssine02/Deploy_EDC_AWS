@@ -2438,6 +2438,11 @@ app.post('/api/commande', verifyToken, (req, res) => {
 
   const { commande, familles } = req.body;
 
+  if (!commande) {
+    console.error("Commande object is missing in the request body.");
+    return res.status(400).json({ error: "Commande data is required" });
+  }
+
   const sqlCommande = `INSERT INTO commandes (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
@@ -2462,15 +2467,15 @@ app.post('/api/commande', verifyToken, (req, res) => {
 
         const commandeId = result.insertId;
 
-        // Insérer les familles si elles existent
-        if (familles && familles.length > 0) {
-          const sqlFamille = `INSERT INTO familles (commande_id, famille, sous_famille, article) VALUES ?`;
+        // Handle familles only if it's a valid array
+        if (Array.isArray(familles) && familles.length > 0) {
+          const sqlFamille = `INSERT INTO familles (famille, sous_famille, article, commande_id) VALUES ?`;
 
           const famillesValues = familles.map((f) => [
-            commandeId,
             f.famille || null,
             f.sous_famille || null,
             f.article || null,
+            commandeId
           ]);
 
           db.query(sqlFamille, [famillesValues], (famErr) => {
@@ -2479,82 +2484,51 @@ app.post('/api/commande', verifyToken, (req, res) => {
               return res.status(500).json({ error: "Erreur interne du serveur" });
             }
 
-            // Ajouter une notification pour le comptable
-            const notificationMessage = `${req.user.identite} a ajouté une nouvelle commande`;
-            const getComptableQuery = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
-
-            db.query(getComptableQuery, (comptableErr, comptableData) => {
-              if (comptableErr) {
-                console.error("Erreur lors de la récupération du comptable :", comptableErr.message);
-                return res.status(500).json({
-                  error: "Échec de la récupération du comptable",
-                  details: comptableErr.message,
-                });
-              }
-
-              if (comptableData.length === 0) {
-                console.error("Aucun utilisateur avec le rôle 'comptable' trouvé");
-                return res.status(404).json({ error: "Aucun comptable trouvé" });
-              }
-
-              const comptableId = comptableData[0].id;
-              const notificationQuery = `INSERT INTO notifications (user_id, message) VALUES (?, ?)`;
-
-              db.query(notificationQuery, [comptableId, notificationMessage], (notifErr) => {
-                if (notifErr) {
-                  console.error("Erreur lors de l'ajout de la notification :", notifErr.message);
-                  return res.status(500).json({
-                    error: "Échec de l'ajout de la notification",
-                    details: notifErr.message,
-                  });
-                }
-
-                return res.status(201).json({
-                  message: "Commande et familles ajoutées avec succès, notification envoyée.",
-                });
-              });
-            });
+            addNotificationAndRespond(req, res, userId, "Commande et familles ajoutées avec succès, notification envoyée.");
           });
         } else {
-          // Cas où il n'y a pas de familles à insérer
-          const notificationMessage = `${req.user.identite} a ajouté une nouvelle commande`;
-          const getComptableQuery = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
-
-          db.query(getComptableQuery, (comptableErr, comptableData) => {
-            if (comptableErr) {
-              console.error("Erreur lors de la récupération du comptable :", comptableErr.message);
-              return res.status(500).json({
-                error: "Échec de la récupération du comptable",
-                details: comptableErr.message,
-              });
-            }
-
-            if (comptableData.length === 0) {
-              console.error("Aucun utilisateur avec le rôle 'comptable' trouvé");
-              return res.status(404).json({ error: "Aucun comptable trouvé" });
-            }
-
-            const comptableId = comptableData[0].id;
-            const notificationQuery = `INSERT INTO notifications (user_id, message) VALUES (?, ?)`;
-
-            db.query(notificationQuery, [comptableId, notificationMessage], (notifErr) => {
-              if (notifErr) {
-                console.error("Erreur lors de l'ajout de la notification :", notifErr.message);
-                return res.status(500).json({
-                  error: "Échec de l'ajout de la notification",
-                  details: notifErr.message,
-                });
-              }
-
-              return res.status(201).json({
-                message: "Commande ajoutée avec succès (aucune famille), notification envoyée.",
-              });
-            });
-          });
+          // No familles to insert
+          addNotificationAndRespond(req, res, userId, "Commande ajoutée avec succès (aucune famille), notification envoyée.");
         }
       }
   );
 });
+
+// Helper function to add notification and send response
+function addNotificationAndRespond(req, res, userId, successMessage) {
+  const notificationMessage = `${req.user.identite} a ajouté une nouvelle commande`;
+  const getComptableQuery = `SELECT id FROM utilisateurs WHERE role = 'comptable'`;
+
+  db.query(getComptableQuery, (comptableErr, comptableData) => {
+    if (comptableErr) {
+      console.error("Erreur lors de la récupération du comptable :", comptableErr.message);
+      return res.status(500).json({
+        error: "Échec de la récupération du comptable",
+        details: comptableErr.message,
+      });
+    }
+
+    if (comptableData.length === 0) {
+      console.error("Aucun utilisateur avec le rôle 'comptable' trouvé");
+      return res.status(404).json({ error: "Aucun comptable trouvé" });
+    }
+
+    const comptableId = comptableData[0].id;
+    const notificationQuery = `INSERT INTO notifications (user_id, message) VALUES (?, ?)`;
+
+    db.query(notificationQuery, [comptableId, notificationMessage], (notifErr) => {
+      if (notifErr) {
+        console.error("Erreur lors de l'ajout de la notification :", notifErr.message);
+        return res.status(500).json({
+          error: "Échec de l'ajout de la notification",
+          details: notifErr.message,
+        });
+      }
+
+      res.status(201).json({ message: successMessage });
+    });
+  });
+}
 
 // Route pour mettre a jour une commande
 app.put("/api/commande/:id", async (req, res) => {
