@@ -68,17 +68,30 @@ function Home({ isSidebarOpen }) {
     const fetchOrdersPerPeriod = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
-        const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
 
+        // Récupérer le token d'authentification
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Token d'authentification non trouvé. Veuillez vous reconnecter.");
+          navigate("/");
+          return;
+        }
+
+        // Requête pour récupérer les commandes par période
+        const response = await axios.get(
+            "https://comptaonline.linkpc.net/api/orders-per-period",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
+
+        // Vérifier et transformer les données reçues
         if (response.data && Array.isArray(response.data.ordersPerPeriod)) {
           setOrdersPerPeriod(response.data.ordersPerPeriod);
         } else {
-          console.error("Unexpected response format:", response.data);
+          console.error("Format inattendu des données reçues :", response.data);
           setError("Erreur de format des données reçues pour les commandes.");
         }
       } catch (error) {

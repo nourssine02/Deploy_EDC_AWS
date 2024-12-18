@@ -4883,15 +4883,13 @@ app.get("/api/statistics", (req, res) => {
 // Route pour récupérer les commandes par période pour un utilisateur spécifique
 app.get('/api/orders-per-period', verifyToken, async (req, res) => {
   try {
-    const userId = req.user.id; // ID de l'utilisateur connecté
+    const userId = req.user?.id;
 
-    // Vérification de l'ID de l'utilisateur
     if (!userId) {
       console.error("User ID is undefined. Cannot fetch orders.");
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ success: false, error: "User ID is required" });
     }
 
-    // Requête SQL MySQL pour récupérer les commandes d'un utilisateur spécifique par période
     const query = `
       SELECT 
           DATE_FORMAT(date_commande, '%Y-%m') AS period, 
@@ -4902,31 +4900,34 @@ app.get('/api/orders-per-period', verifyToken, async (req, res) => {
       ORDER BY period;
     `;
 
-    // Exécution de la requête avec l'ID de l'utilisateur
     db.query(query, [userId], (err, rows) => {
       if (err) {
-        console.error("Erreur lors de l'exécution de la requête:", err.message);
-        return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+        console.error("Erreur lors de l'exécution de la requête:", {
+          message: err.message,
+          stack: err.stack,
+          sql: query,
+        });
+        return res.status(500).json({ success: false, error: "Erreur lors de la récupération des commandes par période" });
       }
 
-      // Vérification du format des données
       if (!Array.isArray(rows)) {
         console.error("Format inattendu des données:", rows);
-        return res.status(500).json({ error: "Format inattendu des données reçues" });
+        return res.status(500).json({ success: false, error: "Format inattendu des données reçues" });
       }
 
-      // Transformation des résultats pour le frontend
       const ordersPerPeriod = rows.map(row => ({
         label: row.period,
         count: parseInt(row.count, 10),
       }));
 
-      // Réponse au client
-      res.json({ ordersPerPeriod });
+      res.json({ success: true, ordersPerPeriod });
     });
   } catch (err) {
-    console.error("Erreur lors de la récupération des commandes par période:", err.message);
-    res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
+    console.error("Erreur lors de la récupération des commandes par période:", {
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({ success: false, error: "Erreur lors de la récupération des commandes par période" });
   }
 });
 
