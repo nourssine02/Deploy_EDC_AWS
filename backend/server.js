@@ -2427,18 +2427,17 @@ app.get("/api/commandes", verifyToken, (req, res) => {
 });
 
 // Route pour ajouter une commande
-app.post('/api/commande', verifyToken, async (req, res) => {
-  const userId = req.user?.id;
-  const userName = req.user?.identite;
+app.post('/api/commande', verifyToken, (req, res) => {
+  const userId = req.user.id;
 
+  // Vérification que l'ID de l'utilisateur est disponible
   if (!userId) {
-    console.error("Erreur : User ID est manquant.");
-    return res.status(400).json({ error: "User ID is required" });
+    console.error("User ID is undefined. Cannot proceed with adding commande.");
+    return res.status(400).json({ error: "User ID is required to add commande" });
   }
 
   const { commande, familles } = req.body;
 
-<<<<<<< HEAD
   if (!commande) {
     console.error("Commande object is missing in the request body.");
     return res.status(400).json({ error: "Commande data is required" });
@@ -2446,37 +2445,28 @@ app.post('/api/commande', verifyToken, async (req, res) => {
 
   const sqlCommande = `INSERT INTO commandes (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-=======
-  if (!commande?.date_commande || !commande?.num_commande) {
-    console.error("Erreur : Champs obligatoires manquants.");
-    return res.status(400).json({
-      error: "Les champs date_commande et num_commande sont requis.",
-    });
-  }
->>>>>>> 73a8cd80b1f74e04f75cb1e90942379b903a9ddf
 
-  try {
-    // Insert into commandes
-    const [result] = await db.query(`
-      INSERT INTO commandes 
-      (date_commande, num_commande, code_tiers, tiers_saisie, montant_commande, date_livraison_prevue, observations, document_fichier, ajoute_par)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      commande.date_commande,
-      commande.num_commande,
-      commande.code_tiers || null,
-      commande.tiers_saisie || null,
-      commande.montant_commande || null,
-      commande.date_livraison_prevue || null,
-      commande.observations || null,
-      commande.document_fichier || null,
-      userId,
-    ]);
+  db.execute(
+      sqlCommande,
+      [
+        commande.date_commande,
+        commande.num_commande,
+        commande.code_tiers || null,
+        commande.tiers_saisie || null,
+        commande.montant_commande || null,
+        commande.date_livraison_prevue || null,
+        commande.observations || null,
+        commande.document_fichier || null,
+        userId,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("Erreur lors de l'insertion de la commande :", err.message);
+          return res.status(500).json({ error: "Erreur interne du serveur" });
+        }
 
-    const commandeId = result.insertId;
-    console.log(`Commande insérée avec succès. ID: ${commandeId}`);
+        const commandeId = result.insertId;
 
-<<<<<<< HEAD
         // Handle familles only if it's a valid array
         if (Array.isArray(familles) && familles.length > 0) {
           const sqlFamille = `INSERT INTO familles (famille, sous_famille, article, commande_id) VALUES ?`;
@@ -2487,26 +2477,13 @@ app.post('/api/commande', verifyToken, async (req, res) => {
             f.article || null,
             commandeId
           ]);
-=======
-    if (Array.isArray(familles) && familles.length > 0) {
-      const famillesValues = familles.map(f => [
-        commandeId,
-        f.famille || null,
-        f.sous_famille || null,
-        f.article || null,
-      ]);
 
-      // Insert into familles
-      await db.query(`
-        INSERT INTO familles (commande_id, famille, sous_famille, article) 
-        VALUES ?
-      `, [famillesValues]);
->>>>>>> 73a8cd80b1f74e04f75cb1e90942379b903a9ddf
+          db.query(sqlFamille, [famillesValues], (famErr) => {
+            if (famErr) {
+              console.error("Erreur lors de l'insertion des familles :", famErr.message);
+              return res.status(500).json({ error: "Erreur interne du serveur" });
+            }
 
-      console.log("Familles insérées avec succès.");
-    }
-
-<<<<<<< HEAD
             addNotificationAndRespond(req, res, userId, "Commande et familles ajoutées avec succès, notification envoyée.");
           });
         } else {
@@ -2515,39 +2492,6 @@ app.post('/api/commande', verifyToken, async (req, res) => {
         }
       }
   );
-=======
-    // Fetch comptables
-    const [comptableData] = await db.query(`SELECT id FROM utilisateurs WHERE role = 'comptable'`);
-    if (comptableData.length > 0) {
-      const notificationMessage = `${userName} a ajouté une nouvelle commande.`;
-      const notificationValues = comptableData.map(comptable => [
-        comptable.id,
-        notificationMessage,
-      ]);
-
-      // Insert notifications
-      await db.query(`
-        INSERT INTO notifications (user_id, message) VALUES ?
-      `, [notificationValues]);
-
-      console.log("Notifications envoyées aux comptables.");
-    } else {
-      console.warn("Aucun utilisateur avec le rôle 'comptable' trouvé.");
-    }
-
-    // Send success response
-    res.status(201).json({
-      message: "Commande ajoutée avec succès, familles insérées (si présentes), et notifications envoyées.",
-    });
-
-  } catch (err) {
-    console.error("Erreur interne du serveur :", err.message);
-    res.status(500).json({
-      error: "Erreur interne du serveur",
-      details: err.message,
-    });
-  }
->>>>>>> 73a8cd80b1f74e04f75cb1e90942379b903a9ddf
 });
 
 // Helper function to add notification and send response
@@ -2585,6 +2529,7 @@ function addNotificationAndRespond(req, res, userId, successMessage) {
     });
   });
 }
+
 
 // Route pour mettre a jour une commande
 app.put("/api/commande/:id", async (req, res) => {
