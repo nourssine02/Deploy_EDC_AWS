@@ -11,9 +11,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2"; // Import Bar chart from react-chartjs-2
+import { Bar } from "react-chartjs-2";
 
-// Register the necessary chart components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function Home({ isSidebarOpen }) {
@@ -39,10 +38,8 @@ function Home({ isSidebarOpen }) {
           return;
         }
 
-        const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await axios.get("/api/home", {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         setUser(response.data.user);
@@ -55,7 +52,7 @@ function Home({ isSidebarOpen }) {
     const fetchStatistics = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("https://comptaonline.linkpc.net/api/statistics");
+        const response = await axios.get("/api/statistics");
         setStats(response.data);
       } catch (error) {
         console.error("Erreur lors de la récupération des statistiques :", error);
@@ -69,7 +66,6 @@ function Home({ isSidebarOpen }) {
       try {
         setLoading(true);
 
-        // Récupérer le token d'authentification
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Token d'authentification non trouvé. Veuillez vous reconnecter.");
@@ -77,17 +73,10 @@ function Home({ isSidebarOpen }) {
           return;
         }
 
-        // Requête pour récupérer les commandes par période
-        const response = await axios.get(
-            "https://comptaonline.linkpc.net/api/orders-per-period",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-        );
+        const response = await axios.get("/api/orders-per-period", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        // Vérifier et transformer les données reçues
         if (response.data && Array.isArray(response.data.ordersPerPeriod)) {
           setOrdersPerPeriod(response.data.ordersPerPeriod);
         } else {
@@ -107,65 +96,44 @@ function Home({ isSidebarOpen }) {
     fetchOrdersPerPeriod();
   }, [setUser, navigate]);
 
-  // Data for Bar Chart for Stats (comptable)
   const statsChartData = {
     labels: ["Utilisateurs", "Commandes", "Livraisons", "Factures Non Payées"],
     datasets: [
       {
         label: "Statistiques",
         data: [stats.totalUsers, stats.totalOrders, stats.totalDeliveries, stats.unpaidInvoices],
-        backgroundColor: [
-          "rgba(54, 162, 235, 0.5)", // Utilisateurs
-          "rgba(255, 99, 132, 0.5)", // Commandes
-          "rgba(255, 159, 64, 0.5)", // Livraisons
-          "rgba(153, 102, 255, 0.5)", // Factures Non Payées
-        ],
+        backgroundColor: ["rgba(54, 162, 235, 0.5)", "rgba(255, 99, 132, 0.5)", "rgba(255, 159, 64, 0.5)", "rgba(153, 102, 255, 0.5)"],
         borderColor: ["#36A2EB", "#FF6384", "#FF9F40", "#9966FF"],
         borderWidth: 1,
       },
     ],
   };
 
-  // Data for Bar Chart for Orders (utilisateur)
   const ordersChartData = {
     labels: ordersPerPeriod.map(order => order.label),
     datasets: [
       {
         label: "Commandes par Mois",
         data: ordersPerPeriod.map(order => order.count),
-        backgroundColor: ordersPerPeriod.map(
-            (_, idx) =>
-                `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
-                    Math.random() * 255
-                )}, 0.5)`
-        ),
-        borderColor: ordersPerPeriod.map(
-            (_, idx) =>
-                `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
-                    Math.random() * 255
-                )}, 1)`
-        ),
+        backgroundColor: ordersPerPeriod.map(() => `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`),
+        borderColor: ordersPerPeriod.map(() => `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`),
         borderWidth: 1,
       },
     ],
   };
 
-  // Chart options
   const chartOptions = {
     responsive: true,
     plugins: {
       legend: { display: true },
     },
     scales: {
-      x: {
-        title: { display: true, text: "Périodes" },
-      },
-      y: {
-        title: { display: true, text: "Nombre de Commandes" },
-        beginAtZero: true,
-      },
+      x: { title: { display: true, text: "Périodes" } },
+      y: { title: { display: true, text: "Nombre de Commandes" }, beginAtZero: true },
     },
   };
+
+  if (!user) return null;
 
   return (
       <div className="main-panel">
@@ -175,29 +143,24 @@ function Home({ isSidebarOpen }) {
               <div className="card">
                 <div className="card-body">
                   <h2 className="text-center mb-5">Dashboard</h2>
-                  <br />
                   {error && <p style={{ color: "red" }}>{error}</p>}
                   {loading && <p>Chargement des données...</p>}
 
                   {user.role === "comptable" && (
                       <>
                         <h4>Statistiques Générales</h4>
-                        <div className="mt-5">
-                          <Bar data={statsChartData} options={chartOptions} />
-                        </div>
+                        <Bar data={statsChartData} options={chartOptions} />
                       </>
                   )}
 
                   {user.role === "utilisateur" && (
                       <>
                         <h4>Commandes par Mois</h4>
-                        <div className="mt-5">
-                          {ordersPerPeriod.length > 0 ? (
-                              <Bar data={ordersChartData} options={chartOptions} />
-                          ) : (
-                              <p>Aucune commande trouvée pour cette période.</p>
-                          )}
-                        </div>
+                        {ordersPerPeriod.length > 0 ? (
+                            <Bar data={ordersChartData} options={chartOptions} />
+                        ) : (
+                            <p>Aucune commande trouvée pour cette période.</p>
+                        )}
                       </>
                   )}
                 </div>
