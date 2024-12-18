@@ -4879,46 +4879,6 @@ app.get("/api/statistics", (req, res) => {
   });
 });
 
-// Route pour récupérer les commandes par période
-// app.get('/api/orders-per-period', async (req, res) => {
-//   try {
-//     // Requête SQL MySQL
-//     const query = `
-//             SELECT
-//                 DATE_FORMAT(date_commande, '%Y-%m') AS period,
-//                 COUNT(*) AS count
-//             FROM commandes
-//             GROUP BY DATE_FORMAT(date_commande, '%Y-%m')
-//             ORDER BY period;
-//         `;
-//
-//     // Exécution de la requête et traitement du résultat
-//     db.query(query, (err, rows) => {
-//       if (err) {
-//         console.error("Erreur lors de l'exécution de la requête:", err.message);
-//         return res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
-//       }
-//
-//       // Vérification du format des données
-//       if (!Array.isArray(rows)) {
-//         console.error("Format inattendu des données:", rows);
-//         return res.status(500).json({ error: "Format inattendu des données reçues" });
-//       }
-//
-//       // Transformation des résultats pour le frontend
-//       const ordersPerPeriod = rows.map(row => ({
-//         label: row.period,
-//         count: parseInt(row.count, 10),
-//       }));
-//
-//       // Réponse au client
-//       res.json({ ordersPerPeriod });
-//     });
-//   } catch (err) {
-//     console.error("Erreur lors de la récupération des commandes par période:", err.message);
-//     res.status(500).json({ error: "Erreur lors de la récupération des commandes par période" });
-//   }
-// });
 
 // Route pour récupérer les commandes par période pour un utilisateur spécifique
 app.get('/api/orders-per-period', verifyToken, async (req, res) => {

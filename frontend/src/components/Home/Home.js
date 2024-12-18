@@ -11,13 +11,14 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";  // Import Bar chart from react-chartjs-2
+import { Bar } from "react-chartjs-2"; // Import Bar chart from react-chartjs-2
 
-// Enregistrer les composants nécessaires pour les graphiques en barres
+// Register the necessary chart components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function Home({ isSidebarOpen }) {
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalOrders: 0,
@@ -46,25 +47,34 @@ function Home({ isSidebarOpen }) {
 
         setUser(response.data.user);
       } catch (error) {
-        setError("Erreur lors de la récupération des données");
+        console.error("Erreur lors de la récupération des données utilisateur :", error);
+        setError("Erreur lors de la récupération des données utilisateur.");
       }
     };
 
     const fetchStatistics = async () => {
       try {
+        setLoading(true);
         const response = await axios.get("https://comptaonline.linkpc.net/api/statistics");
         setStats(response.data);
       } catch (error) {
-        console.error("Error fetching statistics", error);
+        console.error("Erreur lors de la récupération des statistiques :", error);
         setError("Une erreur est survenue lors de la récupération des statistiques.");
+      } finally {
+        setLoading(false);
       }
     };
 
     const fetchOrdersPerPeriod = async () => {
       try {
-        const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period");
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        // Validation : vérifier si ordersPerPeriod est bien un tableau
         if (response.data && Array.isArray(response.data.ordersPerPeriod)) {
           setOrdersPerPeriod(response.data.ordersPerPeriod);
         } else {
@@ -72,8 +82,10 @@ function Home({ isSidebarOpen }) {
           setError("Erreur de format des données reçues pour les commandes.");
         }
       } catch (error) {
-        console.error("Error fetching orders per period:", error);
+        console.error("Erreur lors de la récupération des commandes par période :", error);
         setError("Une erreur est survenue lors de la récupération des commandes par période.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -90,14 +102,12 @@ function Home({ isSidebarOpen }) {
         label: "Statistiques",
         data: [stats.totalUsers, stats.totalOrders, stats.totalDeliveries, stats.unpaidInvoices],
         backgroundColor: [
-          "rgba(54, 162, 235, 0.5)",   // Utilisateurs
-          "rgba(255, 99, 132, 0.5)",   // Commandes
-          "rgba(255, 159, 64, 0.5)",   // Livraisons
-          "rgba(153, 102, 255, 0.5)"   // Factures Non Payées
+          "rgba(54, 162, 235, 0.5)", // Utilisateurs
+          "rgba(255, 99, 132, 0.5)", // Commandes
+          "rgba(255, 159, 64, 0.5)", // Livraisons
+          "rgba(153, 102, 255, 0.5)", // Factures Non Payées
         ],
-        borderColor: [
-          "#36A2EB", "#FF6384", "#4BC0C0", "#9966FF"
-        ],
+        borderColor: ["#36A2EB", "#FF6384", "#FF9F40", "#9966FF"],
         borderWidth: 1,
       },
     ],
@@ -105,66 +115,40 @@ function Home({ isSidebarOpen }) {
 
   // Data for Bar Chart for Orders (utilisateur)
   const ordersChartData = {
-    labels: Array.isArray(ordersPerPeriod) ? ordersPerPeriod.map(order => order.label) : [],
+    labels: ordersPerPeriod.map(order => order.label),
     datasets: [
       {
         label: "Commandes par Mois",
-        data: Array.isArray(ordersPerPeriod) ? ordersPerPeriod.map(order => order.count) : [],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.5)",  // Mois 1
-          "rgba(54, 162, 235, 0.5)",  // Mois 2
-          "rgba(75, 192, 192, 0.5)",  // Mois 3
-          "rgba(153, 102, 255, 0.5)", // Mois 4
-          "rgba(255, 159, 64, 0.5)"   // Mois 5
-        ],
-        borderColor: [
-          "#FF6384", "#36A2EB", "#4BC0C0", "#9966FF", "#FF9F40"
-        ],
+        data: ordersPerPeriod.map(order => order.count),
+        backgroundColor: ordersPerPeriod.map(
+            (_, idx) =>
+                `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
+                    Math.random() * 255
+                )}, 0.5)`
+        ),
+        borderColor: ordersPerPeriod.map(
+            (_, idx) =>
+                `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
+                    Math.random() * 255
+                )}, 1)`
+        ),
         borderWidth: 1,
       },
     ],
   };
 
-  // Options for Orders Chart
-  const ordersChartOptions = {
+  // Chart options
+  const chartOptions = {
     responsive: true,
     plugins: {
       legend: { display: true },
     },
     scales: {
       x: {
-        title: {
-          display: true,
-          text: "Périodes",
-        },
+        title: { display: true, text: "Périodes" },
       },
       y: {
-        title: {
-          display: true,
-          text: "Nombre de Commandes",
-        },
-        beginAtZero: true,
-      },
-    },
-  };
-
-  // Options for Stats Chart
-  const statsChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { display: true },
-    },
-    scales: {
-      x: {
-        title: {
-          display: false, // Aucun titre pour l'axe X dans les statistiques
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: "Nombre", // Titre de l'axe Y pour les statistiques
-        },
+        title: { display: true, text: "Nombre de Commandes" },
         beginAtZero: true,
       },
     },
@@ -180,12 +164,13 @@ function Home({ isSidebarOpen }) {
                   <h2 className="text-center mb-5">Dashboard</h2>
                   <br />
                   {error && <p style={{ color: "red" }}>{error}</p>}
+                  {loading && <p>Chargement des données...</p>}
 
                   {user.role === "comptable" && (
                       <>
                         <h4>Statistiques Générales</h4>
                         <div className="mt-5">
-                          <Bar data={statsChartData} options={statsChartOptions} />
+                          <Bar data={statsChartData} options={chartOptions} />
                         </div>
                       </>
                   )}
@@ -194,7 +179,11 @@ function Home({ isSidebarOpen }) {
                       <>
                         <h4>Commandes par Mois</h4>
                         <div className="mt-5">
-                          <Bar data={ordersChartData} options={ordersChartOptions} />
+                          {ordersPerPeriod.length > 0 ? (
+                              <Bar data={ordersChartData} options={chartOptions} />
+                          ) : (
+                              <p>Aucune commande trouvée pour cette période.</p>
+                          )}
                         </div>
                       </>
                   )}
