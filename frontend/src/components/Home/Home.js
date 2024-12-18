@@ -38,7 +38,7 @@ function Home({ isSidebarOpen }) {
           return;
         }
 
-        const response = await axios.get("/api/home", {
+        const response = await axios.get("https://comptaonline.linkpc.net/api/home", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -52,7 +52,7 @@ function Home({ isSidebarOpen }) {
     const fetchStatistics = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("/api/statistics");
+        const response = await axios.get("https://comptaonline.linkpc.net/api/statistics");
         setStats(response.data);
       } catch (error) {
         console.error("Erreur lors de la récupération des statistiques :", error);
@@ -73,7 +73,7 @@ function Home({ isSidebarOpen }) {
           return;
         }
 
-        const response = await axios.get("/api/orders-per-period", {
+        const response = await axios.get("https://comptaonline.linkpc.net/api/orders-per-period", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
